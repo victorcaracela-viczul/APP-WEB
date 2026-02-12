@@ -13,6 +13,47 @@
 </head>
 
 <body>
+
+<!-- Aviso Automático Global Actualizado -->
+<div id="avisoGlobalEPP" style="
+    display: none;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #343a40;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 50px;
+    z-index: 20000;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    align-items: center;
+    gap: 15px;
+    border-left: 5px solid #ffc107;
+    font-family: 'Poppins', sans-serif;
+">
+  <!-- Icono de Casco de Seguridad -->
+  <div style="
+      background: #ffc107;
+      color: #343a40;
+      width: 35px;
+      height: 35px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-size: 1.1rem;
+  ">
+    <i class="fa-solid fa-helmet-safety"></i>
+  </div>
+  
+  <span id="textoAviso" style="font-weight: 500; letter-spacing: 0.3px;">
+    Tienes alertas pendientes. Revisa tu módulo de EPPs.
+  </span>
+</div>
+
+
+
       <!-- ✅ Indicador de estado de conexión -->
   <div id="connection-status" class="connection-status online d-none">
     <i class="fa fa-wifi me-1"></i> Conectado
@@ -748,6 +789,11 @@ function initializeApp() {
       updateUserInterface(userData);
       cargarDatosDNI(userData.usuario);
       startPeriodicCheck();
+
+      setTimeout(() => {
+        verificarAlertasAlInicio();
+      }, 10000);
+
     } catch (error) {
       console.error('Error al parsear cache:', error);
       Swal.fire({
@@ -787,10 +833,7 @@ function login(obj) {
   google.script.run
     .withSuccessHandler((result) => {
       if (result.success) {
-        // Desestructuración de datos que vienen del servidor
         const [id, usuario, nombre, cargo, empresa, email, password, foto, accesos, firma, token] = result.data;
-        
-        // Creación del objeto usuario
         const userObj = { id, usuario, nombre, cargo, empresa, email, password, foto, accesos, firma, token };
         
         localStorage.setItem('userName', JSON.stringify(userObj));
@@ -800,14 +843,17 @@ function login(obj) {
         updateUserInterface(userObj);
         initEPPAfterLogin(userObj);
         
-        // ✅ AQUÍ AGREGAMOS LA INICIALIZACIÓN DEL ROL
-        // Le pasamos userObj para que detecte si es Operario (Lite) o Jefe (Full)
         if (typeof startRolModule === 'function') {
             startRolModule(userObj);
         }
 
         setTimeout(() => cargarDatosDNI?.(usuario), 50);
         startPeriodicCheck();
+
+        // ✨ AÑADIR ESTO: Se activa 10 segundos después del login
+        setTimeout(() => {
+          verificarAlertasAlInicio();
+        }, 10000); 
 
       } else if (result.blocked) {
         showError('Tu cuenta está desactivada. Contacta al administrador.');
@@ -822,6 +868,7 @@ function login(obj) {
     })
     .loginData(obj);
 }
+
 
 
 function logout() {
@@ -1423,6 +1470,40 @@ document.addEventListener('DOMContentLoaded', function() {
   // NOTA: Aquí NO llamamos a getTodasLasListas() porque YA se llama en el script anterior.
   // Esto evita el conflicto de doble carga.
 });
+
+function verificarAlertasAlInicio() {
+  const userData = JSON.parse(localStorage.getItem('userName'));
+  if (!userData || !userData.usuario) return;
+
+  // Llamamos al servidor para ver si hay alertas activas
+  google.script.run
+    .withSuccessHandler(function(alertas) {
+      if (alertas && alertas.length > 0) {
+        mostrarAvisoTemporal();
+      }
+    })
+    .obtenerAlertasVencimientos(userData.usuario);
+}
+
+function mostrarAvisoTemporal() {
+  const aviso = document.getElementById('avisoGlobalEPP');
+  if (!aviso) return;
+
+  // Mostrar con una pequeña animación de entrada
+  aviso.style.display = 'flex';
+  aviso.style.animation = 'fadeInDown 0.5s ease-out';
+
+  // Cerrar automáticamente a los 5 segundos
+  setTimeout(() => {
+    aviso.style.animation = 'fadeOutUp 0.5s ease-in';
+    setTimeout(() => {
+      aviso.style.display = 'none';
+    }, 450);
+  }, 5000);
+}
+
+
+
 </script>
 
 

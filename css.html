@@ -483,4 +483,150 @@ button.btn:hover {
 .morphing-menu:active svg {
   transform: rotate(90deg);
 }
+
+
+
+
+
+/* La campana flotante en la esquina */
+.campana-flotante {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #ffc107;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  z-index: 9999;
+  animation: pulse 2s infinite;
+}
+
+.icono-campana { font-size: 30px; }
+
+/* El número rojo sobre la campana */
+.badge-alerta {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: red;
+  color: white;
+  border-radius: 50%;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: bold;
+  border: 2px solid white;
+}
+
+/* Modal de información */
+.alerta-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 10000; /* Asegura que esté por encima de todo */
+  justify-content: center;
+  align-items: center;
+  padding: 10px; /* Margen para que no pegue a los bordes del cel */
+}
+
+.alerta-modal {
+  background: white;
+  width: 90%; max-width: 450px;
+  border-radius: 15px;
+  padding: 20px;
+  position: relative;
+}
+
+.btn-cerrar-alerta {
+  position: absolute; top: 10px; right: 15px;
+  font-size: 25px; cursor: pointer; color: #999;
+}
+
+.item-alerta {
+  padding: 10px; margin-bottom: 5px;
+  border-radius: 8px; font-size: 13px;
+  border-left: 5px solid #d9534f;
+  background: #fdf2f2;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+
+.alerta-modal-grande {
+  background: white;
+  width: 100%;
+  max-width: 500px;
+  /* IMPORTANTE: Máximo 85% de la altura de la pantalla */
+  max-height: 85vh; 
+  border-radius: 15px;
+  position: relative;
+  display: flex;
+  flex-direction: column; /* Permite que el header sea fijo y el cuerpo scrolleable */
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  overflow: hidden; /* Para que el contenido no se salga de los bordes redondeados */
+}
+
+/* El encabezado (Fijo arriba) */
+.alerta-header {
+  padding: 20px 20px 10px 20px;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0; /* Evita que el header se achique */
+}
+
+/* La zona de la tabla (Con Scroll) */
+.alerta-cuerpo-scroll {
+  padding: 10px 20px 20px 20px;
+  overflow-y: auto; /* AQUÍ SE ACTIVA EL SCROLL VERTICAL */
+  flex-grow: 1;    /* Ocupa el resto del espacio disponible */
+  -webkit-overflow-scrolling: touch; /* Suavidad de scroll en iPhone */
+}
+
+/* Ajuste para la tabla en móvil */
+.tabla-alertas {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem; /* Un poco más pequeña para móviles */
+}
+
+.tabla-alertas th {
+  background: #f8f9fa; padding: 10px;
+  border-bottom: 2px solid #dee2e6; text-align: left;
+}
+
+.tabla-alertas td { padding: 10px; border-bottom: 1px solid #eee; }
+
+/* Colores de Alerta */
+.fila-vencida { background-color: #ffe5e5 !important; color: #b71c1c; font-weight: bold; }
+.fila-proxima { background-color: #fff3e0 !important; color: #e65100; }
+
+.badge-estado {
+  padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; text-transform: uppercase;
+}
+.bg-rojo { background: #d32f2f; color: white; }
+.bg-naranja { background: #ef6c00; color: white; }
+
+
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translate(-50%, -20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes fadeOutUp {
+  from { opacity: 1; transform: translate(-50%, 0); }
+  to { opacity: 0; transform: translate(-50%, -20px); }
+}
+
+
+
 </style>

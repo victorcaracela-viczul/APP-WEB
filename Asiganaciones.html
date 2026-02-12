@@ -183,6 +183,12 @@
         <small class="text-muted">EPPs, Equipos, Materiales, Herramientas, Productos</small>
       </div>
     </div>
+<div id="contenedorCampana" class="campana-flotante" style="display: none;" onclick="alternarAlertas()">
+  <span class="icono-campana">🦺</span>
+  <span id="contadorAlertas" class="badge-alerta">0</span>
+</div>
+
+
   </div>
 
   <!-- Chips de categorías -->
@@ -228,6 +234,28 @@
 <!-- Toast -->
 <div id="epp-toast" class="epp-toast"></div>
 
+<!-- 📋 MODAL DE ALERTAS -->
+<div id="contenedorAlerta" class="alerta-overlay" style="display: none;" onclick="cerrarAlertaFuera(event)">
+  <div class="alerta-modal-grande" onclick="event.stopPropagation()">
+    <span class="btn-cerrar-alerta" onclick="alternarAlertas()">&times;</span>
+    <div class="alerta-header">
+      <h4 id="nombreTrabajadorAlerta" style="color: #0d6efd; margin: 0; font-size: 1.1rem;"></h4>
+      <p style="font-size: 0.8rem; color: #666; margin: 5px 0 0 0;">⚠️ EPPs pendientes de renovación</p>
+    </div>
+    <div class="alerta-cuerpo-scroll">
+      <table class="tabla-alertas">
+        <thead>
+          <tr>
+            <th>Equipo</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpoTablaAlertas"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 <script>
   /** ===== Config ===== **/
   const PLACEHOLDER_IMG='https://lh5.googleusercontent.com/d/1n38-t1dDdj56TqOjv8c4SAAcUQcA0U72';
@@ -564,6 +592,8 @@
       state.matrizGrid = init?.matrizGrid || null;
       state.historial  = hist || [];
 
+      ejecutarChequeoAlertas(dni, p.NOMBRES); 
+
       await renderUnifiedEPP();
       eppToast('Datos actualizados','ok');
     }catch(e){
@@ -660,6 +690,62 @@ function initEPPAfterLogin(userObj) {
     console.warn('initEPPAfterLogin error:', e);
   }
 }
+
+// 1. Esta función le pide al servidor los datos filtrados por DNI
+function ejecutarChequeoAlertas(dni, nombre) {
+  if (!dni) return;
+
+  document.getElementById('nombreTrabajadorAlerta').innerText = "👤 " + (nombre || "");
+  // Ocultar campana antes de empezar para limpiar estados previos
+  document.getElementById('contenedorCampana').style.display = 'none';
+
+  google.script.run
+    .withSuccessHandler(function(alertas) {
+      if (alertas && alertas.length > 0) {
+        document.getElementById('contadorAlertas').innerText = alertas.length;
+        const tabla = document.getElementById('cuerpoTablaAlertas');
+        tabla.innerHTML = ''; 
+
+        alertas.forEach(function(item) {
+          let fila = `
+            <tr class="${item.clase}">
+              <td>${item.producto}</td>
+              <td>${item.fecha}</td>
+              <td><span class="badge-estado ${item.badge}">${item.estado}</span></td>
+            </tr>
+          `;
+          tabla.innerHTML += fila;
+        });
+
+        document.getElementById('contenedorCampana').style.display = 'flex';
+      }
+    })
+    .obtenerAlertasVencimientos(dni);
+}
+
+// 2. Función para abrir/cerrar el modal de la campana
+function alternarAlertas() {
+  const modal = document.getElementById('contenedorAlerta');
+  const body = document.body;
+
+  if (modal.style.display === 'none' || modal.style.display === '') {
+    modal.style.display = 'flex';
+    body.style.overflow = 'hidden'; 
+  } else {
+    modal.style.display = 'none';
+    body.style.overflow = 'auto';   
+  }
+}
+
+// Función para cerrar si hacen click fuera del cuadro
+function cerrarAlertaFuera(event) {
+  alternarAlertas();
+}
+function resetEPPModule() {
+  // ... (tu código de reset)
+  document.getElementById('contenedorCampana').style.display = 'none';
+}
 </script>
+
 </body>
 </html>
