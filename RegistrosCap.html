@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!-- Asumo que ya cargas Bootstrap, FontAwesome y SweetAlert en tu proyecto global.
+         Si no, agrega sus CDN aquí. -->
+  </head>
+  <body>
+    <div class="d-flex align-items-center mt-3">
+      <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+        <i class="fas fa-book text-white"></i>
+      </div>
+      <div>
+        <h5 class="mb-0 text-success">Gestión de Temas</h5>
+        <small class="text-muted">Lista de Temas</small>
+      </div>
+    </div>
+
+    <div class="container-fluid my-1 px-0">
+      <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+        <!-- IZQUIERDA -->
+        <div class="d-flex align-items-center gap-1">
+          <button onclick="abrirFormularioTemas()" class="btn btn-secondary btn-sm">Nuevo Tema</button>
+          <button class="btn btn-warning btn-sm" id="btn2" onclick="window.print()" style="font-size:15px;">
+            <i class="fa-solid fa-print"></i>
+          </button>
+        </div>
+
+        <!-- DERECHA -->
+        <div class="d-flex align-items-center gap-1">
+          <input type="text" id="buscadorTemas" class="form-control" placeholder="Buscar..." style="max-width: 250px; height:30px;">
+          <button id="btnBuscarTemas" class="btn btn-info btn-sm">Buscar</button>
+        </div>
+      </div>
+
+      <div id="loadingTablaTemas" class="text-center my-4" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-2">Cargando temas...</p>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table print-container">
+          <thead><tr id="encabezadosTemas"></tr></thead>
+          <tbody id="cuerpoTemas"></tbody>
+        </table>
+      </div>
+
+      <div class="text-start my-3">
+        <button id="btnVerMasTemas" class="btn btn-outline-secondary shadow-sm" style="display:none;" onclick="verMasTemas()"><i class="fa-solid fa-arrow-down"></i> Ver más</button>
+      </div>
+    </div>
+
+    <!-- DIALOG / MODAL -->
+    <dialog id="modal2Temas" class="border-0 rounded-3 shadow p-2" style="width: 90%; max-width: 600px;">
+      <div class="modal-content border-0">
+        <div class="modal-header py-2">
+          <h5 class="modal-title w-100 text-center" id="modal-tituloTemas">Editar Tema</h5>
+          <button type="button" class="btn-close" aria-label="Cerrar" onclick="cerrarModalTemas()"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formularioTemas" method="dialog">
+            <!-- Campos dinámicos se generarán con JS según encabezados -->
+          </form>
+          <div id="mensaje-errorTemas" class="text-danger mt-2" style="display:none;"></div>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-guardarTemas" type="button" onclick="guardarCambiosTemas()" class="btn btn-primary">Guardar</button>
+          <button type="button" onclick="cerrarModalTemas()" class="btn btn-secondary">Cancelar</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script>
+      // Variables de estado
+      let datosGlobalesTemas = [];
+      let headersTemas = [];
+      let datosTemas = [];
+      let totalTemas = 0;
+      let offsetTemas = 0;
+      const limitTemas = 30;
+      let filtroTemas = "";
+
+      // Buscar botón
+      document.getElementById("btnBuscarTemas").addEventListener("click", () => {
+        offsetTemas = 0;
+        filtroTemas = document.getElementById("buscadorTemas").value.toLowerCase();
+        datosTemas = [];
+        cargarDatosTemas();
+      });
+
+      function verMasTemas() {
+        offsetTemas += limitTemas;
+        cargarDatosTemas();
+      }
+
+      function cargarDatosTemas() {
+        document.getElementById("loadingTablaTemas").style.display = "block";
+        const btnVerMas = document.getElementById("btnVerMasTemas");
+        btnVerMas.disabled = true;
+
+        google.script.run.withSuccessHandler(function (res) {
+          if (!res?.headersTemas || !res?.filas) {
+            console.error("Datos incompletos:", res);
+            document.getElementById("loadingTablaTemas").style.display = "none";
+            btnVerMas.disabled = false;
+            return;
+          }
+
+          if (offsetTemas === 0) {
+            headersTemas = res.headersTemas;
+            datosTemas = res.filas;
+            datosGlobalesTemas = datosTemas.slice();
+            document.getElementById("encabezadosTemas").innerHTML = headersTemas
+              .map(h => `<th>${h}</th>`).join("") + "<th>Acción</th>";
+          } else {
+            datosTemas = datosTemas.concat(res.filas);
+            datosGlobalesTemas = datosTemas.slice();
+          }
+
+          totalTemas = res.total;
+          mostrarFilasTemas(datosTemas);
+
+          // Mostrar/ocultar Ver más
+          if (datosTemas.length < totalTemas) {
+            btnVerMas.style.display = "inline-block";
+          } else {
+            btnVerMas.style.display = "none";
+          }
+
+          document.getElementById("loadingTablaTemas").style.display = "none";
+          btnVerMas.disabled = false;
+        }).obtenerMatrizTemasPaginado(offsetTemas, limitTemas, filtroTemas);
+      }
+
+      function mostrarFilasTemas(data) {
+        const tbody = document.getElementById("cuerpoTemas");
+        tbody.innerHTML = "";
+
+        const fragment = document.createDocumentFragment();
+
+        data.forEach((fila) => {
+          const tr = document.createElement("tr");
+
+          fila.forEach((celda) => {
+            const td = document.createElement("td");
+            td.textContent = celda;
+            tr.appendChild(td);
+          });
+
+          // Columna de acciones
+          const btnTd = document.createElement("td");
+
+          const btnEditar = document.createElement("button");
+          btnEditar.innerHTML = '<i class="fa-solid fa-pen"></i>';
+          btnEditar.className = "btn btn-sm btn-info me-1";
+          btnEditar.onclick = () => abrirFormularioTemas(fila[0]);
+
+          const btnEliminar = document.createElement("button");
+          btnEliminar.innerHTML = '<i class="fa-solid fa-trash"></i>';
+          btnEliminar.className = "btn btn-sm btn-danger";
+          btnEliminar.onclick = () => eliminarRegistroTemas(fila[0]);
+
+          btnTd.appendChild(btnEditar);
+          btnTd.appendChild(btnEliminar);
+
+          tr.appendChild(btnTd);
+          fragment.appendChild(tr);
+        });
+
+        tbody.appendChild(fragment);
+      }
+
+function abrirFormularioTemas(codigo = null) {
+  const modal2 = document.getElementById("modal2Temas");
+  const form = document.getElementById("formularioTemas");
+  const isNuevo = codigo === null;
+
+  document.getElementById("modal-tituloTemas").textContent = 
+    isNuevo ? "Nuevo Tema" : "Editar Tema";
+
+  let valores = Array(headersTemas.length).fill("");
+  let indexOriginal = "null";
+
+  // --- Si es EDICIÓN, buscar fila original ---
+  if (!isNuevo) {
+    const filaOriginal = datosGlobalesTemas.find((f, i) => {
+      if (String(f[0]).trim() === String(codigo).trim()) {
+        indexOriginal = i;
+        return true;
+      }
+      return false;
+    });
+
+    if (!filaOriginal) {
+      alert("No se pudo encontrar la fila original.");
+      return;
+    }
+
+    valores = filaOriginal;
+  }
+
+  form.innerHTML = "";
+
+  // --- Construir campos dinámicos según headers ---
+  headersTemas.forEach((h, i) => {
+    if (i === 0) return; // Omitir Código
+
+    const valor = valores[i] || "";
+    const inputId = `campo-${i}`;
+    let tipo = "text";
+
+    // --- FECHAS (HoraInicio/HoraFin) ---
+    if (i === 8 || i === 9) tipo = "datetime-local";
+
+    // --- EXAMEN / VALORACIÓN ---
+    if (i === 4 || i === 5 || i === 6 || i === 12) tipo = "number";
+
+    // --- SELECTs normales ---
+    if (i === 10) tipo = "select";
+
+    // --- ESTADO ---
+    if (i === 7) tipo = "select-estado";
+
+    // --- TEMA (select dinámico desde BD con caché) -> columna B (i === 1)
+    if (i === 1) {
+  form.innerHTML += `
+    <div class="mb-3">
+      <label class="form-label fw-semibold">${h}</label>
+      <input id="campo-1" name="${h}" list="listaTemas" class="form-control">
+      <datalist id="listaTemas"></datalist>
+    </div>`;
+  return;
+}
+
+    // --- ÁREA (select dinámico) ---
+    if (i === 2) {
+      form.innerHTML += `
+        <div class="mb-3">
+          <label class="form-label fw-semibold">${h}</label>
+          <select id="campo-2" name="${h}" class="form-select"></select>
+        </div>`;
+      return;
+    }
+
+    // --- CAPACITADOR (datalist) ---
+    if (i === 3) {
+      form.innerHTML += `
+        <div class="mb-3">
+          <label class="form-label fw-semibold">${h}</label>
+          <input id="campo-3" name="${h}" list="listCapacitadores" 
+                 class="form-control" value="${valor}">
+          <datalist id="listCapacitadores"></datalist>
+        </div>`;
+      return;
+    }
+
+        // --- SELECT Tipo de capacitación ---
+    if (tipo === "select-estado") {
+        form.innerHTML += `
+          <div class="mb-3">
+            <label class="form-label fw-semibold">${h}</label>
+            <select id="${inputId}" name="${h}" class="form-select"></select>
+          </div>`;
+        return;
+      }
+
+
+    // --- SELECT normal ---
+    if (tipo === "select") {
+      form.innerHTML += `
+        <div class="mb-3">
+          <label class="form-label fw-semibold">${h}</label>
+          <select id="${inputId}" name="${h}" class="form-select">
+            <option value="No" ${valor === "No" ? "selected" : ""}>No</option>
+            <option value="Sí" ${valor === "Sí" ? "selected" : ""}>Sí</option>
+          </select>
+        </div>`;
+      return;
+    }
+
+
+    // --- FIELD datetime-local ---
+    if (tipo === "datetime-local") {
+      const fechaConvertida = convertirFechaInput(valor);
+      form.innerHTML += `
+        <div class="mb-3">
+          <label class="form-label fw-semibold">${h}</label>
+          <input id="${inputId}" name="${h}" value="${fechaConvertida}" 
+                 type="datetime-local" class="form-control">
+        </div>`;
+      return;
+    }
+
+    // --- Último campo usa datalist desde capacitaciones ---
+      if (i === 11) {
+        form.innerHTML += `
+          <div class="mb-3">
+            <label class="form-label fw-semibold">${h}</label>
+            <input id="campo-11" name="${h}" list="listEmpresasCap" 
+                  class="form-control" value="${valor}">
+            <datalist id="listEmpresasCap"></datalist>
+          </div>`;
+        return;
+      }
+
+
+    // --- INPUT normal ---
+    form.innerHTML += `
+      <div class="mb-3">
+        <label class="form-label fw-semibold">${h}</label>
+        <input id="${inputId}" name="${h}" value="${valor}" 
+               type="${tipo}" class="form-control">
+      </div>`;
+  });
+
+  //                🔥  CARGAR LISTA DE TEMAS (COL B)
+if (document.getElementById("campo-1")) {
+  cargarTemasEnSelect();
+
+  // Esperar un micro-tick para que se llene el select
+  setTimeout(() => {
+    document.getElementById("campo-1").value = valores[1] || "";
+  }, 50);
+}
+
+// --- Rellenar SELECT Estado desde capacitaciones ---
+if (document.getElementById("campo-7")) {
+  llenarSelectDesdeLista("campo-7", listas.capacitaciones);
+  document.getElementById("campo-7").value = valores[7] || "";
+}
+
+  // --- Rellenar ÁREA ---
+  if (document.getElementById("campo-2")) {
+    llenarSelectDesdeLista("campo-2", listas.areas);
+    document.getElementById("campo-2").value = valores[2] || "";
+  }
+
+  // --- Rellenar CAPACITADOR ---
+  if (document.getElementById("listCapacitadores")) {
+    llenarDatalistDesdeLista("listCapacitadores", listas.trabajadores);
+    document.getElementById("campo-3").value = valores[3] || "";
+  }
+
+  // --- Rellenar DATALIST del último campo ---
+if (document.getElementById("listEmpresasCap")) {
+  llenarDatalistDesdeLista("listEmpresasCap", listas.empresas);
+  document.getElementById("campo-11").value = valores[11] || "";
+}
+
+
+  // Mantener el índice para guardar
+  form.dataset.index = (isNuevo ? "null" : indexOriginal);
+
+  modal2.showModal();
+}
+
+function convertirFechaInput(valor) {
+  if (!valor) return "";
+  const d = new Date(valor);
+  if (isNaN(d)) return "";
+
+  // Formato compatible con datetime-local
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+}
+
+
+
+      function cerrarModalTemas() {
+        document.getElementById("modal2Temas").close();
+      }
+
+
+function guardarCambiosTemas() {
+  const btnGuardar = document.getElementById("btn-guardarTemas");
+  const form = document.getElementById("formularioTemas");
+  const elementos = form.querySelectorAll("input, select, textarea");
+  const mensajeError = document.getElementById("mensaje-errorTemas");
+
+  const camposVacios = Array.from(elementos).some(el => el.value.trim() === "");
+
+  btnGuardar.textContent = "Guardando...";
+  btnGuardar.disabled = true;
+
+  if (camposVacios) {
+    mensajeError.textContent = "Todos los campos son obligatorios.";
+    mensajeError.style.display = "block";
+    btnGuardar.textContent = "Guardar";
+    btnGuardar.disabled = false;
+    return;
+  }
+
+  mensajeError.style.display = "none";
+
+  // Construir objeto data
+  const index = form.dataset.index;
+  const dataObj = {
+    codigo: "", tema: "", area: "", capacitador: "",
+    duracion: "", intentos: "", validez: "", estado: "",
+    horaInicio: "", horaFin: "", examen: "", valoracion: "", puntajeMinimo: ""
+  };
+
+  elementos.forEach((el) => {
+    const idParts = el.id.split("-");
+    const pos = parseInt(idParts[1]);
+
+    switch (pos) {
+      case 1: dataObj.tema = el.value.trim(); break;
+      case 2: dataObj.area = el.value.trim(); break;
+      case 3: dataObj.capacitador = el.value.trim(); break;
+      case 4: dataObj.duracion = el.value.trim(); break;
+      case 5: dataObj.intentos = el.value.trim(); break;
+      case 6: dataObj.validez = el.value.trim(); break;
+      case 7: dataObj.estado = el.value.trim(); break;
+      case 8:
+        dataObj.horaInicio = el.value ? new Date(el.value).toISOString() : "";
+        break;
+      case 9:
+        dataObj.horaFin = el.value ? new Date(el.value).toISOString() : "";
+        break;
+      case 10: dataObj.examen = el.value.trim(); break;
+      case 11: dataObj.valoracion = el.value.trim(); break;
+      case 12: dataObj.puntajeMinimo = el.value.trim(); break;
+    }
+  });
+
+  // Si es edición, recuperar código existente
+  if (index !== "null") {
+    const idx = parseInt(index);
+    dataObj.codigo = datosGlobalesTemas[idx][0];
+  }
+
+  const callback = (codigoGenerado) => {
+    localStorage.removeItem("lista_temas_local");
+    cerrarModalTemas();
+    offsetTemas = 0;
+    cargarDatosTemas();
+
+    btnGuardar.textContent = "Guardar";
+    btnGuardar.disabled = false;
+
+    // SWEETALERT + botón copiar compatible
+    Swal.fire({
+      title: 'Código generado',
+      html: `
+        <div style="font-size: 45px; font-weight: bold; letter-spacing: 3px; margin-bottom:10px;">
+          ${codigoGenerado}
+        </div>
+        <button id="btnCopiarCodigo" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-copy"></i> Copiar código
+        </button>
+      `,
+      showConfirmButton: false,
+      didOpen: () => {
+        document.getElementById("btnCopiarCodigo").addEventListener("click", () => {
+
+          // 📌 Reemplazo seguro para Google Sites
+          copiarTextoCompat(codigoGenerado);
+
+          Swal.fire({
+            icon: "success",
+            title: "Código copiado",
+            timer: 1000,
+            showConfirmButton: false
+          });
+        });
+      }
+    });
+  };
+
+  if (index === "null") {
+    google.script.run.withSuccessHandler(callback).agregarTema(dataObj);
+  } else {
+    google.script.run.withSuccessHandler(callback).actualizarTema(dataObj);
+  }
+}
+function copiarTextoCompat(texto) {
+  // Crear input temporal
+  const temp = document.createElement("input");
+  temp.value = texto;
+  document.body.appendChild(temp);
+
+  // Seleccionar texto
+  temp.select();
+  temp.setSelectionRange(0, 99999);
+
+  try {
+    document.execCommand("copy");
+  } catch (e) {
+    console.error("Error al copiar:", e);
+  }
+
+  // Eliminar input temporal
+  document.body.removeChild(temp);
+}
+
+
+      function eliminarRegistroTemas(codigo) {
+        if (!codigo) return alert("Registro inválido.");
+
+        Swal.fire({
+          title: '¿Eliminar?',
+          text: `¿Deseas eliminar el Código "${codigo}"?`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, eliminar',
+          cancelButtonText: 'Cancelar',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            google.script.run.withSuccessHandler(() => {
+              // Remover visualmente el registro eliminado
+              datosTemas = datosTemas.filter(fila => String(fila[0]) !== String(codigo));
+              datosGlobalesTemas = datosGlobalesTemas.filter(fila => String(fila[0]) !== String(codigo));
+              mostrarFilasTemas(datosTemas);
+
+              Swal.fire('Eliminado', 'El tema fue eliminado.', 'success');
+            }).eliminarTemaPorCodigo(codigo);
+          }
+        });
+      }
+
+      // Búsqueda local instantánea similar a tu HHT
+      document.addEventListener("DOMContentLoaded", function () {
+        const buscador = document.getElementById("buscadorTemas");
+        buscador.addEventListener("input", function () {
+          const texto = this.value.toLowerCase();
+          const filtrados = datosGlobalesTemas.filter(fila =>
+            fila.some(celda => String(celda).toLowerCase().includes(texto))
+          );
+          mostrarFilasTemas(filtrados);
+        });
+        cargarDatosTemas();
+      });
+
+
+// === Cargar temas con cache localStorage ===
+function cargarTemasEnSelect() {
+  const inputTema = document.getElementById("campo-1");
+
+  // 1. Revisar si ya hay datos guardados en localStorage
+  const cacheLocal = localStorage.getItem("lista_temas_local");
+
+  if (cacheLocal) {
+    try {
+      const lista = JSON.parse(cacheLocal);
+      llenarSelectTemas(lista);
+      return; // No llama al servidor
+    } catch (e) {
+      console.warn("Error leyendo localStorage, recargando desde servidor...");
+      // continúa y recarga desde servidor
+    }
+  }
+
+  // 2. Si no hay cache, cargar desde Apps Script (una sola vez)
+  google.script.run
+    .withSuccessHandler(lista => {
+      // Guardar en localStorage
+      localStorage.setItem("lista_temas_local", JSON.stringify(lista));
+
+      // Llenar el select
+      llenarSelectTemas(lista);
+    })
+    .withFailureHandler(err => {
+      console.error("Error al obtener temas:", err);
+      Swal.fire("Error", "No se pudo cargar la lista de temas.", "error");
+    })
+    .getTemasDesdeBD();
+}
+
+// === Función para llenar el select ===
+function llenarSelectTemas(lista) {
+  const dataList = document.getElementById("listaTemas");
+  dataList.innerHTML = "";
+
+  lista.forEach(t => {
+    const op = document.createElement("option");
+    op.value = t;
+    dataList.appendChild(op);
+  });
+}
+
+
+    </script>
+  </body>
+</html>

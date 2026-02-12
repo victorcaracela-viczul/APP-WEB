@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+   #filtroglobalCharla th, td { 
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+        font-size: 14px;
+      }
+   /* CSS Mejorado */
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: stretch; /* ✅ Hace que todas las cards tengan la misma altura por fila */
+}
+
+.card-charla {
+  position: relative;
+  border-radius: 12px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  height: 240px; /* ✅ Altura fija para uniformidad */
+  display: flex;
+  flex-direction: column;
+}
+
+.card-charla:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.charla-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+/* Header con tema y fecha - Optimizado */
+.charla-header {
+  padding: 12px 14px 10px 14px;
+  background: #fafbfc;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0; /* ✅ No se comprime */
+}
+
+.charla-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: #1e293b;
+  line-height: 1.2;
+  margin-bottom: 6px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* ✅ Máximo 2 líneas */
+  -webkit-box-orient: vertical;
+}
+
+/* Body con detalles - Optimizado */
+.charla-body {
+  flex: 1;
+  padding: 12px 14px;
+  overflow-y: auto;
+/*  //padding-right: 54px;  ✅ Menos espacio para botones */
+  min-height: 0; /* ✅ Permite que se comprima */
+}
+
+.charla-details {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.4;
+  word-break: break-word;
+  white-space: normal;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Botones verticales estilo TikTok - Optimizados */
+.charla-actions-vertical {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* ✅ Menos espacio entre botones */
+  z-index: 2;
+}
+
+.charla-actions-vertical button {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  width: 44px; /* ✅ Botones más pequeños */
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.charla-actions-vertical button:hover {
+  background: white;
+  transform: scale(1.05); /* ✅ Menos scale para espacio optimizado */
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+}
+
+.charla-actions-vertical button i {
+  color: #374151;
+  font-size: 18px; /* ✅ Íconos más pequeños */
+}
+
+/* Colores específicos para cada botón */
+.charla-actions-vertical button:nth-child(1):hover i { color: #3b82f6; } /* Editar - Azul */
+.charla-actions-vertical button:nth-child(2):hover i { color: #ef4444; } /* Eliminar - Rojo */
+.charla-actions-vertical button:last-child:hover i { color: #25d366; } /* WhatsApp - Verde */
+
+/* Responsive - Optimizado para más cards */
+@media (min-width: 1400px) {
+  .cards-container {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .cards-container {
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .charla-actions-vertical {
+    right: 8px;
+    gap: 6px;
+  }
+
+  .charla-actions-vertical button {
+    width: 40px;   /* en lugar de 32px */
+    height: 40px;
+  }
+
+  .charla-actions-vertical button i {
+    font-size: 16px; /* en lugar de 12px */
+  }
+}
+
+</style>
+  </head>
+  <body>
+    <div class="d-flex align-items-center mt-3">
+  <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+    <i class="fas fa-file-alt text-white"></i>
+  </div>
+  <div>
+    <h5 class="mb-0 text-success">Registros</h5>
+    <small class="text-muted">Registros de capacitaciones</small>
+  </div>
+</div>
+
+    <!-- Dentro del <body> -->
+     <div id="filtroglobalCharla" class="container-fluid my-1 px-0">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <!-- Botón Registrar Charlas (Izquierda) -->
+            <button type="button" 
+                    class="btn btn-dark position-relative shadow-sm btn-sm rounded-pill btn-transition" 
+                    id="btnRegistrarCharla">
+              <i class="fa-regular fa-address-card me-2"></i>Registrar Charlas
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                    aria-label="Cantidad total de charlas">
+                <i class="fa fa-bell" aria-hidden="true"></i> 
+                <span id="totalCharlas" aria-live="polite">0</span>
+              </span>
+            </button>
+
+            <!-- Botón Filtros (Derecha) -->
+            <button class="btn btn-outline-success btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosBusquedaCharla" aria-expanded="false" aria-controls="filtrosBusquedaCharla">
+              <i class="fa fa-filter me-1"></i> Filtros
+            </button>
+          </div>
+
+
+        <!-- Acordeón/Filtros colapsables Charla -->
+        <div class="collapse" id="filtrosBusquedaCharla">
+          <div class="container my-1">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-3">
+                <input type="text" class="form-control" id="filtroTextoCharla" placeholder="Buscar...">
+              </div>
+              <div class="col-md-2">
+                <label for="fechaDesdeCharla" class="form-label mb-0">Desde</label>
+                <input type="date" class="form-control" id="fechaDesdeCharla">
+              </div>
+              <div class="col-md-2">
+                <label for="fechaHastaCharla" class="form-label mb-0">Hasta</label>
+                <input type="date" class="form-control" id="fechaHastaCharla">
+              </div>
+              <div class="col-md-2">
+                <button id="buscarFiltrosCharla" class="btn btn-info w-100" onclick="aplicarFiltrosCharla()">Buscar</button>
+              </div>
+              <div class="col-md-2">
+                <div class="d-flex gap-2">
+                  <button class="btn btn-warning w-100" onclick="limpiarFiltrosCharla()">Limpiar</button>
+                  <button class="btn btn-secondary" onclick="imprimirComoTabla()">
+                <i class="fa-solid fa-print"></i> 
+              </button>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      <div class="print-container">
+  <div id="tabla-containerCharla">
+    <div class="spinner-border text-primary" role="status"></div> Cargando charlas...
+  </div>
+</div>
+<div class="controlsCharla">
+  <div id="paginacionCharla" class="d-flex justify-content-between align-items-center mt-2"></div>
+</div>
+
+    </div>
+
+<!-- Modal para editar -->
+<div class="modal fade" id="modalEditarCharla" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Registro</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formEditarCharla"></form>
+      </div>
+      <div class="modal-footer">
+        <button id="botonEditarCharla" type="button" class="btn btn-primary" onclick="guardarCambiosCharla()">Guardar</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-outline-primary" onclick="leerArchivoYCompletarFormularioIA()">
+        📄 Rellenar con IA
+      </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div id="skeleton-loading-charla" class="d-none">
+      <div class="row g-3 py-2">
+        <div class="col-sm-6 col-md-4 col-lg-3" style="height: 280px;">
+          <div class="skeleton-card"></div>
+        </div>
+        <div class="col-sm-6 col-md-4 col-lg-3" style="height: 280px;">
+          <div class="skeleton-card"></div>
+        </div>
+        <div class="col-sm-6 col-md-4 col-lg-3" style="height: 280px;">
+          <div class="skeleton-card"></div>
+        </div>
+        <div class="col-sm-6 col-md-4 col-lg-3" style="height: 280px;">
+          <div class="skeleton-card"></div>
+        </div>
+      </div>
+    </div>
+    <script>
+ // ✅ VARIABLES GLOBALES CON MEJORAS
+let datosOriginalesCharla = [];
+let startCharla = 0;
+const pageSizeCharla = 20;
+let totalGlobalCharla = 0;
+
+// ✅ VARIABLES DE CONTROL AGREGADAS
+let searchTimeoutCharla;
+let currentControllerCharla;
+let isLoadingMoreCharla = false;
+let currentSearchIdCharla = 0;
+
+// ✅ CONFIGURACIÓN DE CAMPOS - MANTENIDA IGUAL
+const camposConListas = { 
+  3: { tipo: "select", lista: "lugares" },         // Columna 4 = Lugar
+  4: { tipo: "select", lista: "capacitaciones" },  // Columna 5 = Tipo de formación
+  5: { tipo: "datalist", lista: "trabajadores" },   // Capacitador
+  6: { tipo: "select", lista: "empresas" },        // Empresa
+  7: { tipo: "select", lista: "areas" },           // Área
+  8: { tipo: "select", lista: ["Día", "Noche"] },  // Turno
+  12: { tipo: "datalist", lista: "trabajadores" }   // Registrado por
+};
+
+// ✅ DEBOUNCE PARA BÚSQUEDAS - NUEVO
+function debounceSearchCharla(func, delay = 300) {
+  return function executedFunction(...args) {
+    clearTimeout(searchTimeoutCharla);
+    
+    if (currentControllerCharla) {
+      currentControllerCharla.abort();
+    }
+    
+    searchTimeoutCharla = setTimeout(() => {
+      func(...args);
+    }, delay);
+  };
+}
+
+// ✅ CARGA DE DATOS MEJORADA
+function cargarDatosDesdeServidorCharla(reset = false) {
+  // Prevenir múltiples cargas simultáneas
+  if (isLoadingMoreCharla && !reset) return;
+  
+  if (reset) {
+    currentSearchIdCharla++;
+    startCharla = 0;
+  }
+  
+  const searchId = currentSearchIdCharla;
+  isLoadingMoreCharla = true;
+
+  // Cancelar petición anterior
+  if (currentControllerCharla) {
+    currentControllerCharla.abort();
+  }
+  currentControllerCharla = new AbortController();
+
+  const texto = document.getElementById("filtroTextoCharla")?.value || "";
+  const desde = document.getElementById("fechaDesdeCharla")?.value || "";
+  const hasta = document.getElementById("fechaHastaCharla")?.value || "";
+
+  const btnSubmit = document.getElementById('buscarFiltrosCharla') || document.getElementById('showsave');
+  const btnCargarMas = document.getElementById('btnCargarMasCharla');
+
+  // Estados de carga mejorados
+  if (reset) {
+    mostrarEstadoCargaCharla('skeleton', true);
+    if (btnSubmit) {
+      btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Buscando...';
+      btnSubmit.disabled = true;
+    }
+  } else {
+    if (btnCargarMas) {
+      btnCargarMas.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Cargando...`;
+      btnCargarMas.disabled = true;
+    }
+  }
+
+  google.script.run
+    .withSuccessHandler(respuesta => {
+      // Validar que la respuesta sea de la búsqueda actual
+      if (searchId !== currentSearchIdCharla) {
+        console.log("Respuesta charla obsoleta ignorada");
+        isLoadingMoreCharla = false;
+        return;
+      }
+      
+      totalGlobalCharla = respuesta.total;
+      const badgeCharlas = document.getElementById("totalCharlas");
+    if (badgeCharlas) {
+      badgeCharlas.textContent = totalGlobalCharla;
+    }
+
+
+      // Solo limpiar si es reset
+      if (reset) {
+        datosOriginalesCharla = [respuesta.headers, ...respuesta.data];
+        renderizarTablaCharla(datosOriginalesCharla, true);
+      } else {
+        // Agregar nuevos registros a los existentes
+        const nuevosDatos = [respuesta.headers, ...respuesta.data];
+        datosOriginalesCharla = [datosOriginalesCharla[0], ...datosOriginalesCharla.slice(1), ...respuesta.data];
+        renderizarTablaCharla(nuevosDatos, false);
+      }
+
+      actualizarPaginacionCharla(respuesta.total);
+
+      // Restaurar botones
+      mostrarEstadoCargaCharla('', false);
+      isLoadingMoreCharla = false;
+      
+      if (btnSubmit) {
+        btnSubmit.innerHTML = "Buscar";
+        btnSubmit.disabled = false;
+      }
+
+      if (btnCargarMas) {
+        btnCargarMas.innerHTML = `<i class="fa-solid fa-plus"></i> Cargar más charlas`;
+        btnCargarMas.disabled = false;
+      }
+    })
+    .withFailureHandler(err => {
+      console.error("Error cargando charlas:", err);
+      mostrarEstadoCargaCharla('', false);
+      isLoadingMoreCharla = false;
+      
+      // Restaurar botones en caso de error
+      if (btnSubmit) {
+        btnSubmit.innerHTML = 'Buscar';
+        btnSubmit.disabled = false;
+      }
+      if (btnCargarMas) {
+        btnCargarMas.innerHTML = '<i class="fa-solid fa-plus"></i> Cargar más charlas';
+        btnCargarMas.disabled = false;
+      }
+      
+      mostrarNotificacion('Error al cargar los datos', 'error');
+    })
+    .getDatosDesdeCharlas(startCharla, pageSizeCharla, texto, desde, hasta);
+}
+
+// ✅ FUNCIÓN DE PAGINACIÓN MEJORADA
+function siguientePaginaCharla() {
+  if (!isLoadingMoreCharla && startCharla + pageSizeCharla < totalGlobalCharla) {
+    startCharla += pageSizeCharla;
+    cargarDatosDesdeServidorCharla(false);
+  }
+}
+
+// ✅ ACTUALIZAR PAGINACIÓN CON MEJORES MENSAJES
+function actualizarPaginacionCharla(total) {
+  const paginacion = document.getElementById("paginacionCharla");
+  if (!paginacion) return;
+  
+  const mostrando = Math.min(startCharla + pageSizeCharla, total);
+  const hayMasDatos = mostrando < total;
+
+  if (!hayMasDatos) {
+    paginacion.innerHTML = `
+      <div class="text-center py-3">
+        <small class="text-muted">
+          <i class="fa-solid fa-check-circle me-1"></i>
+          Mostrando todos los ${total} registros
+        </small>
+      </div>
+    `;
+    return;
+  }
+
+  paginacion.innerHTML = `
+    <div class="d-flex justify-content-center align-items-center py-3">
+      <button id="btnCargarMasCharla" class="btn btn-outline-dark btn-sm me-3" 
+              onclick="siguientePaginaCharla()" ${isLoadingMoreCharla ? 'disabled' : ''}>
+        <i class="fa-solid fa-plus me-1"></i> Cargar más charlas
+      </button>
+      <small class="text-muted">
+        Mostrando ${mostrando} de ${total} registros
+      </small>
+    </div>
+  `;
+}
+
+// ✅ RENDERIZADO CON ANIMACIONES Y MEJORAS VISUALES
+function renderizarTablaCharla(datos, reset = false) {
+  const contenedor = document.getElementById("tabla-containerCharla");
+  if (!contenedor) return;
+
+  // Solo limpiar si es la primera carga o filtro nuevo
+  if (reset) contenedor.innerHTML = "";
+
+  const headers = datos[0];
+  const registros = datos.slice(1);
+
+  // Mostrar mensaje si no hay datos
+  if (!registros || registros.length === 0) {
+    if (reset) {
+      contenedor.innerHTML = `
+        <div class="text-center py-5">
+          <i class="fa-solid fa-search text-muted" style="font-size: 3rem;"></i>
+          <h5 class="mt-3 text-muted">No se encontraron charlas</h5>
+          <p class="text-muted">Intenta ajustar los filtros de búsqueda</p>
+        </div>
+      `;
+    }
+    return;
+  }
+
+  const grid = contenedor.querySelector(".row") || document.createElement("div");
+  grid.className = "row g-2";
+
+  const fragment = document.createDocumentFragment();
+
+  registros.forEach((fila, i) => {
+    const id = fila[0];
+    const fecha = fila[1] || "";
+    const tema = fila[2] || `Charla #${i + 1}`;
+
+    const accionesLaterales = [];
+
+    let linkDetectado = null;
+    for (let j = 3; j < fila.length; j++) {
+      const celda = fila[j];
+      if (typeof celda === "string" && celda.startsWith("https://") && !linkDetectado) {
+        linkDetectado = { index: j, url: celda };
+      }
+    }
+
+    if (linkDetectado) {
+      accionesLaterales.push(`
+        <button data-url="${linkDetectado.url}" onclick="window.open(this.dataset.url, '_blank')" title="Ver archivo">
+          <i class="fa-solid fa-file-arrow-down" style="font-size: 20px;"></i>
+        </button>
+      `);
+    }
+
+    const detalles = fila.slice(3).map((celda, idx) => {
+      const realIndex = idx + 3;
+      const label = headers[realIndex];
+      const esLink = linkDetectado && realIndex === linkDetectado.index;
+      const esVacio = celda === "" || celda === "-" || celda == null;
+      if (esLink || esVacio) return "";
+      return `<div><strong>${label}:</strong> ${celda}</div>`;
+    }).join("");
+
+    const card = document.createElement("div");
+    card.className = "col-12 col-md-6 col-lg-3";
+    card.style.opacity = "0";
+    card.style.transform = "translateY(20px)";
+
+card.innerHTML = `
+  <div class="card-charla">
+    <div class="charla-content">
+      <!-- Header con tema y fecha separados por línea -->
+      <div class="charla-header">
+        <div class="charla-title">${tema}</div>
+        <span class="badge bg-success-subtle text-success">
+        <div><i class="fa-solid fa-calendar-days"></i> ${fecha}</div>
+        </span>
+      </div>
+      
+      <!-- Body con detalles -->
+      <div class="charla-body">
+        <div class="charla-details">${detalles}</div>
+      </div>
+      
+      <!-- Botones verticales estilo TikTok -->
+      <div class="charla-actions-vertical">
+        <button onclick="abrirModalEditar(${id})" title="Editar">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </button>
+        <button onclick="eliminarFila(${id})" title="Eliminar">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+        ${accionesLaterales.join("")}
+        <button onclick="enviarWhatsAppDesdeCard(this)" title="Enviar por WhatsApp">
+          <i class="fa-brands fa-whatsapp"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+`;
+
+    fragment.appendChild(card);
+
+    // Animación de entrada mejorada
+    setTimeout(() => {
+      card.style.transition = "all 0.3s ease";
+      card.style.opacity = "1";
+      card.style.transform = "translateY(0)";
+    }, i * 50);
+  });
+
+  grid.appendChild(fragment);
+
+  // Agregar grid al contenedor si no existe
+  if (!contenedor.querySelector(".row")) {
+    contenedor.appendChild(grid);
+  }
+}
+
+// ✅ APLICAR FILTROS CON DEBOUNCE
+const aplicarFiltrosCharla = debounceSearchCharla(function() {
+  const btnSubmit = document.getElementById('buscarFiltrosCharla') || document.getElementById('showsave');
+  if (btnSubmit) {
+    btnSubmit.innerHTML = "Buscando...";
+    btnSubmit.disabled = true;
+  }
+  cargarDatosDesdeServidorCharla(true); // true = reset a página 0
+});
+
+// ✅ LIMPIAR FILTROS MEJORADO
+function limpiarFiltrosCharla() {
+  document.getElementById("filtroTextoCharla").value = "";
+  document.getElementById("fechaDesdeCharla").value = "";
+  document.getElementById("fechaHastaCharla").value = "";
+  cargarDatosDesdeServidorCharla(true);
+}
+
+// ✅ ESTADOS DE CARGA MEJORADOS - NUEVOS
+function mostrarEstadoCargaCharla(tipo, mostrar = true) {
+  const skeleton = document.getElementById('skeleton-loading-charla');
+  const spinner = document.getElementById('spinner-charla');
+  const container = document.getElementById("tabla-containerCharla");
+  
+  if (tipo === 'skeleton' && mostrar) {
+    skeleton?.classList.remove('d-none');
+    spinner?.classList.add('d-none');
+    if (container) {
+      container.style.opacity = "0.6";
+      container.style.pointerEvents = "none";
+    }
+  } else if (tipo === 'spinner' && mostrar) {
+    skeleton?.classList.add('d-none');
+    spinner?.classList.remove('d-none');
+    if (container) {
+      container.style.opacity = "0.8";
+      container.style.pointerEvents = "none";
+    }
+  } else {
+    skeleton?.classList.add('d-none');
+    spinner?.classList.add('d-none');
+    if (container) {
+      container.style.opacity = "1";
+      container.style.pointerEvents = "auto";
+    }
+  }
+}
+
+function mostrarNotificacion(mensaje, tipo = 'info') {
+  // Sistema básico de notificaciones
+  console.log(`${tipo.toUpperCase()}: ${mensaje}`);
+}
+
+// ✅ CONFIGURAR EVENT LISTENERS AUTOMÁTICAMENTE
+document.addEventListener("DOMContentLoaded", function() {
+  const filtroTexto = document.getElementById("filtroTextoCharla");
+  const fechaDesde = document.getElementById("fechaDesdeCharla");
+  const fechaHasta = document.getElementById("fechaHastaCharla");
+  
+  if (filtroTexto) {
+    filtroTexto.addEventListener("input", aplicarFiltrosCharla);
+  }
+  
+  if (fechaDesde) {
+    fechaDesde.addEventListener("change", aplicarFiltrosCharla);
+  }
+  
+  if (fechaHasta) {
+    fechaHasta.addEventListener("change", aplicarFiltrosCharla);
+  }
+});
+
+// ✅ SCROLL INFINITO OPCIONAL
+document.addEventListener('scroll', function() {
+  if (isLoadingMoreCharla) return;
+  
+  const scrollPosition = window.innerHeight + window.scrollY;
+  const documentHeight = document.documentElement.scrollHeight;
+  const threshold = documentHeight - 800;
+  
+  if (scrollPosition >= threshold && startCharla + pageSizeCharla < totalGlobalCharla) {
+    siguientePaginaCharla();
+  }
+}, { passive: true });
+
+// ✅ LIMPIEZA AL CERRAR
+window.addEventListener('beforeunload', function() {
+  if (currentControllerCharla) {
+    currentControllerCharla.abort();
+  }
+  clearTimeout(searchTimeoutCharla);
+});
+
+// ✅ INICIALIZACIÓN AUTOMÁTICA - MANTENIDA
+cargarDatosDesdeServidorCharla(true);
+
+function imprimirComoTabla() {
+  const contenedor = document.getElementById("tabla-containerCharla");
+  const datos = datosOriginalesCharla;
+
+  // Guardar vista original
+  const vistaOriginal = contenedor.innerHTML;
+
+  if (!datos || datos.length <= 1) {
+    alert("No hay datos para imprimir");
+    return;
+  }
+
+  // Generar tabla HTML
+  let html = `<table class="table table-bordered table-sm"><thead><tr>`;
+  html += `<th>#</th>`;
+  datos[0].forEach(titulo => html += `<th>${titulo}</th>`);
+  html += `</tr></thead><tbody>`;
+
+  for (let i = 1; i < datos.length; i++) {
+    html += `<tr><td>${i}</td>`;
+    datos[i].forEach(celda => {
+      const esLink = typeof celda === 'string' && celda.startsWith('https://');
+      html += `<td>${esLink ? `<a href="${celda}" target="_blank">Link</a>` : celda || ""}</td>`;
+    });
+    html += `</tr>`;
+  }
+
+  html += `</tbody></table>`;
+
+  // Reemplazar contenido por la tabla
+  contenedor.innerHTML = html;
+
+  // Esperar un momento y luego imprimir
+  setTimeout(() => {
+    window.print();
+    // Restaurar vista original
+    contenedor.innerHTML = vistaOriginal;
+  }, 300);
+}
+
+document.getElementById("btnRegistrarCharla").addEventListener("click", () => {
+  const headers = datosOriginalesCharla[0]; // mismos headers que usa la edición
+  const form = document.getElementById("formEditarCharla");
+  idActualEditar = null; // ← para que se sepa que es nuevo
+
+  let camposHTML = headers.map((titulo, i) => {
+    if (i === 0) return ""; // ID se generará automáticamente
+
+    const configCampo = camposConListas[i];
+    const valor = "";
+
+    if (configCampo) {
+  const opcionesFuente = Array.isArray(configCampo.lista)
+    ? configCampo.lista
+    : listasGlobales[configCampo.lista] || [];
+
+  const opciones = opcionesFuente.map(opcion =>
+    `<option value="${opcion}">${opcion}</option>`
+  ).join("");
+
+
+      if (configCampo.tipo === "select") {
+        return `
+          <div class="mb-2">
+            <label class="form-label">${titulo}</label>
+            <select class="form-select" name="campo${i}">
+              ${opciones}
+            </select>
+          </div>
+        `;
+      } else if (configCampo.tipo === "datalist") {
+        const idLista = `lista${i}`;
+        return `
+          <div class="mb-2">
+            <label class="form-label">${titulo}</label>
+            <input type="text" class="form-control" name="campo${i}" list="${idLista}" value="">
+            <datalist id="${idLista}">${opciones}</datalist>
+          </div>
+        `;
+      }
+    }
+
+    const tituloNormalizado = titulo.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const inputType = tituloNormalizado.includes("fecha") ? "date" :
+                      tituloNormalizado.includes("duracion") ? "number" :
+                      tituloNormalizado.includes("asistentes") ? "number" :
+                      tituloNormalizado.includes("file") ? "file" : "text";
+
+    return `
+      <div class="mb-2">
+        <label class="form-label">${titulo}</label>
+        <input type="${inputType}" class="form-control" name="campo${i}" value="">
+      </div>
+    `;
+  }).join("");
+
+  // ✅ Agrega el botón "Leer con IA" una sola vez al final
+  // camposHTML += `
+  //   <div class="d-flex justify-content-end mt-2">
+  //     <button type="button" class="btn btn-outline-primary" onclick="leerArchivoYCompletarFormularioIA()">
+  //       📄 Rellenar con IA
+  //     </button>
+  //   </div>
+  // `;
+
+  form.innerHTML = camposHTML;
+  new bootstrap.Modal(document.getElementById("modalEditarCharla")).show();
+});
+
+
+    // Función ejemplo para eliminar fila, puedes personalizarla
+function eliminarFila(id) {
+  Swal.fire({
+    title: '¿Estás seguro?',
+    text: `Se eliminará el registro con ID ${id}. Esta acción no se puede deshacer.`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Mostrar alerta de "Eliminando..."
+      Swal.fire({
+        title: 'Eliminando...',
+        text: 'Por favor espera un momento',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      google.script.run.withSuccessHandler(() => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Eliminado',
+          text: `El registro con ID ${id} fue eliminado.`,
+          timer: 2000,
+          showConfirmButton: false
+        });
+        cargarDatosDesdeServidorCharla(true)
+      }).eliminarRegistroPorId(id);
+    }
+  });
+}
+
+  //EDITAR
+let idActualEditar = null;
+
+function abrirModalEditar(id) {
+  const fila = datosOriginalesCharla.find((f, i) => i > 0 && f[0] == id);
+  if (!fila) return alert("Registro no encontrado.");
+
+  idActualEditar = id;
+  const titulos = datosOriginalesCharla[0];
+  const form = document.getElementById("formEditarCharla");
+
+  form.innerHTML = titulos.map((titulo, i) => {
+    let valor = fila[i] ?? "";
+    const disabled = i === 0 ? "disabled" : "";
+
+    const tituloNormalizado = titulo.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+    // Convertir fecha a yyyy-mm-dd
+      if (tituloNormalizado.includes("fecha") && valor) {
+        // Si ya está en formato yyyy-mm-dd, se conserva
+        const esValida = /^\d{4}-\d{2}-\d{2}$/.test(valor);
+        if (!esValida) {
+          try {
+            const partes = valor.split("/");
+            if (partes.length === 3) {
+              const fechaISO = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+              valor = fechaISO;
+            } else {
+              const fecha = new Date(valor);
+              if (!isNaN(fecha.getTime())) {
+                valor = fecha.toISOString().split("T")[0];
+              }
+            }
+          } catch (e) {
+            console.warn("Error procesando fecha:", valor);
+          }
+        }
+      }
+
+
+    const configCampo = camposConListas[i];
+
+   if (configCampo) {
+  const opcionesFuente = Array.isArray(configCampo.lista)
+    ? configCampo.lista
+    : listasGlobales[configCampo.lista] || [];
+
+  const opciones = opcionesFuente.map(opcion =>
+    `<option value="${opcion}" ${opcion === valor ? "selected" : ""}>${opcion}</option>`
+  ).join("");
+
+
+      if (configCampo.tipo === "select") {
+        return `
+          <div class="mb-2">
+            <label class="form-label">${titulo}</label>
+            <select class="form-select" name="campo${i}" ${disabled}>
+              ${opciones}
+            </select>
+          </div>
+        `;
+      } else if (configCampo.tipo === "datalist") {
+        const idLista = `lista${i}`;
+        return `
+          <div class="mb-2">
+            <label class="form-label">${titulo}</label>
+            <input type="text" class="form-control" name="campo${i}" list="${idLista}" value="${valor}" ${disabled}>
+            <datalist id="${idLista}">${opciones}</datalist>
+          </div>
+        `;
+      }
+    }
+
+    const inputType = tituloNormalizado.includes("fecha") ? "date" :
+                      tituloNormalizado.includes("duracion") ? "number" :
+                      tituloNormalizado.includes("asistentes") ? "number" :
+                      tituloNormalizado.includes("file") ? "file" : "text";
+
+    // Mostrar archivo actual si es campo tipo file
+    if (inputType === "file") {
+      const mostrarUrl = (valor && valor.startsWith("http")) ? `
+        <div class="mb-2">
+          <label class="form-label">${titulo} actual:</label>
+          <a href="${valor}" target="_blank" class="form-control bg-light" style="font-size:10px;">${valor}</a>
+          <input type="hidden" name="campo${i}_url" value="${valor}">
+        </div>` : "";
+
+      return mostrarUrl + `
+        <div class="mb-2">
+          <label class="form-label">Subir nuevo archivo (${titulo})</label>
+          <input type="file" class="form-control" name="campo${i}">
+        </div>`;
+    }
+
+    return `
+      <div class="mb-2">
+        <label class="form-label">${titulo}</label>
+        <input type="${inputType}" class="form-control" name="campo${i}" value="${valor}" ${disabled}>
+      </div>
+    `;
+  }).join("");
+
+  new bootstrap.Modal(document.getElementById("modalEditarCharla")).show();
+}
+
+// ✅ Versión corregida y validada: guardar en la columna correcta
+
+function guardarCambiosCharla() { 
+  const btnGuardar = document.getElementById("botonEditarCharla");
+  btnGuardar.textContent = "Guardando...";
+  btnGuardar.disabled = true;
+
+  const form = document.getElementById("formEditarCharla");
+  const elementos = form.querySelectorAll("input, select, textarea");
+
+  // Crear arreglo de valores excluyendo inputs hidden de URL y archivos
+  const valores = Array.from(elementos).map(el => {
+    if (el.type === "file") return ""; // Evita guardar "C:\fakepath\..."
+    if (el.type === "hidden" && el.name.includes("_url")) return null; // Excluir inputs hidden de URL
+    return el.value;
+  }).filter(val => val !== null); // Remover los valores null
+
+  // Detectar el input tipo file
+  const inputFileEl = form.querySelector('input[type="file"]');
+  const archivo = inputFileEl?.files[0];
+
+  // Obtener el índice real del campo en la hoja (ej. campo9 → 9)
+  let inputIndex = -1;
+  if (inputFileEl) {
+    const match = inputFileEl.name.match(/campo(\d+)/);
+    if (match) inputIndex = parseInt(match[1], 10);
+  }
+
+  // Input hidden con la URL actual (si hay)
+  const hiddenUrlInput = form.querySelector(`input[name="campo${inputIndex}_url"]`);
+
+  if (idActualEditar) {
+    // 🟢 MODO EDICIÓN
+    if (archivo && inputIndex >= 0) {
+      convertirArchivoABase64(archivo).then(fileData => {
+        google.script.run.withSuccessHandler(urls => {
+          const valoresConNuevoLink = [...valores];
+          valoresConNuevoLink[inputIndex] = urls[0];
+
+          google.script.run
+            .withSuccessHandler(() => {
+              Swal.fire("Éxito", "Datos actualizados correctamente", "success");
+              cargarDatosDesdeServidorCharla(true);
+              bootstrap.Modal.getInstance(document.getElementById("modalEditarCharla")).hide();
+              btnGuardar.textContent = "Guardar";
+              btnGuardar.disabled = false;
+            })
+            .withFailureHandler(error => {
+              console.error("Error al guardar:", error);
+              Swal.fire("Error", "No se pudo guardar los cambios.", "error");
+              btnGuardar.textContent = "Guardar";
+              btnGuardar.disabled = false;
+            })
+            .actualizarFilaPorID(idActualEditar, valoresConNuevoLink);
+        }).uploadFilesToDrive([fileData]);
+      }).catch(error => {
+        console.error("Error al leer archivo:", error);
+        Swal.fire("Error", "No se pudo leer el archivo adjunto.", "error");
+        btnGuardar.textContent = "Guardar";
+        btnGuardar.disabled = false;
+      });
+    } else {
+      // No se subió nuevo archivo, mantener URL existente si hay
+      const valoresConUrl = [...valores];
+      if (inputIndex >= 0) {
+        valoresConUrl[inputIndex] = hiddenUrlInput?.value || "";
+      }
+
+      google.script.run
+        .withSuccessHandler(() => {
+          Swal.fire("Éxito", "Datos actualizados correctamente", "success");
+          cargarDatosDesdeServidorCharla(true);
+          bootstrap.Modal.getInstance(document.getElementById("modalEditarCharla")).hide();
+          btnGuardar.textContent = "Guardar";
+          btnGuardar.disabled = false;
+        })
+        .withFailureHandler(error => {
+          console.error("Error al guardar:", error);
+          Swal.fire("Error", "No se pudo guardar los cambios.", "error");
+          btnGuardar.textContent = "Guardar";
+          btnGuardar.disabled = false;
+        })
+        .actualizarFilaPorID(idActualEditar, valoresConUrl);
+    }
+  } else {
+    // 🆕 MODO NUEVO REGISTRO
+    if (archivo && inputIndex >= 0) {
+      convertirArchivoABase64(archivo).then(fileData => {
+        google.script.run.withSuccessHandler(urls => {
+          const valoresConLink = [...valores];
+          // Ajustar el índice ya que excluimos los inputs hidden
+          const inputFilePosition = Array.from(elementos)
+            .filter(el => el.type !== "hidden" || !el.name.includes("_url"))
+            .findIndex(el => el === inputFileEl);
+          
+          if (inputFilePosition >= 0) {
+            valoresConLink[inputFilePosition] = urls[0];
+          }
+
+          google.script.run
+            .withSuccessHandler(() => {
+              Swal.fire("Éxito", "Registro agregado correctamente", "success");
+              cargarDatosDesdeServidorCharla(true);
+              bootstrap.Modal.getInstance(document.getElementById("modalEditarCharla")).hide();
+              btnGuardar.textContent = "Guardar";
+              btnGuardar.disabled = false;
+            })
+            .withFailureHandler(error => {
+              console.error("Error al guardar:", error);
+              Swal.fire("Error", "No se pudo guardar el nuevo registro.", "error");
+              btnGuardar.textContent = "Guardar";
+              btnGuardar.disabled = false;
+            })
+            .saveData(valoresConLink);
+        }).uploadFilesToDrive([fileData]);
+      }).catch(error => {
+        console.error("Error al leer archivo:", error);
+        Swal.fire("Error", "No se pudo leer el archivo adjunto.", "error");
+        btnGuardar.textContent = "Guardar";
+        btnGuardar.disabled = false;
+      });
+    } else {
+      // Nuevo registro sin archivo
+      google.script.run
+        .withSuccessHandler(() => {
+          Swal.fire("Éxito", "Registro agregado correctamente", "success");
+          cargarDatosDesdeServidorCharla(true);
+          bootstrap.Modal.getInstance(document.getElementById("modalEditarCharla")).hide();
+          btnGuardar.textContent = "Guardar";
+          btnGuardar.disabled = false;
+        })
+        .withFailureHandler(error => {
+          console.error("Error al agregar:", error);
+          Swal.fire("Error", "No se pudo guardar el nuevo registro.", "error");
+          btnGuardar.textContent = "Guardar";
+          btnGuardar.disabled = false;
+        })
+        .saveData(valores);
+    }
+  }
+}
+
+function convertirArchivoABase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve({ filename: file.name, data: reader.result });
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+//WHASTAPP
+function enviarWhatsAppDesdeCard(boton) {
+  const card = boton.closest(".card-charla");
+
+  // 🟡 Título
+  const titulo = card.querySelector(".charla-title")?.innerText || "";
+
+  // 🟡 Detalles con títulos en negrita
+  const detallesDivs = Array.from(card.querySelectorAll(".charla-details > div"));
+  const detalles = detallesDivs.map(div => {
+    const texto = div.innerText;
+    const partes = texto.split(":");
+    if (partes.length >= 2) {
+      const campo = partes.shift().trim();
+      const valor = partes.join(":").trim();
+      return `*${campo}:* ${valor}`;
+    }
+    return texto;
+  }).join("\n");
+
+  // 🟡 Fecha
+  const fecha = card.querySelector(".charla-footer")?.innerText || "";
+
+  // 🟡 URL (si hay botón con data-url)
+  let urlArchivo = "";
+  const botonArchivo = card.querySelector("button[title='Ver archivo'][data-url]");
+  if (botonArchivo) {
+    urlArchivo = botonArchivo.dataset.url;
+  }
+
+  // 🟢 Mensaje completo
+  let messageDesvios = `*${titulo}*\n${detalles}\n${fecha}`;
+  if (urlArchivo) {
+    messageDesvios += `\n-> ${urlArchivo}`;
+  }
+
+  // 🟢 Mostrar Swal
+  Swal.fire({
+    title: 'Enviar por WhatsApp',
+    text: '¿Cómo deseas enviar el mensaje?',
+    showDenyButton: true,
+    showCancelButton: true,
+    confirmButtonText: '📱 Ingresar número',
+    denyButtonText: '📇 Buscar en contactos',
+    cancelButtonText: 'Cancelar',
+    input: 'text',
+    inputPlaceholder: 'Ej. 999999999',
+    preConfirm: (value) => {
+      if (!value || !value.match(/^\d{9}$/)) {
+        Swal.showValidationMessage('Número inválido. Ingresa solo 9 dígitos.');
+      }
+      return value;
+    }
+  }).then((result) => {
+    const urlBase = "https://wa.me/";
+    const textoCodificado = encodeURIComponent(messageDesvios);
+
+    if (result.isConfirmed) {
+      const telefono = "51" + result.value;
+      const url = `${urlBase}${telefono}?text=${textoCodificado}`;
+      window.open(url, '_blank');
+    } else if (result.isDenied) {
+      const url = `${urlBase}?text=${textoCodificado}`;
+      window.open(url, '_blank');
+    }
+  });
+}
+
+
+</script>
+<script>
+function leerArchivoYCompletarFormularioIA() {
+  const inputFile = document.querySelector('#formEditarCharla input[type="file"]');
+  const archivo = inputFile?.files?.[0];
+
+  if (!archivo) {
+    Swal.fire("⚠️ Faltan datos", "Debes adjuntar un archivo PDF o imagen para analizar con IA.", "warning");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const base64 = e.target.result;
+
+    Swal.fire({
+      title: "Analizando con IA...",
+      text: "Esto puede tomar unos segundos.",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        Swal.close();
+        rellenarFormularioDesdeGemini(res);
+        Swal.fire("✅ Completado", "Campos completados con IA", "success");
+      })
+      .withFailureHandler(function (err) {
+        Swal.fire("❌ Error", "No se pudo analizar el archivo", "error");
+        console.error(err);
+      })
+      .analizarArchivoConGemini(base64);
+  };
+  reader.readAsDataURL(archivo);
+}
+
+function rellenarFormularioDesdeGemini(textoIA) {
+  const campos = {
+    "Fecha": "",
+    "Tema": "",
+    "Lugar": "",
+    "Tipo de formación": "",
+    "Capacitador": "",
+    "Empresa": "",
+    "Gestión": "",
+    "Turno": "",
+    "Duración (min)": "",
+    "Asistentes": "",
+    "Comentarios": "",
+    "Registrado por": ""
+  };
+
+  // 🧠 Diccionario de equivalencias
+  const equivalencias = {
+    "Empresa": {
+      "CONSORCIO CONSTRUCTOR LUSOPERUANO": "CCL",
+    },
+    "Gestión": {
+      "SSOMA": "SSOMA",
+      "Seguridad": "SSOMA",
+      "Medio Ambiente": "SSOMA",
+      "Salud Ocupacional": "SSOMA",
+      "Producción": "Producción"
+    }
+  };
+
+  textoIA.split("\n").forEach(linea => {
+    const [claveRaw, ...resto] = linea.split(":");
+    const clave = claveRaw?.trim();
+    const valor = resto.join(":")?.trim();
+    if (clave in campos && valor) {
+      // Aplicar equivalencia si existe
+      if (equivalencias[clave] && equivalencias[clave][valor]) {
+        campos[clave] = equivalencias[clave][valor];
+      } else {
+        campos[clave] = valor;
+      }
+    }
+  });
+
+  const form = document.getElementById("formEditarCharla");
+  if (!form) return;
+
+  form.querySelectorAll("input, select, textarea").forEach(input => {
+    const label = input.closest(".mb-2")?.querySelector("label")?.innerText?.trim();
+    if (!label) return;
+
+    for (const [clave, valor] of Object.entries(campos)) {
+      if (label.toLowerCase().includes(clave.toLowerCase())) {
+        if (input.tagName === "SELECT") {
+          const opciones = Array.from(input.options);
+          const exacta = opciones.find(opt => opt.value.toLowerCase() === valor.toLowerCase());
+          if (exacta) {
+            input.value = exacta.value;
+          } else {
+            const similar = opciones.find(opt => valor.toLowerCase().includes(opt.value.toLowerCase()));
+            if (similar) input.value = similar.value;
+          }
+        } else if (input.type === "date" && valor.includes("/")) {
+          const [d, m, a] = valor.split("/");
+          input.value = `${a}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+        } else {
+          input.value = valor;
+        }
+      }
+    }
+  });
+}
+
+</script>
+
+  </body>
+</html>

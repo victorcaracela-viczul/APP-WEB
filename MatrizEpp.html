@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <title>Matriz de productos (EPP)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+  <style>
+    th.sticky-header {
+      position: sticky; top: 0; background: #fff; z-index: 10;
+    }
+    th.sticky-col, td.sticky-col {
+      position: sticky; left: 0; background: #fff; z-index: 11;
+    }
+    th.sticky-col.sticky-header { z-index: 12; }
+    #tabla-matrizEpp-wrapper {
+      max-height: 80vh; overflow: auto; position: relative;
+    }
+    .loading-overlay {
+      position: absolute; inset: 0; background: rgba(255,255,255,.9);
+      z-index: 1000; display: none; border-radius: .375rem;
+    }
+    .chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-height: 38px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background-color: #fff;
+  position: relative;
+}
+.chips-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  flex: 1;
+}
+.chipepp {
+  background: #198754;
+  color: #fff;
+  border-radius: 12px;
+  padding: 3px 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+}
+.chipepp button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+.chip-input {
+  border: none;
+  outline: none;
+  flex: 1;
+  min-width: 120px;
+  margin-left: 5px;
+}
+
+  </style>
+</head>
+<body class="bg-light mt-3">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center mt-3">
+    <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+      <i class="fas fa-boxes text-white"></i>
+    </div>
+    <div>
+      <h5 class="mb-0 text-success">Matriz de productos</h5>
+      <small class="text-muted">EPP, Equipos, Herramientas, Productos (edición de 5 encabezados)</small>
+    </div>
+  </div>
+
+  <!-- Acciones -->
+  <div class="d-flex justify-content-start mb-2 gap-2">
+    <button class="btn btn-success btn-sm" onclick="MatrizEPP.exportarAExcel()">
+      <i class="fa fa-file-excel me-1"></i> Exportar a Excel
+    </button>
+  </div>
+
+  <!-- Loading inicial -->
+  <div id="loadingMatrizEpp" class="text-center my-4" style="display: none;">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p class="mt-2">Cargando matriz, por favor espera...</p>
+  </div>
+
+  <!-- Tabla -->
+  <div id="tabla-matrizEpp-wrapper" class="table-responsive">
+    <div class="loading-overlay" id="overlayMatriz">
+      <div class="d-flex flex-column align-items-center justify-content-center h-100">
+        <div class="spinner-border text-primary mb-2" role="status">
+          <span class="visually-hidden">Actualizando...</span>
+        </div>
+        <small class="text-muted">Actualizando matriz...</small>
+      </div>
+    </div>
+    <div id="tabla-matrizEpp"></div>
+  </div>
+
+  <!-- Modal de edición de columna -->
+  <div class="modal fade" id="modalEditarColumnaEpp" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Editar columna</h5></div>
+        <div class="modal-body">
+          
+          <label class="mt-1">Req. capacitación</label>
+          <div class="chips-container form-control p-2" id="chipsContainer" tabindex="0">
+            <div class="chips-list" id="chipsList"></div>
+            <input type="text" id="chipInput" class="chip-input" placeholder="Escribe o selecciona...">
+            <select id="chipSelect" class="form-select mt-2"></select>
+          </div>
+
+
+          <label class="mt-2">Frec. inspección (días)</label>
+          <input class="form-control" id="matInsp" type="number" min="0" placeholder="Ej: 30"/>
+
+          <label class="mt-2">Vida útil (días)</label>
+          <input class="form-control" id="matVida" type="number" min="0" placeholder="Ej: 180"/>
+
+          <label class="mt-2">Categoría</label>
+          <select class="form-select" id="matCat"></select>
+
+          <label class="mt-2">Producto (desde STOCK!C)</label>
+          <select class="form-select" id="matProducto"></select>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" onclick="guardarEncabezadoEpp()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  const HEADER_ROWS = 5;
+  const MAT_FIRST_DATA_ROW = 7;
+  const MAT_FIRST_DATA_COL = 3;
+
+  const MatrizEPP = {
+    state: {
+      encabezados: [],
+      datosCheckbox: [],
+      nombresFila: [],
+      opcionesProductos: [],
+      columnaEditando: -1,
+      isLoading: false
+    },
+
+    elements: {
+      loading:      () => document.getElementById("loadingMatrizEpp"),
+      tabla:        () => document.getElementById("tabla-matrizEpp"),
+      overlay:      () => document.getElementById("overlayMatriz"),
+      modal:        () => document.getElementById("modalEditarColumnaEpp"),
+      cap:          () => document.getElementById("matCap"),
+      insp:         () => document.getElementById("matInsp"),
+      vida:         () => document.getElementById("matVida"),
+      cat:          () => document.getElementById("matCat"),
+      producto:     () => document.getElementById("matProducto")
+    },
+
+    init: function(isInitialLoad) {
+      this.showLoading(isInitialLoad === true);
+      google.script.run
+        .withSuccessHandler(this.onDataLoaded.bind(this))
+        .withFailureHandler(this.onError.bind(this))
+        .obtenerDatosMatrizInteractivaEpp();
+    },
+
+    onDataLoaded: function(payload) {
+      this.state.encabezados      = payload.encabezadosMatriz || [];
+      this.state.datosCheckbox    = payload.checks || [];
+      this.state.nombresFila      = payload.nombresFila || [];
+      this.state.opcionesProductos= payload.opcionesProductos || [];
+      this.render();
+    },
+
+    onError: function(err) {
+      this.hideLoading();
+      this.showAlert('error', 'Error', (err && err.message) ? err.message : 'Error al cargar datos');
+    },
+
+    render: function() {
+      this.hideLoading();
+      const table = this.createTable();
+      const container = this.elements.tabla();
+      container.innerHTML = "";
+      container.appendChild(table);
+    },
+
+    createTable: function() {
+      const table = document.createElement("table");
+      table.className = "table table-bordered table-hover table-sm bg-white";
+      const thead = this.createTableHeader();
+      const tbody = this.createTableBody();
+      table.append(thead, tbody);
+      return table;
+    },
+
+    createTableHeader: function() {
+      const thead = document.createElement("thead");
+      for (let rowIndex = 0; rowIndex < HEADER_ROWS; rowIndex++) {
+        const tr = document.createElement("tr");
+        if (rowIndex === 0) {
+          const th = document.createElement("th");
+          th.rowSpan = HEADER_ROWS;
+          th.classList.add("sticky-header", "sticky-col", "text-center");
+          th.style.backgroundColor = "transparent";
+          th.innerHTML = `
+            <button class="btn btn-sm btn-success" onclick="MatrizEPP.agregarColumna()" title="Agregar columna">
+              <i class="fa fa-plus"></i>
+            </button>`;
+          tr.appendChild(th);
+        }
+
+        this.state.encabezados.forEach((col, colIndex) => {
+          const th = document.createElement("th");
+          th.classList.add("sticky-header");
+          const cellContent = (col && col[rowIndex]) ? col[rowIndex] : '<i class="text-muted">[vacío]</i>';
+          const deleteButton = (rowIndex === 0)
+            ? `<button class="btn btn-xs btn-danger py-0 px-1 ms-1" title="Eliminar columna"
+                 onclick="MatrizEPP.eliminarColumna(${colIndex})"><i class="fa fa-times"></i></button>`
+            : '';
+          th.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="header-text" onclick="MatrizEPP.editarColumna(${colIndex})"
+                    style="cursor:pointer; flex-grow:1; min-height:20px;">${cellContent}</span>
+              ${deleteButton}
+            </div>`;
+          tr.appendChild(th);
+        });
+
+        thead.appendChild(tr);
+      }
+      return thead;
+    },
+
+    createTableBody: function() {
+      const tbody = document.createElement("tbody");
+      this.state.datosCheckbox.forEach((fila, filaIndex) => {
+        const tr = document.createElement("tr");
+        const th = document.createElement("th");
+        th.textContent = this.state.nombresFila[filaIndex] || `Fila ${filaIndex + 1}`;
+        th.classList.add("sticky-col");
+        tr.appendChild(th);
+        fila.forEach((valor, colIndex) => {
+          const td = document.createElement("td");
+          td.classList.add("text-center");
+          td.innerHTML = `
+            <input type="checkbox" ${valor ? "checked" : ""} 
+                   onchange="MatrizEPP.actualizarCheckbox(${MAT_FIRST_DATA_ROW + filaIndex}, ${MAT_FIRST_DATA_COL + colIndex}, this.checked)"
+                   class="form-check-input">`;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      return tbody;
+    },
+
+    // === NUEVO ===
+cargarListasModal: function() {
+  google.script.run
+    .withSuccessHandler((res) => {
+      // Select de categorías
+      const catSel = this.elements.cat();
+      catSel.innerHTML = res.categorias.map(v => `<option value="${v}">${v}</option>`).join("");
+
+      // Lista de opciones para los chips
+      const chipSelect = document.getElementById("chipSelect");
+      chipSelect.innerHTML = res.reqCap.map(v => `<option value="${v}">${v}</option>`).join("");
+
+      // Configurar chips
+      this.initChipSelector();
+    })
+    .withFailureHandler((err) => console.error("Error cargando listas:", err))
+    .getListasMatrizEpp();
+},
+
+initChipSelector: function() {
+  const chipSelect = document.getElementById("chipSelect");
+  const chipInput = document.getElementById("chipInput");
+  const chipsList = document.getElementById("chipsList");
+  const container = document.getElementById("chipsContainer");
+
+  let selectedChips = [];
+
+  // Limpia cualquier chip previo al volver a abrir modal
+  chipsList.innerHTML = "";
+  chipInput.value = "";
+
+  // Al seleccionar desde el combo
+  chipSelect.onchange = () => {
+    const value = chipSelect.value;
+    if (value && !selectedChips.includes(value)) {
+      selectedChips.push(value);
+      renderChips();
+    }
+    chipSelect.value = "";
+  };
+
+  // Permitir escribir manualmente y presionar Enter
+  chipInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && chipInput.value.trim() !== "") {
+      e.preventDefault();
+      const value = chipInput.value.trim();
+      if (!selectedChips.includes(value)) {
+        selectedChips.push(value);
+        renderChips();
+      }
+      chipInput.value = "";
+    }
+  });
+
+  // Mostrar chips
+  const renderChips = () => {
+    chipsList.innerHTML = selectedChips.map(v =>
+      `<div class="chipepp">${v}<button type="button" data-value="${v}">&times;</button></div>`
+    ).join("");
+    chipsList.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const value = btn.dataset.value;
+        selectedChips = selectedChips.filter(v => v !== value);
+        renderChips();
+      });
+    });
+  };
+
+  // Guardar referencia
+  this.getChipValues = () => selectedChips;
+  this.setChipValues = (arr) => {
+    selectedChips = arr || [];
+    renderChips();
+  };
+},
+
+editarColumna: function(indiceCol) {
+  // Evitar clicks múltiples
+  if (this.state.isEditing) return;
+  this.state.isEditing = true;
+  this.state.columnaEditando = indiceCol;
+
+  // Mostrar el modal inmediatamente (vacío)
+  const modal = new bootstrap.Modal(this.elements.modal());
+  modal.show();
+
+  // Limpiar y mostrar spinner mientras carga
+  const chipSelect = document.getElementById("chipSelect");
+  const chipsList = document.getElementById("chipsList");
+  const chipInput = document.getElementById("chipInput");
+  const catSel = this.elements.cat();
+  const prodSel = this.elements.producto();
+
+  chipSelect.innerHTML = "";
+  chipsList.innerHTML = `<div class="text-center w-100 py-2"><div class="spinner-border text-success" role="status"></div></div>`;
+  chipInput.disabled = true;
+  catSel.innerHTML = `<option>Cargando...</option>`;
+  prodSel.innerHTML = `<option>Cargando...</option>`;
+
+  // Preparar datos base del encabezado actual
+  const col = this.state.encabezados[indiceCol] || ["", "", "", "", ""];
+  this.elements.insp().value     = col[1] || "";
+  this.elements.vida().value     = col[2] || "";
+  this.elements.cat().value      = "";
+  this.elements.producto().value = "";
+
+  // Cargar listas desde servidor sin bloquear interfaz
+  google.script.run
+    .withSuccessHandler((res) => {
+      // Llenar select de categorías
+      catSel.innerHTML = res.categorias.map(v => `<option value="${v}">${v}</option>`).join("");
+      catSel.value = col[3] || "";
+
+      // Llenar productos evitando duplicados
+      const productosUsados = this.state.encabezados
+        .map((c, i) => (i !== indiceCol && c && c[4]) ? String(c[4]) : "")
+        .filter(Boolean);
+      prodSel.innerHTML = this.state.opcionesProductos
+        .filter(p => !productosUsados.includes(p))
+        .map(p => `<option value="${p}">${p}</option>`)
+        .join("");
+      prodSel.value = col[4] || "";
+
+      // Llenar lista de capacitación (chips)
+      chipSelect.innerHTML = res.reqCap.map(v => `<option value="${v}">${v}</option>`).join("");
+      chipInput.disabled = false;
+      this.initChipSelector();
+
+      // Cargar valores existentes (chips anteriores)
+      const capValues = (col[0] || "").split(",").map(s => s.trim());
+      if (typeof this.setChipValues === "function") this.setChipValues(capValues);
+    })
+    .withFailureHandler((err) => {
+      console.error("Error cargando listas:", err);
+      chipsList.innerHTML = `<div class="text-danger text-center w-100 py-2">Error al cargar listas</div>`;
+    })
+    .withUserObject(this)
+    .getListasMatrizEpp();
+
+  // Liberar el candado después de un breve retardo (para evitar dobles clics)
+  setTimeout(() => { this.state.isEditing = false; }, 1000);
+},
+
+
+getModalValues: function() {
+  const capSel = this.getChipValues().join(", ");
+  return [
+    capSel,
+    this.elements.insp().value.trim(),
+    this.elements.vida().value.trim(),
+    this.elements.cat().value.trim(),
+    this.elements.producto().value.trim()
+  ];
+},
+
+
+    saveToGoogleSheets: function(valores) {
+      const colAbs = MAT_FIRST_DATA_COL + this.state.columnaEditando;
+      return new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .actualizarEncabezadoMatrizEpp(colAbs, valores);
+      });
+    },
+
+    guardarEncabezado: async function() {
+      const btn = document.querySelector("#modalEditarColumnaEpp .btn.btn-primary");
+      btn.disabled = true; btn.innerText = "Guardando...";
+      try {
+        const valores = this.getModalValues();
+        if (!valores[4]) {
+          this.showAlert('warning', 'Falta producto', 'Selecciona el producto (STOCK!C).');
+          return;
+        }
+        await this.saveToGoogleSheets(valores);
+        this.showAlert('success', 'Actualizado', 'Encabezado guardado correctamente', 1500, false);
+        bootstrap.Modal.getInstance(this.elements.modal()).hide();
+        this.init(false);
+      } catch (e) {
+        this.showAlert('error', 'Error al guardar', (e && e.message) ? e.message : 'Ocurrió un problema');
+      } finally {
+        btn.disabled = false; btn.innerText = "Guardar";
+      }
+    },
+
+    showLoading(isInitialLoad) {
+      this.state.isLoading = true;
+      const loadingEl = this.elements.loading();
+      const overlay = this.elements.overlay();
+      if (isInitialLoad) {
+        loadingEl.style.display = "block";
+        this.elements.tabla().innerHTML = "";
+        overlay.style.display = "none";
+      } else {
+        loadingEl.style.display = "none";
+        overlay.style.display = "flex";
+      }
+    },
+    hideLoading() {
+      this.state.isLoading = false;
+      this.elements.loading().style.display = "none";
+      this.elements.overlay().style.display = "none";
+    },
+    showAlert(icon, title, text, timer, showConfirmButton) {
+      const cfg = { icon, title };
+      if (text) cfg.text = text;
+      if (timer) { cfg.timer = timer; cfg.showConfirmButton = false; }
+      else { cfg.showConfirmButton = (showConfirmButton !== false); }
+      Swal.fire(cfg);
+    }
+  };
+
+  function guardarEncabezadoEpp() { MatrizEPP.guardarEncabezado(); }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    MatrizEPP.init(true);
+  });
+  </script>
+</body>
+</html>

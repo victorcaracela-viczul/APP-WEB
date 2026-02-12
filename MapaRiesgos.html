@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Mapas de Riesgos</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+ 
+  <style>
+    /* ===== AISLAMIENTO ===== */
+    #riskmaps-module { --bdr: 12px; --shadow-sm: 0 2px 4px rgba(0,0,0,0.1); --shadow-md: 0 4px 12px rgba(0,0,0,0.15); max-width:100%; }
+    #riskmaps-module *, #riskmaps-module *::before, #riskmaps-module *::after { box-sizing: border-box; }
+    #riskmaps-module h2,#riskmaps-module h4{margin:6px 0 10px}
+    #riskmaps-module .section .d-flex.mb-4{margin-bottom:10px!important}
+
+    /* ===== CARDS ===== */
+    #riskmaps-module .tiktok-card{
+      position:relative;overflow:hidden;border-radius:12px;background:#000;color:#fff;
+      aspect-ratio:9/16;display:flex;flex-direction:column;justify-content:flex-end;transition:transform .2s ease
+    }
+    #riskmaps-module .tiktok-card:hover{transform:scale(1.02)}
+    #riskmaps-module .tiktok-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;transition:transform .3s ease}
+    #riskmaps-module .tiktok-card:hover img{transform:scale(1.02)}
+    #riskmaps-module .map-title-overlay{
+      position:relative;z-index:2;padding:10px 12px;background:linear-gradient(to top,rgba(0,0,0,.72),transparent);
+      font-size:13px;font-weight:600;text-shadow:1px 1px 3px rgba(0,0,0,.85);display:flex;flex-direction:column;gap:2px
+    }
+    #riskmaps-module .map-meta{font-size:11px;font-weight:500;opacity:.95;color:#f3f4f6}
+
+    /* ===== BOTONES VERTICALES (TikTok) ===== */
+    #riskmaps-module .overlay-buttons { position:absolute; right:10px; bottom:90px; display:flex; flex-direction:column; gap:10px; z-index:2; }
+    #riskmaps-module .overlay-buttons button{
+      background-color: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 40px; height: 40px;
+      display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.4);
+      transition: all .2s cubic-bezier(.4,0,.2,1); cursor:pointer; padding:0;
+    }
+    #riskmaps-module .overlay-buttons button:hover{ background:#f0f0f0; transform:scale(1.05); box-shadow:0 4px 12px rgba(0,0,0,.2); }
+    #riskmaps-module .overlay-buttons button:active{ transform:scale(.95); }
+    #riskmaps-module .overlay-buttons button i{ font-size:18px; color:#000; }
+
+    /* ===== BADGES POR TIPO ===== */
+    #riskmaps-module .type-badges{
+      position:absolute; left:8px; top:8px; z-index:3; display:flex; flex-direction:column; gap:6px;
+    }
+    #riskmaps-module .type-badge{
+      min-width:34px; display:flex; align-items:center; justify-content:center; padding:4px 6px; border-radius:6px;
+      font-size:11px; font-weight:700; color:#111; box-shadow:0 1px 3px rgba(0,0,0,.25);
+    }
+    /* colores */
+    #riskmaps-module .tb-preventivo{ background:#FACC15; }   /* amarillo */
+    #riskmaps-module .tb-informativo{ background:#22C55E; }  /* verde */
+    #riskmaps-module .tb-restrictivo{ background:#EF4444; color:#fff; } /* rojo */
+    #riskmaps-module .tb-obligatorio{ background:#3B82F6; color:#fff; } /* azul */
+
+    /* ===== FAB ===== */
+    #riskmaps-module .fab{ position:fixed; right:16px; bottom:16px; width:52px; height:52px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center; z-index:9999; box-shadow:0 6px 20px rgba(0,0,0,.25) }
+
+    /* ===== GRID ===== */
+    #riskmaps-module #rm-cardsRow .col{padding:8px}
+    @media (max-width:576px){ #riskmaps-module #rm-cardsRow{padding:0 8px} }
+
+    /* ===== SKELETON ===== */
+    #riskmaps-module .skel{ position:relative;border-radius:12px;overflow:hidden;aspect-ratio:9/16;background:#e9ecef }
+    #riskmaps-module .skel::after{ content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:sh 1.2s infinite }
+    @keyframes sh{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+
+    /* ===== SIDEBAR EDITOR ===== */
+    #riskmaps-module #rm-sidebar{ width:200px; display:grid; grid-template-columns:repeat(2,1fr); gap:8px; max-height:450px; overflow-y:auto; padding:12px; border:2px solid #e9ecef; border-radius:12px; background:#f8f9fa; }
+    #riskmaps-module #rm-sidebar img{ width:70%; margin:0 auto; aspect-ratio:1; cursor:grab; border-radius:8px; object-fit:contain; background:#fff; padding:4px; box-shadow:0 2px 4px rgba(0,0,0,.1); transition:transform .2s, box-shadow .2s; max-height:72px; }
+    #riskmaps-module #rm-sidebar img:hover{ transform:scale(1.05); box-shadow:0 4px 8px rgba(0,0,0,.15) }
+    #riskmaps-module #rm-sidebar img:active{ cursor:grabbing; }
+
+    /* ===== CANVAS / LAYOUT EDITOR ===== */
+    #riskmaps-module .editor-workspace{ display:flex; gap:15px; overflow-x:hidden; }
+    #riskmaps-module .editor-sidebar{ width:200px; flex:0 0 200px; }
+    #riskmaps-module .editor-canvaswrap{ flex:1 1 0; min-width:0; }
+    #riskmaps-module #rm-canvas-container,
+    #riskmaps-module #rm-viewer-container > .viewer-canvas-wrap {
+      position: relative; border: 2px solid #007bff; border-radius: 12px; background: #f8f9fa; overflow:hidden;
+    }
+    #riskmaps-module #rm-viewer-container { display:flex; gap:12px; align-items:flex-start; }
+    #riskmaps-module canvas{ width:100% !important; height:auto !important; display:block; }
+
+    /* ===== ZOOM ===== */
+    #riskmaps-module .zoom-controls{ position:absolute; top:15px; right:15px; z-index:10; display:flex; flex-direction:column; gap:5px; }
+    #riskmaps-module .zoom-controls button{
+      background:rgba(255,255,255,0.95); border:1px solid #dee2e6; border-radius:8px; width:40px; height:40px; display:flex; align-items:center; justify-content:center; font-size:16px; transition:.2s; box-shadow:0 2px 4px rgba(0,0,0,.1);
+    }
+    #riskmaps-module .zoom-controls button:hover{ background:#f8f9fa; transform:scale(1.05) }
+
+    /* ===== LEYENDA ===== */
+    #riskmaps-module .legend-sidebar{ width:220px; background:#f8f9fa; border-left:2px solid #28a745; padding:14px; overflow:auto; border-radius:12px; }
+    #riskmaps-module .legend-item{ display:flex; align-items:flex-start; gap:10px; padding:8px; margin-bottom:8px; background:#fff; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,.1) }
+    #riskmaps-module .legend-item img{ width:30px; height:30px; object-fit:contain; border-radius:4px }
+    #riskmaps-module .legend-item span{ font-size:12px; color:#495057; font-weight:500; line-height:1.2 }
+
+    /* Leyenda abajo (wrap) */
+    #riskmaps-module .legend-bottom{ margin-top:10px; padding:10px; background:#f8f9fa; border-top:2px solid #28a745; border-radius:12px; display:flex; flex-wrap:wrap; gap:8px; }
+    #riskmaps-module .legend-chip{ display:flex; align-items:center; gap:8px; background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:6px 8px; }
+    #riskmaps-module .legend-chip img{ width:24px; height:24px; object-fit:contain; }
+
+    /* ===== MODAL ICONOS ===== */
+    #riskmaps-module #rm-iconosGrid .icon-item{ background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:8px; display:flex; gap:8px; align-items:center; box-shadow:0 1px 2px rgba(0,0,0,.04) }
+    #riskmaps-module #rm-iconosGrid img{ width:42px; height:42px; object-fit:contain; border-radius:6px; background:#fff }
+    #riskmaps-module #rm-iconosGrid .name{ font-size:12px; color:#334155; font-weight:600; flex:1; word-break:break-word }
+    #riskmaps-module #rm-iconosGrid .tipo{ font-size:11px; color:#64748b; font-weight:400; margin-top:2px }
+    #riskmaps-module #rm-iconosGrid .btn-del{ border:0; background:#fee2e2; color:#991b1b; border-radius:8px; padding:6px 8px }
+    #riskmaps-module #rm-dropIconZone.drag{ background:#f0f9ff; border-color:#bae6fd }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 992px){
+      #riskmaps-module #rm-viewer-container{ flex-direction:column; }
+      #riskmaps-module .legend-sidebar{ width:100%; border-left:0; border-top:2px solid #28a745; }
+    }
+
+    /* scrollbars del módulo */
+    #riskmaps-module ::-webkit-scrollbar { width: 6px; height: 6px; }
+    #riskmaps-module ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+    #riskmaps-module ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+    #riskmaps-module ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    /* ===== Menú Export personalizado ===== */
+#riskmaps-module .rm-export-wrap{
+  position:relative; display:inline-flex; gap:6px; overflow:visible; z-index:3000;
+}
+#riskmaps-module .rm-menu{
+  position:absolute; top:100%; right:0;
+  min-width:220px; background:#fff; border:1px solid #e5e7eb; border-radius:8px;
+  padding:6px; box-shadow:0 12px 24px rgba(0,0,0,.12);
+  display:none; z-index:4000;
+}
+#riskmaps-module .rm-menu.open{ display:block; }
+#riskmaps-module .rm-menu .rm-item{
+  display:block; width:100%; text-align:left;
+  background:transparent; border:0; padding:8px 10px; border-radius:6px; font-size:.9rem; cursor:pointer;
+}
+#riskmaps-module .rm-menu .rm-item:hover{ background:#f1f5f9; }
+
+  </style>
+</head>
+
+<body class="bg-light">
+<div id="riskmaps-module" class="container-fluid py-3 px-1">
+     <div class="d-flex justify-content-between align-items-center mb-1">                                                                    
+      <div class="d-flex align-items-center">
+        <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+           <i class="fa fa-map me-2 text-white"></i>
+        </div>
+        <div>
+          <h5 class="mb-0 text-success">Mapa de riesgos</h5>
+          <small class="text-muted">Con señaletíca dinámica</small>
+        </div>
+      </div>                                                                                                                          
+                                                                                                                                     
+    </div> 
+
+  <!-- Navegación simplificada -->
+  <div class="d-flex justify-content-center mb-3" hidden>
+    <div class="btn-group" role="group" hidden>
+      <button type="button" class="btn btn-outline-primary" data-rm-view="galeria" onclick="RiskMaps.showView('galeria')">
+        <i class="fas fa-images me-2"></i>Galería
+      </button>
+      <button type="button" class="btn btn-outline-primary" data-rm-view="editor" onclick="RiskMaps.showView('editor')">
+        <i class="fas fa-edit me-2"></i>Editor
+      </button>
+      <button type="button" class="btn btn-outline-primary" data-rm-view="viewer" onclick="RiskMaps.showView('viewer')">
+        <i class="fas fa-eye me-2"></i>Visualizador
+      </button>
+    </div>
+  </div>
+
+  <!-- GALERÍA -->
+  <div id="rm-galeria" class="rm-view section" style="display: block;">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <div class="input-group input-group-sm" style="max-width:260px">
+        <span class="input-group-text"><i class="fas fa-search"></i></span>
+        <input id="rm-searchMaps" class="form-control" placeholder="Buscar...">
+      </div>
+    </div>
+    <div id="rm-cardsRow" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-2 p-0"></div>
+    <div id="rm-scrollSentinel" style="height:1px"></div>
+  </div>
+
+  <!-- EDITOR -->
+  <div id="rm-editor" class="rm-view section" style="display: none;">
+    <div class="editor-controls d-flex flex-wrap align-items-end gap-2">
+      <div>
+        <label class="form-label fw-bold mb-1">Título</label>
+        <input id="rm-tituloInput" class="form-control form-control-sm" placeholder="Nombre del mapa" style="min-width:220px">
+      </div>
+      <div>
+        <label class="form-label fw-bold mb-1">Autor</label>
+        <input id="rm-autorInput" class="form-control form-control-sm" placeholder="Autor del mapa" style="min-width:200px">
+      </div>
+      <div>
+        <label class="form-label fw-bold mb-1">Contraseña (para editar)</label>
+        <input id="rm-passInput" type="password" class="form-control form-control-sm" placeholder="Mín. 4 caracteres" style="min-width:200px">
+      </div>
+
+      <div class="d-flex gap-2">
+        <input id="rm-fondoFile" type="file" class="d-none" accept="image/*">
+        <button id="rm-btnFondo" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('rm-fondoFile').click()">
+          <i class="fas fa-image me-1"></i>Cambiar fondo
+        </button>
+        <button id="rm-btnIconos" class="btn btn-outline-primary btn-sm" onclick="RiskMaps.openIconosModal()">
+          <i class="fas fa-shapes me-1"></i>Íconos
+        </button>
+      </div>
+
+      <div class="ms-auto d-flex gap-2">
+        <button id="rm-btnGuardar" class="btn btn-success btn-sm" onclick="RiskMaps.guardarMapa()"><i class="fas fa-save me-1"></i>Guardar</button>
+        <button id="rm-btnLimpiar" class="btn btn-secondary btn-sm" onclick="RiskMaps.limpiarEditor()"><i class="fas fa-redo me-1"></i>Limpiar</button>
+        <button id="rm-btnSalirEditor" class="btn btn-info btn-sm" onclick="RiskMaps.showView('galeria')"><i class="fas fa-arrow-left me-1"></i>Salir</button>
+      </div>
+    </div>
+
+    <div class="editor-workspace">
+      <!-- Sidebar -->
+      <div class="editor-sidebar">
+        <h6 class="text-center mb-2"><i class="fas fa-palette me-2"></i>Íconos</h6>
+        <div id="rm-sidebar"></div>
+        <div class="mt-2 text-center">
+          <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Arrastra al mapa</small>
+        </div>
+      </div>
+
+      <!-- Canvas -->
+      <div class="editor-canvaswrap">
+        <div id="rm-canvas-container">
+          <div class="zoom-controls">
+            <button onclick="RiskMaps.zoomIconos(1.1)" title="Aumentar íconos"><i class="fas fa-search-plus"></i></button>
+            <button onclick="RiskMaps.zoomIconos(0.9)" title="Disminuir íconos"><i class="fas fa-search-minus"></i></button>
+            <button onclick="RiskMaps.zoomTextos(1.1)" title="Aumentar texto"><i class="fas fa-font"></i></button>
+            <button onclick="RiskMaps.zoomTextos(0.9)" title="Disminuir texto"><i class="fas fa-compress-alt"></i></button>
+          </div>
+          <canvas id="rm-editor-canvas"></canvas>
+        </div>
+        <div class="mt-2 text-center">
+          <small class="text-muted">
+            <i class="fas fa-lightbulb me-1"></i><strong>Doble clic</strong> para agregar/editar texto | <strong>Delete</strong> para eliminar
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEWER -->
+  <div id="rm-viewer" class="rm-view section" style="display: none;">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div>
+        <h4 id="rm-viewer-titulo" class="m-0"><i class="fas fa-eye me-2"></i>Visualizando Mapa</h4>
+        <div id="rm-viewer-autor" class="text-muted small mt-1"></div>
+        <div id="rm-viewer-fecha" class="text-muted small"></div>
+        <small class="text-muted">Modo de solo lectura</small>
+      </div>
+<div class="rm-export-wrap">
+  <button id="rm-btnExport" class="btn btn-success btn-sm" type="button">
+    <i class="fas fa-download me-1"></i>Exportar <i class="fas fa-chevron-down ms-1"></i>
+  </button>
+
+  <button id="rm-btnSalirViewer" class="btn btn-info btn-sm" onclick="RiskMaps.showView('galeria')">
+    <i class="fas fa-arrow-left me-1"></i>Salir
+  </button>
+
+  <!-- Menú personalizado (NO Bootstrap) -->
+  <div id="rm-exportMenu" class="rm-menu" role="menu" aria-labelledby="rm-btnExport">
+    <button class="rm-item" data-format="png">PNG (alta calidad)</button>
+    <button class="rm-item" data-format="jpg">JPG (ligero)</button>
+    <button class="rm-item" data-format="pdf">PDF (A4)</button>
+  </div>
+</div>
+
+    </div>
+
+    <div id="rm-viewer-container">
+      <div class="viewer-canvas-wrap" style="flex:1; position:relative;">
+        <!-- badges de tipos en viewer -->
+        <div id="rm-typeBadgesViewer" class="type-badges" style="left:auto; right:8px;"></div>
+        <canvas id="rm-viewer-canvas"></canvas>
+        <!-- leyenda abajo (se muestra solo si es "larga") -->
+        <div id="rm-legend-bottom" class="legend-bottom d-none"></div>
+      </div>
+      <!-- leyenda lateral (por defecto) -->
+      <div id="rm-legend-side" class="legend-sidebar">
+        <h6 class="mb-3"><i class="fas fa-list me-2"></i>Leyenda</h6>
+        <div id="rm-legend-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAB móvil -->
+  <button id="rm-fabNuevo" class="btn btn-success fab" onclick="RiskMaps.nuevoMapa()" aria-label="Crear nuevo mapa">
+    <i class="fas fa-plus"></i>
+  </button>
+
+  <!-- MODAL: Gestión de Íconos -->
+  <div class="modal fade" id="rm-iconosModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+      <div class="modal-content" style="border-radius:14px">
+        <div class="modal-header py-2">
+          <h6 class="modal-title"><i class="fas fa-shapes me-2"></i>Gestión de íconos</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="d-flex gap-2 flex-wrap mb-3">
+            <select id="rm-iconTypeInput" class="form-select form-select-sm" style="max-width:200px">
+              <option value="">Tipo…</option>
+              <option value="Preventivo">Preventivo</option>
+              <option value="Informativo">Informativo</option>
+              <option value="Restrictivo">Restrictivo</option>
+              <option value="Obligatorio">Obligatorio</option>
+            </select>
+            <input id="rm-iconNameInput" class="form-control form-control-sm" placeholder="Nombre del ícono" style="max-width:220px">
+            <input id="rm-iconFileInput" type="file" accept="image/*" class="form-control form-control-sm" style="max-width:260px">
+            <button id="rm-btnSubirIcono" class="btn btn-primary btn-sm" onclick="RiskMaps.modalSubirIcono()">
+              <i class="fas fa-upload me-1"></i>Subir
+            </button>
+            <div id="rm-dropIconZone" class="flex-grow-1 p-2 border rounded text-muted text-center" style="min-height:40px;cursor:copy">
+              Arrastra una imagen aquí
+            </div>
+          </div>
+
+          <div id="rm-iconosGrid" class="row g-2"></div>
+        </div>
+
+        <div class="modal-footer py-2">
+          <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+window.RiskMaps = (function() {
+  'use strict';
+
+  // Estado encapsulado
+  let canvas, viewerCanvas;
+  let mapas = [], iconos = [], currentId = null;
+  let defaultIconScale = 0.15;
+  let defaultTextScale = 1;
+  let currentMapIcons = [];
+  let isInitialized = false;
+  const DROP_ICON_SCALE_FACTOR = 0.7;
+  const DEFAULT_ICON_SCALE_BASE = 0.15; // coincide con tu valor inicial
+  const DEFAULT_TEXT_SCALE_BASE = 1;
+
+  // Cache keys
+  const ICONS_CACHE_KEY = 'riskmaps:iconos:v2';
+  const ICONS_CACHE_TTL = 60 * 60 * 1000;
+  const MAPS_CACHE_PREFIX = 'riskmaps:maps:firstpage:';
+  const MAPS_CACHE_TTL = 5 * 60 * 1000;
+
+  // Paginación
+  let MAPS_LIMIT = 20;
+  let mapsQuery = "";
+  let mapsOffset = 0;
+  let mapsTotal = 0;
+  let mapsLoading = false;
+  let mapsDone = false;
+  let ioScroll;
+
+  // Resize handlers
+  let resizeHandlerEditor, resizeHandlerViewer;
+
+  const TYPE_META = {
+    'Preventivo': { cls: 'tb-preventivo', key: 'Preventivo', color: '#FACC15' },
+    'Informativo': { cls: 'tb-informativo', key: 'Informativo', color: '#22C55E' },
+    'Restrictivo': { cls: 'tb-restrictivo', key: 'Restrictivo', color: '#EF4444' },
+    'Obligatorio': { cls: 'tb-obligatorio', key: 'Obligatorio', color: '#3B82F6' }
+  };
+
+  const GROUP_ORDER = ['Preventivo','Informativo','Restrictivo','Obligatorio'];
+  const groupIndex = (t) => {
+    const i = GROUP_ORDER.indexOf(t);
+    return i === -1 ? 999 : i;  // los que no tengan tipo van al final
+  };
+
+
+  // Utils
+  function getUrl(idOrUrl) {
+    if (!idOrUrl) return '';
+    if (/^https?:\/\//i.test(idOrUrl)) return idOrUrl;
+    return 'https://lh5.googleusercontent.com/d/' + idOrUrl;
+  }
+
+  const debouncemapa = (fn, ms = 300) => {
+    let t;
+    return (...a) => {
+      clearTimeout(t);
+      t = setTimeout(() => fn(...a), ms);
+    };
+  };
+
+  const rafThrottle = (fn) => {
+    let ticking = false;
+    return (...args) => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          fn(...args);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+  };
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
+  }
+
+  // Botón con estado
+  const originalBtnText = new WeakMap();
+  function setBtnLoading(btn, text = 'Procesando...') {
+    if (!btn || btn.disabled) return;
+    originalBtnText.set(btn, btn.innerHTML);
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>${text}`;
+  }
+
+  function clearBtnLoading(btn) {
+    if (!btn) return;
+    btn.disabled = false;
+    const html = originalBtnText.get(btn);
+    if (html) btn.innerHTML = html;
+  }
+
+  // Navegación entre vistas
+  function showView(viewName) {
+    const views = document.querySelectorAll('#riskmaps-module .rm-view');
+    const buttons = document.querySelectorAll('#riskmaps-module [data-rm-view]');
+    
+    views.forEach(view => view.style.display = 'none');
+    buttons.forEach(btn => btn.classList.remove('active'));
+
+    const targetView = document.getElementById(`rm-${viewName}`);
+    const targetButton = document.querySelector(`[data-rm-view="${viewName}"]`);
+    
+    if (targetView) {
+      targetView.style.display = 'block';
+      targetButton?.classList.add('active');
+    }
+
+    // Inicialización específica por vista
+    if (viewName === 'editor' && !canvas) {
+      setTimeout(() => initCanvas(), 100);
+    } else if (viewName === 'viewer' && !viewerCanvas) {
+      setTimeout(() => initViewerCanvas(), 100);
+    }
+  }
+
+  // Inicialización de canvas
+  // ===================== initCanvas (REEMPLAZAR COMPLETA) =====================
+function initCanvas() {
+  if (canvas) canvas.dispose();
+  canvas = new fabric.Canvas('rm-editor-canvas');
+
+  // Doble click: crear/editar texto
+  canvas.on('mouse:dblclick', e => {
+    if (e.target && e.target.type === 'i-text') {
+      e.target.enterEditing();
+      e.target.selectAll();
+      canvas.renderAll();
+    } else if (!e.target) {
+      const p = canvas.getPointer(e.e);
+      const t = new fabric.IText('Texto', {
+        left: p.x,
+        top: p.y,
+        fontSize: 16,
+        fill: 'white',
+        stroke: 'black',       // 👈 contorno negro
+        strokeWidth: 2,        // 👈 grosor del contorno
+        paintFirst: 'stroke',  // 👈 dibuja primero contorno luego relleno
+        shadow: '1px 1px 2px rgba(0,0,0,0.7)' // 👈 sombra más fina, no difusa
+      });
+
+
+      // === Ajuste al zoom de textos actual ===
+      const TEXT_BASE = (typeof DEFAULT_TEXT_SCALE_BASE !== 'undefined') ? DEFAULT_TEXT_SCALE_BASE : 1;
+      const textZoomFactor = TEXT_BASE > 0 ? (defaultTextScale / TEXT_BASE) : 1;
+      if (textZoomFactor !== 1) {
+        t.set({ scaleX: textZoomFactor, scaleY: textZoomFactor });
+      }
+      // =======================================
+
+      canvas.add(t).setActiveObject(t);
+      t.enterEditing();
+      t.selectAll();
+    }
+  });
+
+  // Resize responsivo del canvas editor
+  const container = document.getElementById('rm-canvas-container');
+  const doResize = rafThrottle(() => {
+    if (!canvas.__baseW || !canvas.__baseH) return;
+    const baseW = canvas.__baseW, baseH = canvas.__baseH;
+    const scale = (container.clientWidth || 800) / baseW;
+    canvas.setWidth(Math.floor(baseW * scale));
+    canvas.setHeight(Math.floor(baseH * scale));
+    canvas.setZoom(scale);
+    canvas.requestRenderAll();
+  });
+
+  if (resizeHandlerEditor) window.removeEventListener('resize', resizeHandlerEditor);
+  resizeHandlerEditor = () => doResize();
+  window.addEventListener('resize', resizeHandlerEditor);
+
+  // Drag & drop de iconos
+  setupCanvasDragDrop();
+}
+
+
+  function initViewerCanvas() {
+    if (viewerCanvas) viewerCanvas.dispose();
+    viewerCanvas = new fabric.Canvas('rm-viewer-canvas');
+    viewerCanvas.selection = false;
+    viewerCanvas.defaultCursor = 'default';
+
+    const container = document.querySelector('#rm-viewer-container .viewer-canvas-wrap');
+    const doResize = rafThrottle(() => {
+      if (!viewerCanvas.__baseW || !viewerCanvas.__baseH) return;
+      const baseW = viewerCanvas.__baseW, baseH = viewerCanvas.__baseH;
+      const scale = (container.clientWidth || 800) / baseW;
+      viewerCanvas.setWidth(Math.floor(baseW * scale));
+      viewerCanvas.setHeight(Math.floor(baseH * scale));
+      viewerCanvas.setZoom(scale);
+      viewerCanvas.requestRenderAll();
+      decideLegendPlacement();
+    });
+
+    if (resizeHandlerViewer) window.removeEventListener('resize', resizeHandlerViewer);
+    resizeHandlerViewer = () => doResize();
+    window.addEventListener('resize', resizeHandlerViewer);
+  }
+
+// ============ setupCanvasDragDrop (REEMPLAZAR COMPLETA) =============
+function setupCanvasDragDrop() {
+  const canvasContainer = document.getElementById('rm-canvas-container');
+  if (!canvasContainer) return;
+
+  // Evita enlazar dos veces
+  if (canvasContainer.dataset.rmBound === '1') return;
+  canvasContainer.dataset.rmBound = '1';
+
+  canvasContainer.addEventListener('dragover', e => e.preventDefault());
+
+  canvasContainer.addEventListener('drop', e => {
+    e.preventDefault();
+    if (!canvas) return;
+
+    const src  = e.dataTransfer.getData('url');
+    const name = e.dataTransfer.getData('name');
+    if (!src) return;
+
+    const p = canvas.getPointer(e);
+
+    fabric.Image.fromURL(src, img => {
+      // === Escala base: icono ≈ 4% del ancho del fondo, en coordenadas base ===
+      const baseW = canvas.__baseW || (canvas.backgroundImage?.width) || null;
+      let baseScale = defaultIconScale * DROP_ICON_SCALE_FACTOR; // fallback por si no hay fondo
+
+      if (baseW && img.width) {
+        const desiredPct = 0.04;                 // 4% del ancho del fondo
+        baseScale = (baseW * desiredPct) / img.width;
+      }
+
+      // === Aplica el "zoom" acumulado de íconos ===
+      const ICON_BASE = (typeof DEFAULT_ICON_SCALE_BASE !== 'undefined') ? DEFAULT_ICON_SCALE_BASE : 0.15;
+      const iconZoomFactor = ICON_BASE > 0 ? (defaultIconScale / ICON_BASE) : 1;
+      const finalScale = baseScale * iconZoomFactor;
+      // =================================================
+
+      img.set({ left: p.x, top: p.y, scaleX: finalScale, scaleY: finalScale });
+      canvas.add(img);
+
+      // Solo para leyenda/UI (mantén src tal cual lo usas en tu sistema)
+      currentMapIcons.push({
+        src,
+        name: name || (iconos.find(i => i.img === src)?.nombre) || 'Ícono',
+        x: p.x, y: p.y, scale: finalScale
+      });
+
+      updateLegend();
+    }, { crossOrigin: 'anonymous' });
+  });
+}
+
+
+  // Background handling
+  function setBackgroundWithZoom(bg, targetCanvas = canvas) {
+    const container = (targetCanvas === canvas) 
+      ? document.getElementById('rm-canvas-container') 
+      : document.querySelector('#rm-viewer-container .viewer-canvas-wrap');
+    const baseW = bg.width, baseH = bg.height;
+    targetCanvas.__baseW = baseW;
+    targetCanvas.__baseH = baseH;
+    const scale = (container.clientWidth || 800) / baseW;
+    targetCanvas.setWidth(Math.floor(baseW * scale));
+    targetCanvas.setHeight(Math.floor(baseH * scale));
+    targetCanvas.setZoom(scale);
+    bg.set({ left: baseW/2, top: baseH/2, originX: 'center', originY: 'center', scaleX: 1, scaleY: 1 });
+    targetCanvas.setBackgroundImage(bg, () => {
+      targetCanvas.requestRenderAll();
+      if (targetCanvas === viewerCanvas) decideLegendPlacement();
+    });
+  }
+
+  // Skeleton loading
+  function addSkeletons(n = 6) {
+    const row = document.getElementById('rm-cardsRow');
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < n; i++) {
+      const c = document.createElement('div');
+      c.className = 'col px-2';
+      c.innerHTML = `<div class="skel"></div>`;
+      frag.appendChild(c);
+    }
+    row.appendChild(frag);
+  }
+
+  // Type handling
+  function tipoFromSrc(src) {
+    const meta = iconos.find(i => i.img === src);
+    return meta?.tipo || null;
+  }
+
+  function typeCountsFromIconList(iconList) {
+    const counts = { Preventivo: 0, Informativo: 0, Restrictivo: 0, Obligatorio: 0 };
+    (iconList || []).forEach(i => {
+      const raw = i?.src || '';
+      const type = tipoFromSrc(raw) || tipoFromSrc(getUrl(raw));
+      if (type && counts.hasOwnProperty(type)) counts[type]++;
+    });
+    return Object.entries(counts).filter(([, c]) => c > 0).map(([t, c]) => ({ tipo: t, count: c }));
+  }
+
+  function badgesHTMLForCounts(counts) {
+    if (!counts || !counts.length) return '';
+    counts.sort((a, b) => a.tipo.localeCompare(b.tipo));
+    return counts.map(c => {
+      const meta = TYPE_META[c.tipo] || {};
+      const cls = meta.cls || '';
+      const short = c.tipo[0];
+      return `<div class="type-badge ${cls}" title="${c.tipo}">${short}:${c.count}</div>`;
+    }).join('');
+  }
+
+  // Gallery rendering
+  function renderMapsBatch(items) {
+    const row = document.getElementById('rm-cardsRow');
+    const frag = document.createDocumentFragment();
+    items.forEach(m => {
+      const col = document.createElement('div');
+      col.className = 'col';
+      const fechaTxt = formatDate(m.fecha);
+      const src = getUrl(m.fondo);
+      const counts = iconos.length ? typeCountsFromIconList(m.iconos) : [];
+      col.innerHTML = `
+        <div class="tiktok-card" data-id="${m.id}">
+          <img src="${src}" alt="${m.titulo}" decoding="async" loading="lazy" referrerpolicy="no-referrer">
+          <div class="type-badges">${badgesHTMLForCounts(counts)}</div>
+          <div class="overlay-buttons">
+            <button onclick="RiskMaps.editarMapaProtegido('${m.id}')" title="Editar"><i class="fas fa-edit"></i></button>
+            <button onclick="RiskMaps.verMapa('${m.id}')" title="Ver"><i class="fas fa-eye"></i></button>
+            <button onclick="RiskMaps.eliminarMapa('${m.id}')" title="Eliminar"><i class="fas fa-trash"></i></button>
+          </div>
+          <div class="map-title-overlay">
+            <div>${m.titulo || 'Mapa'}</div>
+            <div class="map-meta"><i class="fa-solid fa-user me-1"></i>${(m.autor || '—')} • <i class="far fa-clock ms-2 me-1"></i>${fechaTxt || ''}</div>
+          </div>
+        </div>`;
+      frag.appendChild(col);
+    });
+    row.appendChild(frag);
+  }
+
+  function refreshAllCardBadges() {
+    if (!iconos || !iconos.length) return;
+    const cards = document.querySelectorAll('#rm-cardsRow .tiktok-card');
+    cards.forEach(card => {
+      const id = card.getAttribute('data-id');
+      const m = mapas.find(x => x.id === id);
+      if (!m) return;
+      const counts = typeCountsFromIconList(m.iconos);
+      const holder = card.querySelector('.type-badges');
+      if (holder) holder.innerHTML = badgesHTMLForCounts(counts);
+    });
+  }
+
+  // Cache functions
+  function getMapsFirstPageFromCache(query) {
+    try {
+      const k = MAPS_CACHE_PREFIX + (query || '');
+      const raw = sessionStorage.getItem(k);
+      if (!raw) return null;
+      const { ts, data } = JSON.parse(raw);
+      if (Date.now() - ts > MAPS_CACHE_TTL) {
+        sessionStorage.removeItem(k);
+        return null;
+      }
+      return data;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function setMapsFirstPageCache(query, payload) {
+    try {
+      const k = MAPS_CACHE_PREFIX + (query || '');
+      sessionStorage.setItem(k, JSON.stringify({ ts: Date.now(), data: payload }));
+    } catch (e) {}
+  }
+
+  // Gallery functions
+  function resetAndLoadGallery(term = "") {
+    mapsQuery = term.trim();
+    mapsOffset = 0;
+    mapsTotal = 0;
+    mapsDone = false;
+    mapas = [];
+    const row = document.getElementById('rm-cardsRow');
+    row.innerHTML = '';
+    addSkeletons(8);
+    
+    const cached = getMapsFirstPageFromCache(mapsQuery);
+    if (cached) {
+      const rowEl = document.getElementById('rm-cardsRow');
+      rowEl.querySelectorAll('.skel').forEach(n => n.parentElement.remove());
+      mapas = cached.items.slice();
+      mapsTotal = cached.total || mapas.length;
+      renderMapsBatch(mapas);
+      refreshAllCardBadges();
+      mapsOffset = mapas.length;
+      mapsDone = mapsOffset >= mapsTotal;
+      fetchNextPage();
+    } else {
+      fetchNextPage(true);
+    }
+  }
+
+  function fetchNextPage(isFirst = false) {
+    if (mapsLoading || mapsDone) return;
+    mapsLoading = true;
+    
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run.withSuccessHandler(res => {
+        const row = document.getElementById('rm-cardsRow');
+        row.querySelectorAll('.skel').forEach(n => n.parentElement.remove());
+        const items = res?.items || [];
+        mapsTotal = +res?.total || 0;
+        mapas = mapas.concat(items);
+        renderMapsBatch(items);
+        refreshAllCardBadges();
+        if (isFirst) setMapsFirstPageCache(mapsQuery, { items, total: mapsTotal });
+        mapsOffset += items.length;
+        if (mapsOffset >= mapsTotal || items.length === 0) mapsDone = true;
+        mapsLoading = false;
+      }).getMapasPage(mapsQuery, mapsOffset, MAPS_LIMIT);
+    } else {
+      // Fallback para desarrollo/testing
+      console.warn('Google Apps Script no disponible');
+      mapsLoading = false;
+    }
+  }
+
+  function setupInfiniteScroll() {
+    const sentinel = document.getElementById('rm-scrollSentinel');
+    if (ioScroll) ioScroll.disconnect();
+    ioScroll = new IntersectionObserver((entries) => {
+      entries.forEach(ent => {
+        if (ent.isIntersecting) {
+          fetchNextPage();
+        }
+      });
+    }, { rootMargin: '600px' });
+    ioScroll.observe(sentinel);
+    
+    const input = document.getElementById('rm-searchMaps');
+    if (input) {
+      input.addEventListener('input', debouncemapa(e => {
+        resetAndLoadGallery(e.target.value);
+      }, 350));
+    }
+  }
+
+  // Legend functions
+function updateLegend() {
+  const side = document.getElementById('rm-legend-side');
+  const sideContent = document.getElementById('rm-legend-content');
+  const bottom = document.getElementById('rm-legend-bottom');
+
+  sideContent.innerHTML = '';
+  bottom.innerHTML = '';
+
+  // 1) Conteo por ícono (src)
+  const counts = currentMapIcons.reduce((acc, it) => {
+    if (!it?.src) return acc;
+    acc[it.src] = (acc[it.src] || 0) + 1;
+    return acc;
+  }, {});
+
+  // 2) Orden de grupos fijo
+  const GROUP_ORDER = ['Preventivo', 'Informativo', 'Restrictivo', 'Obligatorio'];
+  const groupIndex = (t) => {
+    const i = GROUP_ORDER.indexOf(t);
+    return i === -1 ? 999 : i; // sin tipo al final
+  };
+
+  // 3) Construcción de ítems + tipo y ordenado por grupo y nombre
+  const items = Object.entries(counts).map(([src, count]) => {
+    const meta = iconos.find(i => i.img === src);
+    const name = meta?.nombre || 'Ícono';
+    const url  = src;
+    const tipo = meta?.tipo || tipoFromSrc(src) || 'Otros';
+    return { name, url, count, tipo };
+  })
+  .filter(it => !/logo/i.test(it.name))
+  .sort((a, b) => {
+    const gi = groupIndex(a.tipo) - groupIndex(b.tipo);
+    return gi !== 0 ? gi : a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
+  });
+
+  // 4) Render
+  items.forEach(it => {
+    const el = document.createElement('div');
+    el.className = 'legend-item';
+    el.setAttribute('data-tipo', it.tipo); // útil si quieres estilos por grupo
+    el.innerHTML = `<img src="${it.url}" alt="${it.name}"><span>${it.name} <strong>(${it.count})</strong></span>`;
+    sideContent.appendChild(el);
+  });
+}
+
+  function decideLegendPlacement() {
+    const side = document.getElementById('rm-legend-side');
+    const sideContent = document.getElementById('rm-legend-content');
+    const bottom = document.getElementById('rm-legend-bottom');
+
+    if (!viewerCanvas || !viewerCanvas.__baseH) return;
+
+    const sideHeight = side.scrollHeight;
+    const canvasHeight = document.getElementById('rm-viewer-canvas').clientHeight || 0;
+    const mustBottom = sideHeight > canvasHeight;
+
+    if (mustBottom) {
+      bottom.classList.remove('d-none');
+      const items = Array.from(sideContent.querySelectorAll('.legend-item')).map(div => {
+        const img = div.querySelector('img')?.src || '';
+        const text = div.querySelector('span')?.textContent || '';
+        const m = text.match(/\((\d+)\)\s*$/);
+        const count = m ? m[1] : '';
+        const name = text.replace(/\s*\(\d+\)\s*$/, '');
+        return { img, name, count };
+      });
+
+      sideContent.innerHTML = '';
+      bottom.innerHTML = '';
+      const frag = document.createDocumentFragment();
+      items.forEach(it => {
+        const chip = document.createElement('div');
+        chip.className = 'legend-chip';
+        chip.innerHTML = `<img src="${it.img}"><span>${it.name} <strong>(${it.count})</strong></span>`;
+        frag.appendChild(chip);
+      });
+      bottom.appendChild(frag);
+      side.style.display = 'none';
+      fitViewerCanvasToContainer();
+    } else {
+      bottom.classList.add('d-none');
+      side.style.display = '';
+      fitViewerCanvasToContainer();
+    }
+  }
+
+  function fitViewerCanvasToContainer() {
+    if (!viewerCanvas || !viewerCanvas.__baseW || !viewerCanvas.__baseH) return;
+    const container = document.querySelector('#rm-viewer-container .viewer-canvas-wrap');
+    const baseW = viewerCanvas.__baseW, baseH = viewerCanvas.__baseH;
+    const scale = (container.clientWidth || 800) / baseW;
+    viewerCanvas.setWidth(Math.floor(baseW * scale));
+    viewerCanvas.setHeight(Math.floor(baseH * scale));
+    viewerCanvas.setZoom(scale);
+    viewerCanvas.requestRenderAll();
+  }
+
+  // Main functions
+  function nuevoMapa() {
+    currentId = null;
+    currentMapIcons = [];
+    document.getElementById('rm-tituloInput').value = '';
+    document.getElementById('rm-autorInput').value = '';
+    document.getElementById('rm-passInput').value = '';
+    document.getElementById('rm-fondoFile').value = '';
+    showView('editor');
+    setTimeout(() => {
+      initCanvas();
+      canvas.clear();
+    }, 100);
+  }
+
+  function editarMapaProtegido(id) {
+    const map = mapas.find(m => m.id === id);
+    if (!map) return;
+
+    const savedPass = map.pass || map.password || map.contrasena || '';
+    if (!savedPass) {
+      if (typeof Swal !== 'undefined') {
+        Swal.fire('Protegido', 'Este mapa no tiene contraseña configurada. No se puede editar.', 'info');
+      }
+      return;
+    }
+
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({
+        title: 'Contraseña requerida',
+        input: 'password',
+        inputPlaceholder: 'Ingresa la contraseña',
+        inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
+        showCancelButton: true,
+        confirmButtonText: 'Entrar',
+        cancelButtonText: 'Cancelar'
+      }).then(res => {
+        if (!res.isConfirmed) return;
+        const pwd = res.value || '';
+        if (pwd !== savedPass) {
+          Swal.fire('Incorrecta', 'Contraseña incorrecta', 'error');
+          return;
+        }
+        editarMapa(id);
+      });
+    }
+  }
+
+  function editarMapa(id) {
+  const map = mapas.find(m => m.id === id);
+  if (!map) return;
+
+  currentId = id;
+  currentMapIcons = map.iconos || [];
+
+  // Rellenar formulario
+  document.getElementById('rm-tituloInput').value = map.titulo || '';
+  document.getElementById('rm-autorInput').value  = map.autor  || '';
+  document.getElementById('rm-passInput').value   = '';
+  document.getElementById('rm-fondoFile').value   = '';
+
+  showView('editor');
+
+  setTimeout(() => {
+    initCanvas();
+    canvas.clear();
+
+    const afterBackgroundReady = () => {
+      // Normalización de posiciones/escala respecto al tamaño base del fondo
+      const factor = rm_getNormalizeFactor(map, canvas);
+
+      // Íconos
+      if (Array.isArray(map.iconos)) {
+        currentMapIcons = [];
+        map.iconos.forEach(i => {
+          const raw = i?.src || '';
+          const src = (raw.startsWith && raw.startsWith('http')) ? raw : getUrl(raw);
+          if (!src) return;
+
+          fabric.Image.fromURL(src, img => {
+            const nx = (i.x ?? 0) * factor;
+            const ny = (i.y ?? 0) * factor;
+            const ns = (i.scale ?? defaultIconScale) * factor;
+
+            img.set({ left: nx, top: ny, angle: i.angle || 0, scaleX: ns, scaleY: ns });
+            canvas.add(img);
+
+            currentMapIcons.push({ src, x: nx, y: ny, scale: ns });
+            updateLegend();
+          }, { crossOrigin: 'anonymous' });
+        });
+      } else {
+        currentMapIcons = [];
+      }
+
+      // Textos (editable) — con contorno + sombra para que no se pierdan en fondos blancos
+      if (Array.isArray(map.textos)) {
+        map.textos.forEach(t => {
+          const content = String(t?.txt ?? t?.text ?? '').trim();
+          if (!content) return;
+
+          const nx = (t.x ?? 0) * factor;
+          const ny = (t.y ?? 0) * factor;
+          const ns = (t.scale ?? 1) * factor;
+
+          const txt = new fabric.IText(content, {
+            left: nx,
+            top: ny,
+            angle: t.angle || 0,
+            fontSize: t.fontSize || 16,
+            fill: 'white',
+            stroke: 'black',
+            strokeWidth: 2,
+            paintFirst: 'stroke',
+            shadow: '1px 1px 2px rgba(0,0,0,0.7)',
+            objectCaching: true
+          });
+
+          txt.set({ scaleX: ns, scaleY: ns });
+          canvas.add(txt);
+        });
+      }
+    };
+
+    if (map.fondo) {
+      fabric.Image.fromURL(
+        getUrl(map.fondo),
+        bg => { setBackgroundWithZoom(bg, canvas); afterBackgroundReady(); },
+        { crossOrigin: 'anonymous' }
+      );
+    } else {
+      // Sin fondo: define base para evitar NaN y trabaja 1:1
+      canvas.__baseW = 800;
+      canvas.__baseH = 600;
+      canvas.setWidth(800);
+      canvas.setHeight(600);
+      canvas.setZoom(1);
+      afterBackgroundReady();
+    }
+  }, 100);
+}
+
+
+function verMapa(id) {
+  const map = mapas.find(m => m.id === id);
+  if (!map) return;
+
+  const titulo = (map.titulo || 'Mapa').slice(0, 80);
+  document.getElementById('rm-viewer-titulo').innerHTML = `<i class="fas fa-eye me-2"></i>${titulo}`;
+  const autorTxt = map.autor ? `Autor: ${map.autor}` : '';
+  const fechaTxt = formatDate(map.fecha);
+  document.getElementById('rm-viewer-autor').textContent = autorTxt;
+  document.getElementById('rm-viewer-fecha').textContent = fechaTxt ? `Actualizado: ${fechaTxt}` : '';
+
+  showView('viewer');
+  currentMapIcons = Array.isArray(map.iconos) ? map.iconos.slice() : [];
+
+  setTimeout(() => {
+    if (viewerCanvas) viewerCanvas.dispose();
+    viewerCanvas = new fabric.Canvas('rm-viewer-canvas');
+    viewerCanvas.selection = false;
+    viewerCanvas.defaultCursor = 'default';
+
+    const afterBackgroundReady = () => {
+      const factor = rm_getNormalizeFactor(map, viewerCanvas);
+
+      if (Array.isArray(map.iconos)) {
+        map.iconos.forEach(i => {
+          const raw = i?.src || '';
+          const src = (raw.startsWith && raw.startsWith('http')) ? raw : getUrl(raw);
+          if (!src) return;
+
+          fabric.Image.fromURL(src, img => {
+            const nx = (i.x ?? 0) * factor;
+            const ny = (i.y ?? 0) * factor;
+            const ns = (i.scale ?? defaultIconScale) * factor;
+            img.set({
+              left: nx, top: ny, angle: i.angle || 0,
+              scaleX: ns, scaleY: ns,
+              selectable: false, evented: false
+            });
+            viewerCanvas.add(img);
+          }, { crossOrigin: 'anonymous' });
+        });
+      }
+
+      if (Array.isArray(map.textos)) {
+        map.textos.forEach(t => {
+          const content = String(t?.txt ?? t?.text ?? '').trim();
+          if (!content) return;
+
+          const nx = (t.x ?? 0) * factor;
+          const ny = (t.y ?? 0) * factor;
+          const ns = (t.scale ?? 1) * factor;
+
+          const txt = new fabric.Text(content, {
+  left: nx, top: ny,
+  angle: t.angle || 0,
+  fontSize: t.fontSize || 16,
+  fill: 'white',
+  stroke: 'black',
+  strokeWidth: 2,
+  paintFirst: 'stroke',
+  shadow: '1px 1px 2px rgba(0,0,0,0.7)',
+  selectable: false, evented: false
+});
+
+          txt.set({ scaleX: ns, scaleY: ns });
+          viewerCanvas.add(txt);
+        });
+      }
+
+      const counts = typeCountsFromIconList(map.iconos);
+      document.getElementById('rm-typeBadgesViewer').innerHTML = badgesHTMLForCounts(counts);
+
+      updateLegend();
+      decideLegendPlacement();
+    };
+
+    if (map.fondo) {
+      fabric.Image.fromURL(
+        getUrl(map.fondo),
+        bg => { 
+          viewerCanvas.__baseW = bg.width;
+          viewerCanvas.__baseH = bg.height;
+          setBackgroundWithZoom(bg, viewerCanvas);
+          fitViewerCanvasToContainer();
+          afterBackgroundReady();
+        },
+        { crossOrigin: 'anonymous' }
+      );
+    } else {
+      viewerCanvas.setWidth(800);
+      viewerCanvas.setHeight(600);
+      viewerCanvas.__baseW = 800; viewerCanvas.__baseH = 600;
+      afterBackgroundReady();
+    }
+  }, 100);
+}
+
+
+  function mostrarFondoTemporal(file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      fabric.Image.fromURL(e.target.result, bg => setBackgroundWithZoom(bg, canvas));
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Save function
+  async function guardarMapa() {
+    const btn = document.getElementById('rm-btnGuardar');
+    const titulo = document.getElementById('rm-tituloInput').value.trim();
+    const autor = document.getElementById('rm-autorInput').value.trim();
+    const pass = document.getElementById('rm-passInput').value.trim();
+
+    if (!titulo) {
+      if (typeof Swal !== 'undefined') {
+        Swal.fire('Falta título', 'Ingresa un título', 'warning');
+      }
+      return;
+    }
+    if (!currentId && pass.length < 4) {
+      if (typeof Swal !== 'undefined') {
+        Swal.fire('Contraseña requerida', 'Para crear un mapa nuevo, define una contraseña (mín. 4 caracteres).', 'info');
+      }
+      return;
+    }
+
+    const id = currentId || Math.floor(10000000 + Math.random() * 90000000).toString();
+    const file = document.getElementById('rm-fondoFile').files[0];
+
+    const textos = [], iconsData = [];
+    canvas.getObjects().forEach(o => {
+      if (o.type === 'image' && o !== canvas.backgroundImage) {
+        iconsData.push({ src: o.getSrc(), x: o.left, y: o.top, angle: o.angle, scale: o.scaleX });
+      }
+      if (o.type === 'i-text') {
+        const content = String(o.text ?? '').trim();
+        if (!content) return;
+        textos.push({ txt: content, x: o.left, y: o.top, angle: o.angle, fontSize: o.fontSize, scale: o.scaleX });
+      }
+    });
+    currentMapIcons = iconsData;
+
+    let fondoWidth = null, fondoHeight = null, fondoScale = null;
+    if (canvas.backgroundImage) {
+      fondoWidth = canvas.backgroundImage.width;
+      fondoHeight = canvas.backgroundImage.height;
+      fondoScale = 1;
+    }
+    const fondoExistente = canvas.backgroundImage && canvas.backgroundImage.getSrc();
+
+    const doSave = (fondoIdOrUrl) => {
+      setBtnLoading(btn, 'Guardando...');
+      const payload = { id, titulo, autor, fondo: fondoIdOrUrl, textos, iconos: iconsData, fondoWidth, fondoHeight, fondoScale };
+      if (pass) payload.pass = pass;
+      
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(() => {
+          clearBtnLoading(btn);
+          try {
+            sessionStorage.removeItem(MAPS_CACHE_PREFIX + mapsQuery);
+          } catch (e) {}
+          if (typeof Swal !== 'undefined') {
+            Swal.fire('Guardado', 'Mapa guardado correctamente', 'success');
+          }
+          showView('galeria');
+          resetAndLoadGallery(mapsQuery);
+        }).saveMapa(payload);
+      }
+    };
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        setBtnLoading(btn, 'Subiendo fondo...');
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+          google.script.run
+            .withSuccessHandler(fondoId => {
+              clearBtnLoading(btn);
+              doSave(fondoId);
+            })
+            .withFailureHandler(() => {
+              clearBtnLoading(btn);
+              if (typeof Swal !== 'undefined') {
+                Swal.fire('Error', 'No se pudo subir el fondo', 'error');
+              }
+            })
+            .subirFondo(file.name, e.target.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    } else if (fondoExistente) {
+      let fondoParaGuardar = fondoExistente;
+      if (String(fondoExistente).startsWith('data:')) {
+        const prev = mapas.find(m => m.id === id);
+        fondoParaGuardar = prev?.fondo || '';
+      }
+      doSave(fondoParaGuardar);
+    } else {
+      if (typeof Swal !== 'undefined') {
+        Swal.fire('Falta fondo', 'Debes subir una imagen de fondo', 'info');
+      }
+    }
+  }
+
+  function limpiarEditor() {
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({
+        title: '¿Limpiar el editor?',
+        text: 'Se perderán los cambios no guardados.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, limpiar',
+        cancelButtonText: 'Cancelar'
+      }).then(res => {
+        if (res.isConfirmed) {
+          document.getElementById('rm-tituloInput').value = '';
+          document.getElementById('rm-autorInput').value = '';
+          document.getElementById('rm-passInput').value = '';
+          document.getElementById('rm-fondoFile').value = '';
+          canvas.clear();
+          currentId = null;
+          currentMapIcons = [];
+        }
+      });
+    }
+  }
+
+// Reemplazar COMPLETA
+function eliminarMapa(id) {
+  const map = mapas.find(m => m.id === id);
+  if (!map) return;
+
+  const savedPass = map.pass || map.password || map.contrasena || '';
+
+  const runDelete = () => {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run.withSuccessHandler(() => {
+        try { sessionStorage.removeItem(MAPS_CACHE_PREFIX + mapsQuery); } catch (e) {}
+        if (typeof Swal !== 'undefined') {
+          Swal.fire('Eliminado', 'El mapa fue eliminado', 'success');
+        }
+        resetAndLoadGallery(mapsQuery);
+      }).deleteMapa(id); // 👈 si luego implementas validación server-side, cámbialo a deleteMapa(id, pass)
+    }
+  };
+
+  // Caso 1: tiene clave -> pedirla en un único diálogo
+  if (savedPass) {
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({
+        title: 'Eliminar mapa',
+        html: '<div class="mb-2">Esta acción no se puede deshacer.</div><div>Ingresa la contraseña de edición para continuar.</div>',
+        icon: 'warning',
+        input: 'password',
+        inputPlaceholder: 'Contraseña de edición',
+        inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
+        showCancelButton: true,
+        confirmButtonText: 'Eliminar',
+        cancelButtonText: 'Cancelar',
+        preConfirm: (pwd) => {
+          if (!pwd) {
+            Swal.showValidationMessage('Ingresa la contraseña');
+            return false;
+          }
+          if (pwd !== savedPass) {
+            Swal.showValidationMessage('Contraseña incorrecta');
+            return false;
+          }
+          return pwd;
+        }
+      }).then(res => {
+        if (!res.isConfirmed) return;
+        // Si quieres validar también en el servidor, aquí podrías llamar deleteMapa(id, res.value)
+        runDelete();
+      });
+    } else {
+      runDelete();
+    }
+    return;
+  }
+
+  // Caso 2: sin clave -> confirmación simple
+  if (typeof Swal !== 'undefined') {
+    Swal.fire({
+      title: '¿Eliminar este mapa?',
+      text: 'Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(res => {
+      if (res.isConfirmed) runDelete();
+    });
+  } else {
+    runDelete();
+  }
+}
+
+  // Export functions
+  function loadImage(url) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+function getLegendCounts() {
+  const counts = currentMapIcons.reduce((acc, it) => {
+    if (!it?.src) return acc;
+    acc[it.src] = (acc[it.src] || 0) + 1;
+    return acc;
+  }, {});
+
+  const items = Object.entries(counts).map(([src, count]) => {
+    const meta = iconos.find(i => i.img === src);
+    const name = meta?.nombre || 'Ícono';
+    const url  = src;
+    const tipo = meta?.tipo || tipoFromSrc(src) || 'Otros';
+    return { name, url, count, tipo };
+  })
+  .filter(it => !/logo/i.test(it.name))
+  .sort((a, b) => {
+    const gi = groupIndex(a.tipo) - groupIndex(b.tipo);
+    return gi !== 0 ? gi : a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
+  });
+
+  return items;
+}
+
+  async function buildCompositeCanvas(mult = 2) {
+    const mapCanvas = viewerCanvas.toCanvasElement(mult);
+    const mapW = mapCanvas.width, mapH = mapCanvas.height;
+
+    const titulo = (document.getElementById('rm-viewer-titulo')?.textContent || 'Mapa').trim();
+    const autor = (document.getElementById('rm-viewer-autor')?.textContent || '').trim();
+    const fecha = (document.getElementById('rm-viewer-fecha')?.textContent || '').trim();
+    const legendItems = getLegendCounts();
+
+    const approxItemH = 36 * mult;
+    const needBottom = (legendItems.length * approxItemH) > (mapH - 20 * mult);
+
+    const MARGIN = 24 * mult;
+    const TITLE_H = 70 * mult;
+    const LEG_SIDE_W = needBottom ? 0 : (280 * mult);
+
+    const CHIP_W = 220 * mult;
+    const cols = Math.max(1, Math.floor(mapW / CHIP_W));
+    const rows = needBottom ? Math.ceil(legendItems.length / cols) : 0;
+    const LEG_BOTTOM_H = needBottom ? (rows * (32 * mult) + 24 * mult) : 0;
+
+    const outW = MARGIN + mapW + (LEG_SIDE_W ? (MARGIN + LEG_SIDE_W) : 0) + MARGIN;
+    const outH = MARGIN + TITLE_H + mapH + (LEG_BOTTOM_H ? (MARGIN + LEG_BOTTOM_H) : 0) + MARGIN;
+
+    const out = document.createElement('canvas');
+    out.width = outW;
+    out.height = outH;
+    const ctx = out.getContext('2d');
+
+    // Fondo
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, outW, outH);
+
+    // Título + autor + fecha
+    ctx.fillStyle = '#111827';
+    ctx.font = `${18 * mult}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
+    ctx.fillText(titulo, MARGIN, MARGIN + 20 * mult);
+    if (autor) {
+      ctx.fillStyle = '#374151';
+      ctx.font = `${12 * mult}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
+      ctx.fillText(autor, MARGIN, MARGIN + 20 * mult + 18 * mult);
+    }
+    if (fecha) {
+      ctx.fillStyle = '#6b7280';
+      ctx.font = `${12 * mult}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
+      ctx.fillText(fecha, MARGIN, MARGIN + 20 * mult + 34 * mult);
+    }
+
+    // Mapa
+    ctx.drawImage(mapCanvas, MARGIN, MARGIN + TITLE_H);
+
+    if (!needBottom) {
+      // Leyenda lateral
+      const startX = MARGIN + mapW + MARGIN;
+      const startY = MARGIN + TITLE_H;
+      ctx.fillStyle = '#111827';
+      ctx.font = `${14 * mult}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
+      ctx.fillText('Leyenda', startX, startY + 14 * mult);
+      let y = startY + 48 * mult;
+      for (const it of legendItems) {
+        try {
+          const img = await loadImage(it.url);
+          ctx.drawImage(img, startX, y - 24 * mult, 24 * mult, 24 * mult);
+        } catch (e) {
+          ctx.fillStyle = '#e5e7eb';
+          ctx.fillRect(startX, y - 24 * mult, 24 * mult, 24 * mult);
+        }
+        ctx.fillStyle = '#374151';
+        ctx.font = `${12 * mult}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
+        ctx.fillText(`${it.name} (${it.count})`, startX + 30 * mult, y);
+        y += 32 * mult;
+      }
+    } else {
+      // Leyenda abajo en grid
+      const gridX = MARGIN;
+      const gridY = MARGIN + TITLE_H + mapH + MARGIN;
+      for (let i = 0; i < legendItems.length; i++) {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const cellW = Math.floor(mapW / cols);
+        const x = gridX + col * cellW;
+        const y = gridY + row * (32 * mult);
+        try {
+          const img = await loadImage(legendItems[i].url);
+          ctx.drawImage(img, x, y - 24 * mult, 24 * mult, 24 * mult);
+        } catch (e) {
+          ctx.fillStyle = '#e5e7eb';
+          ctx.fillRect(x, y - 24 * mult, 24 * mult, 24 * mult);
+        }
+        ctx.fillStyle = '#374151';
+        ctx.font = `${12 * mult}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
+        ctx.fillText(`${legendItems[i].name} (${legendItems[i].count})`, x + 30 * mult, y);
+      }
+    }
+    return out;
+  }
+
+  async function exportarMapa(formato = 'png') {
+    if (!viewerCanvas) {
+      if (typeof Swal !== 'undefined') {
+        Swal.fire('Sin mapa', 'No hay mapa para exportar', 'info');
+      }
+      return;
+    }
+    const btn = document.getElementById('rm-btnExport');
+    try {
+      setBtnLoading(btn, 'Preparando...');
+      const composite = await buildCompositeCanvas(2);
+      const fileBase = `mapa-${Date.now()}`;
+
+      if (formato === 'png') {
+        const dataURL = composite.toDataURL('image/png');
+        descargarDataURL(dataURL, `${fileBase}.png`);
+        clearBtnLoading(btn);
+        return;
+      }
+      if (formato === 'jpg' || formato === 'jpeg') {
+        const dataURL = composite.toDataURL('image/jpeg', 0.92);
+        descargarDataURL(dataURL, `${fileBase}.jpg`);
+        clearBtnLoading(btn);
+        return;
+      }
+      if (formato === 'pdf') {
+        if (typeof window.jspdf !== 'undefined') {
+          const { jsPDF } = window.jspdf;
+          const imgW = composite.width, imgH = composite.height;
+          const imgData = composite.toDataURL('image/png');
+          const orientation = imgW >= imgH ? 'landscape' : 'portrait';
+          const pdf = new jsPDF({ unit: 'pt', format: 'a4', orientation });
+          const pageW = pdf.internal.pageSize.getWidth(), pageH = pdf.internal.pageSize.getHeight();
+          const ratio = Math.min(pageW / imgW, pageH / imgH);
+          const renderW = imgW * ratio, renderH = imgH * ratio;
+          const x = (pageW - renderW) / 2, y = (pageH - renderH) / 2;
+          pdf.addImage(imgData, 'PNG', x, y, renderW, renderH);
+          pdf.save(`${fileBase}.pdf`);
+        }
+        clearBtnLoading(btn);
+        return;
+      }
+      clearBtnLoading(btn);
+      if (typeof Swal !== 'undefined') {
+        Swal.fire('Formato no soportado', '', 'warning');
+      }
+    } catch (err) {
+      console.error('Error exportando:', err);
+      clearBtnLoading(btn);
+      if (typeof Swal !== 'undefined') {
+        Swal.fire('Error', 'No se pudo exportar. Revisa permisos públicos de imágenes (Drive) y CORS.', 'error');
+      }
+    }
+  }
+
+  function descargarDataURL(dataURL, filename) {
+    const link = document.createElement('a');
+    link.href = dataURL;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  // Zoom functions
+// ===================== zoomIconos (REEMPLAZAR COMPLETA) =====================
+function zoomIconos(factor) {
+  // Mantiene estado de zoom acumulado (se usa para nuevos iconos)
+  defaultIconScale *= factor;
+
+  canvas.getObjects().forEach(o => {
+    if (o.type === 'image' && o !== canvas.backgroundImage) {
+      o.scaleX *= factor;
+      o.scaleY *= factor;
+    }
+  });
+  canvas.requestRenderAll();
+}
+
+
+// ===================== zoomTextos (REEMPLAZAR COMPLETA) =====================
+function zoomTextos(factor) {
+  // Mantiene estado de zoom acumulado (se usa para nuevos textos)
+  defaultTextScale *= factor;
+
+  canvas.getObjects().forEach(o => {
+    if (o.type === 'i-text') {
+      o.scaleX *= factor;
+      o.scaleY *= factor;
+    }
+  });
+  canvas.requestRenderAll();
+}
+
+
+  // Icon modal functions
+  let iconosModalInstance = null;
+
+  function openIconosModal() {
+    if (!iconosModalInstance) {
+      iconosModalInstance = new bootstrap.Modal(document.getElementById('rm-iconosModal'));
+    }
+    cargarIconos(() => iconosModalInstance.show());
+  }
+
+  function renderIconosModal() {
+    const grid = document.getElementById('rm-iconosGrid');
+    grid.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    iconos.forEach(icon => {
+      const col = document.createElement('div');
+      col.className = 'col-12 col-sm-6 col-md-4';
+      col.innerHTML = `
+        <div class="icon-item">
+          <img src="${icon.img}" alt="${icon.nombre}">
+          <div class="flex-grow-1">
+            <div class="name">${icon.nombre}</div>
+            <div class="tipo">${icon.tipo || '—'}</div>
+          </div>
+          <button class="btn-del" data-name="${icon.nombre}" title="Eliminar"><i class="fas fa-trash"></i></button>
+        </div>`;
+      frag.appendChild(col);
+    });
+    grid.appendChild(frag);
+  }
+
+  function modalSubirIcono() {
+    const btn = document.getElementById('rm-btnSubirIcono');
+    const tipo = document.getElementById('rm-iconTypeInput').value.trim();
+    const nombre = document.getElementById('rm-iconNameInput').value.trim();
+    const file = document.getElementById('rm-iconFileInput').files[0];
+    if (!tipo || !nombre || !file) {
+      if (typeof Swal !== 'undefined') {
+        Swal.fire('Incompleto', 'Selecciona tipo, nombre e imagen.', 'info');
+      }
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setBtnLoading(btn, 'Subiendo...');
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(() => {
+          clearBtnLoading(btn);
+          document.getElementById('rm-iconTypeInput').value = '';
+          document.getElementById('rm-iconNameInput').value = '';
+          document.getElementById('rm-iconFileInput').value = '';
+          try {
+            localStorage.removeItem(ICONS_CACHE_KEY);
+          } catch (err) {}
+          cargarIconos();
+          if (typeof Swal !== 'undefined') {
+            Swal.fire('Listo', 'Ícono subido', 'success');
+          }
+        }).withFailureHandler(() => {
+          clearBtnLoading(btn);
+          if (typeof Swal !== 'undefined') {
+            Swal.fire('Error', 'No se pudo subir el ícono', 'error');
+          }
+        }).subirIcono(tipo, nombre, e.target.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Cache functions for icons
+  function readIconCache() {
+    try {
+      const raw = localStorage.getItem(ICONS_CACHE_KEY);
+      if (!raw) return null;
+      const { ts, data } = JSON.parse(raw);
+      if (Date.now() - ts > ICONS_CACHE_TTL) {
+        localStorage.removeItem(ICONS_CACHE_KEY);
+        return null;
+      }
+      return data;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeIconCache(data) {
+    try {
+      localStorage.setItem(ICONS_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+    } catch (e) {}
+  }
+
+  function renderIconsToSidebar() {
+    const bar = document.getElementById('rm-sidebar');
+    if (!bar) return;
+    bar.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    iconos.forEach(icon => {
+      const img = document.createElement('img');
+      img.src = icon.img;
+      img.draggable = true;
+      img.title = `${icon.nombre} (${icon.tipo || '—'})`;
+      img.ondragstart = (e) => {
+        e.dataTransfer.setData('url', img.src);
+        e.dataTransfer.setData('name', icon.nombre);
+      };
+      frag.appendChild(img);
+    });
+    bar.appendChild(frag);
+  }
+
+  function cargarIconos(cb) {
+    const cached = readIconCache();
+    if (cached) {
+      iconos = cached;
+      renderIconsToSidebar();
+      if (document.getElementById('rm-iconosGrid')) renderIconosModal();
+      refreshAllCardBadges();
+      if (typeof cb === 'function') cb();
+      
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(icons => {
+          if (!icons) return;
+          iconos = icons;
+          writeIconCache(icons);
+          renderIconsToSidebar();
+          if (document.getElementById('rm-iconosGrid')) renderIconosModal();
+          refreshAllCardBadges();
+        }).getIconos();
+      }
+      return;
+    }
+    
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run.withSuccessHandler(icons => {
+        iconos = icons || [];
+        writeIconCache(iconos);
+        renderIconsToSidebar();
+        if (document.getElementById('rm-iconosGrid')) renderIconosModal();
+        refreshAllCardBadges();
+        if (typeof cb === 'function') cb();
+      }).getIconos();
+    }
+  }
+
+  // Event listeners setup
+  function setupEventListeners() {
+    // Archivo de fondo
+    const fondoFile = document.getElementById('rm-fondoFile');
+    if (fondoFile) {
+      fondoFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file && canvas) mostrarFondoTemporal(file);
+      });
+    }
+
+    // Teclado
+    document.addEventListener('keydown', function (e) {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && canvas) {
+        const active = canvas.getActiveObject();
+        if (active && active.type === 'i-text' && active.isEditing) return;
+        if (active) {
+          canvas.remove(active);
+          canvas.requestRenderAll();
+        }
+      }
+    });
+
+    // Drop zone para iconos modal
+    const dz = document.getElementById('rm-dropIconZone');
+    if (dz) {
+      ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => {
+        e.preventDefault();
+        dz.classList.add('drag');
+      }));
+      ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => {
+        e.preventDefault();
+        dz.classList.remove('drag');
+      }));
+      dz.addEventListener('drop', e => {
+        const file = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (file) {
+          document.getElementById('rm-iconFileInput').files = e.dataTransfer.files;
+        }
+      });
+    }
+
+    // Grid iconos - eliminar
+    const iconosGrid = document.getElementById('rm-iconosGrid');
+    if (iconosGrid) {
+      iconosGrid.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-del');
+        if (!btn) return;
+        const name = btn.getAttribute('data-name');
+        if (typeof Swal !== 'undefined') {
+          Swal.fire({
+            title: `¿Eliminar ícono "${name}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Eliminar',
+            cancelButtonText: 'Cancelar'
+          }).then(res => {
+            if (!res.isConfirmed) return;
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+              google.script.run.withSuccessHandler(() => {
+                try {
+                  localStorage.removeItem(ICONS_CACHE_KEY);
+                } catch (err) {}
+                cargarIconos();
+                if (typeof Swal !== 'undefined') {
+                  Swal.fire('Listo', 'Ícono eliminado', 'success');
+                }
+              }).eliminarIconoPorNombre(name);
+            }
+          });
+        }
+      });
+    }
+  }
+
+  // Initialization
+  function init() {
+    if (isInitialized) return;
+    isInitialized = true;
+
+    // Setup event listeners
+    setupEventListeners();
+
+    // Initialize gallery
+    resetAndLoadGallery("");
+    setupInfiniteScroll();
+    cargarIconos();
+
+    // Show initial view
+    showView('galeria');
+  }
+
+  // Public API
+  return {
+    init,
+    showView,
+    nuevoMapa,
+    editarMapaProtegido,
+    verMapa,
+    guardarMapa,
+    limpiarEditor,
+    eliminarMapa,
+    exportarMapa,
+    zoomIconos,
+    zoomTextos,
+    openIconosModal,
+    modalSubirIcono
+  };
+})();
+// Auto-initialize when module is available (for integration)
+if (typeof window !== 'undefined') {
+  const ready = () => {
+    // da tiempo a que otros sistemas monten cosas
+    setTimeout(() => RiskMaps.init(), 100);
+    setupExportMenu();
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ready);
+  } else {
+    ready();
+  }
+}
+
+function setupExportMenu(){
+  const root = document.getElementById('riskmaps-module');
+  if (!root) return;
+
+  const exportBtn  = root.querySelector('#rm-btnExport');
+  const exportMenu = root.querySelector('#rm-exportMenu');
+  if (!exportBtn || !exportMenu) return;
+
+  // evita enlazar dos veces si se re-inicializa
+  if (exportBtn.dataset.rmBound === '1') return;
+  exportBtn.dataset.rmBound = '1';
+
+  // Abrir/cerrar menú
+  exportBtn.addEventListener('click', (e)=>{
+    e.preventDefault(); e.stopPropagation();
+    exportMenu.classList.toggle('open');
+  });
+
+  // Cerrar al hacer click fuera
+  document.addEventListener('click', (e)=>{
+    if (!exportMenu.contains(e.target) && e.target !== exportBtn){
+      exportMenu.classList.remove('open');
+    }
+  });
+
+  // Cerrar con Escape (opcional)
+  document.addEventListener('keydown', (e)=>{
+    if (e.key === 'Escape') exportMenu.classList.remove('open');
+  });
+
+  // Acciones de export
+  exportMenu.addEventListener('click', (e)=>{
+    const item = e.target.closest('.rm-item');
+    if (!item) return;
+    exportMenu.classList.remove('open');
+    RiskMaps.exportarMapa(item.dataset.format);
+  });
+}
+
+
+// ===== Normalización de coordenadas/escala entre fondos =====
+function rm_getNormalizeFactor(map, targetCanvas){
+  // currentBaseW lo pone setBackgroundWithZoom()
+  const currentBaseW = (targetCanvas && targetCanvas.__baseW) || null;
+  const savedBaseW   = (map && map.fondoWidth) || currentBaseW || null;
+  if (!currentBaseW || !savedBaseW || !isFinite(currentBaseW) || !isFinite(savedBaseW) || savedBaseW <= 0){
+    return 1;
+  }
+  return currentBaseW / savedBaseW;
+}
+
+</script>
+
+
+
+</body>
+</html>

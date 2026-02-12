@@ -1,0 +1,486 @@
+<!-- <link href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css" rel="stylesheet"> -->
+<link href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai&display=swap');
+
+* {
+  font-family: 'Inter', system-ui, sans-serif;
+  /* margin: 0;
+  padding: 0; */
+  box-sizing: border-box;
+}
+
+:root {
+  --main-bg-color: #0d6efd;
+  --main-text-color: #0d6efd;
+  --second-text-color: #2e89f7;
+  --second-bg-color: #d5d8dc;
+  --gray-border: #e5e7eb;
+  --hover-bg: #f1f3f5;
+  --white: #ffffff;
+}
+
+/* Pantalla de carga */
+#loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  background-color: rgba(255, 255, 255, 0.9);
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Enlaces */
+a {
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: var(--main-text-color);
+}
+
+/* Clases auxiliares */
+.primary-text {
+  color: var(--main-text-color);
+}
+
+.second-text {
+  color: var(--second-text-color);
+}
+
+.primary-bg {
+  background-color: var(--main-bg-color);
+}
+
+.secondary-bg {
+  background-color: var(--second-bg-color);
+}
+
+.rounded-full {
+  border-radius: 100%;
+}
+
+/* Fondo general */
+#miVista2 #wrapper {
+  overflow-x: hidden;
+  background-color: #fcfcfc;
+}
+
+/* Sidebar fijo */
+/* Sidebar fijo con scroll */
+#miVista2 #sidebar-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 17.5rem;
+  background-color: var(--white);
+  border-right: 1px solid var(--gray-border);
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+  border-radius: 0 1rem 1rem 0;
+  transition: all 0.25s ease-out;
+  z-index: 1000;
+  overflow-y: auto; /* ✅ Permite scroll vertical */
+  overflow-x: hidden; /* ✅ Oculta scroll horizontal */
+}
+/* ✅ Estiliza la barra de scroll */
+#miVista2 #sidebar-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+#miVista2 #sidebar-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#miVista2 #sidebar-wrapper::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+#miVista2 #sidebar-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* ✅ Asegura que el contenido del sidebar tenga espacio */
+#miVista2 #sidebar-wrapper .list-group {
+  width: 100%;
+  padding: 1rem 0 2rem 0; /* ✅ Padding inferior para espacio al final */
+}
+
+#miVista2 #sidebar-wrapper .sidebar-heading {
+  padding: 1rem 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+#miVista2 .hover-bg-light:hover {
+  background-color: var(--hover-bg);
+  transition: background-color 0.2s ease-in-out;
+}
+
+#miVista2 #sidebar-wrapper .list-group {
+  width: 100%;
+  padding: 1rem 0;
+}
+
+#miVista2 .list-group-item {
+  border: none;
+  padding: 0.75rem 1.5rem;
+  background-color: transparent;
+  border-radius: 0.75rem;
+  margin: 0.1rem 0.2rem;
+  transition: background 0.3s ease;
+}
+
+#miVista2 .list-group-item.active,
+#miVista2 .list-group-item:hover {
+  background-color: var(--second-bg-color);
+  color: var(--main-text-color);
+  font-weight: 600;
+}
+
+/* Contenido principal */
+#miVista2 #page-content-wrapper {
+  margin-left: 10rem;
+  transition: margin 0.25s ease-out;
+  padding: 0.3rem;
+  width: 100%;
+}
+
+/* Al contraer sidebar */
+#miVista2 #wrapper.toggled #page-content-wrapper {
+  margin-left: 0;
+}
+
+#miVista2 #menu-toggle {
+  cursor: pointer;
+  //margin-left: 1rem;
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+  #miVista2 #sidebar-wrapper {
+    width: 17.5rem;
+  }
+
+  #miVista2 #page-content-wrapper {
+    margin-left: 17.5rem;
+  }
+
+  #miVista2 #wrapper.toggled #page-content-wrapper {
+    margin-left: 0;
+  }
+}
+
+#miVista2 #wrapper.toggled #sidebar-wrapper {
+  left: -17.5rem;
+}
+
+/* FIN SIDEBAFR */
+
+ @media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .print-container, .print-container * {
+    visibility: visible;
+  }
+
+  .print-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    background: white;
+  }
+
+  .modal,
+  .modal-dialog,
+  .modal-content,
+  .modal-body {
+    all: unset;
+    overflow: visible !important;
+    max-height: none !important;
+  }
+  .btn {
+      display: none !important;
+    }
+  /* Oculta botones innecesarios #bodi, */
+  #btn1, #btn2, #btn3, #btn4, #btn5, #btn6, .btn-warning, .btn-close, #buscadorDetalle {
+    display: none !important;
+  }
+}
+
+
+//RELOJ
+.wrapper{
+  height: 60px;
+  width: 260px;
+  position: relative;
+  background: linear-gradient(135deg, #14ffe9, #ffeb3b, #ff00e0);
+  border-radius: 10px;
+  cursor: default;
+  animation: animate 1.5s linear infinite;
+  text-align:center;
+}
+.wrapper .display,
+.wrapper span{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.wrapper .display{
+  z-index: 999;
+  height: 45px;
+  width: 245px;
+  background: #1b1b1b;
+  border-radius: 6px;
+  text-align: center;
+}
+.display #time{
+  line-height: 45px;
+  color: #fff;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #14ffe9, #ffeb3b, #ff00e0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: animate 1.5s linear infinite;
+}
+@keyframes animate {
+  100%{
+    filter: hue-rotate(360deg);
+  }
+}
+.wrapper span{
+  height: 100%;
+  width: 100%;
+  border-radius: 10px;
+  background: inherit;
+}
+.wrapper span:first-child{
+  filter: blur(7px);
+}
+.wrapper span:last-child{
+  filter: blur(20px);
+}
+
+
+    /* Radios más grandes y suaves */
+    .form-check-input {
+        width: 1.2em;
+        height: 1.2em;
+        margin: 0 auto;
+        cursor: pointer;
+        transform: scale(1.2);
+    }
+
+      .radio-green:checked {
+    background-color: #198754;
+    border-color: #198754;
+  }
+  .radio-red:checked {
+    background-color: #dc3545;
+    border-color: #dc3545;
+  }
+  .radio-blue:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+  }
+  
+  table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+      th, td { border: 1px solid #ccc; padding: 8px; text-align: left; font-size: 13px;}
+      th { background-color: #f0f0f0; }
+      tbody tr:nth-child(even) { background-color: #f9f9f9; }
+      table tr:hover {
+  background-color: #e0f7fa; /* Cambia el color al que desees */
+} 
+
+//moderno
+input.form-control,
+select.form-control,
+select.form-select,
+textarea.form-control {
+  border-radius: 12px;
+  border: 1px solid #d0d7de;
+  background-color: #ffffff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-size: 14px;
+  padding: 10px 12px;
+}
+input.form-control:focus,
+select.form-control:focus,
+select.form-select:focus,
+textarea.form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+  outline: none;
+}
+
+/* ✅ Botones */
+button.btn {
+  border-radius: 10px !important;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+button.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+}
+
+//conexion a INTERNET
+    /* Estados de conexión */
+    .connection-status {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1050;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .connection-status.online {
+      background: rgba(40, 167, 69, 0.9);
+      color: white;
+    }
+
+    .connection-status.offline {
+      background: rgba(220, 53, 69, 0.9);
+      color: white;
+    }
+</style>
+
+<style>
+.login-form {
+  padding: 0.5rem 0;
+}
+
+.form-label {
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.input-group-custom {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.input-group-custom:focus-within {
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+  transform: translateY(-1px);
+}
+
+.input-icon {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border: 1px solid #dee2e6;
+  border-right: none;
+  width: 50px;
+  justify-content: center;
+}
+
+.form-control-custom {
+  border: 1px solid #dee2e6;
+  border-left: none;
+  border-right: none;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.form-control-custom:focus {
+  border-color: #0d6efd;
+  box-shadow: none;
+  background-color: #fafbfc;
+}
+
+.input-toggle {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border: 1px solid #dee2e6;
+  border-left: none;
+  cursor: pointer;
+  user-select: none;
+  width: 50px;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.input-toggle:hover {
+  background: linear-gradient(135deg, #e9ecef, #dee2e6);
+}
+
+.btn-login {
+ background: linear-gradient(135deg, #1a1a1a, #2d2d2d, #1a1a1a);
+ border: 1px solid #333;
+ color: #ffffff;
+ font-weight: 600;
+ padding: 0.875rem 1.5rem;
+ border-radius: 12px;
+ box-shadow: 
+   0 8px 24px rgba(0, 0, 0, 0.4),
+   0 0 0 1px rgba(255, 255, 255, 0.1),
+   inset 0 1px 0 rgba(255, 255, 255, 0.1);
+ transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+ font-size: 1rem;
+ cursor: pointer;
+ position: relative;
+ overflow: hidden;
+ text-transform: uppercase;
+ letter-spacing: 0.5px;
+}
+
+.btn-login::before {
+ content: '';
+ position: absolute;
+ top: 0;
+ left: -100%;
+ width: 100%;
+ height: 100%;
+ background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+ transition: left 0.6s ease;
+}
+
+.morphing-menu {
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.morphing-menu:hover {
+  background-color: rgba(0,0,0,0.1);
+  transform: scale(1.05);
+}
+
+.morphing-menu svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.3s ease;
+  color: #333;
+}
+
+.morphing-menu:active svg {
+  transform: rotate(90deg);
+}
+</style>

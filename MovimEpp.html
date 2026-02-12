@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>EPP – Gestión moderna</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+<style>
+  /* Variables SOLO dentro del módulo */
+  .epp-scope{
+    --radius: 16px;
+    --cardShadow: 0 10px 30px rgba(0,0,0,.08);
+    --softBorder: 1px solid rgba(0,0,0,.06);
+    --danger: #ef4444;
+  }
+
+  /* Header/buscador */
+  .epp-scope .search-hero{
+    background:#fff; border:var(--softBorder); border-radius:24px; box-shadow:var(--cardShadow);
+    padding:18px; margin:8px auto 14px; position:sticky; top:8px; z-index:20;
+  }
+  .epp-scope .search-hero .big-input{
+    display:flex; align-items:center; gap:5px;
+    background:#f9fafb; border:var(--softBorder); border-radius:16px; padding:8px 10px;
+  }
+  .epp-scope .search-hero .big-input input{
+    border:0; outline:none; background:transparent; font-size:1.05rem; padding:10px 8px; width:100%;
+  }
+  .epp-scope .btn-plus{
+    width:42px; height:42px; border-radius:12px; border:var(--softBorder); background:#fff;
+    display:flex; align-items:center; justify-content:center; box-shadow:var(--cardShadow);
+  }
+  .epp-scope .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .epp-scope .chip{ padding:.15rem .7rem; border:1px solid #e5e7eb; border-radius:999px; background:#fff; cursor:pointer; font-size:.9rem; }
+  .epp-scope .chip.active{ background:#0ea5e9; color:#fff; border-color:#0ea5e9; }
+  .epp-scope .product-search{ margin-top:10px; display:flex; gap:8px; }
+  .epp-scope .persona-box{ border-radius:16px; background:#fff; box-shadow:var(--cardShadow); padding:14px; }
+
+  /* Card producto */
+  .epp-scope .card-prod{
+    border:1px solid transparent; border-radius:18px; overflow:hidden; background:#fff; box-shadow:var(--cardShadow);
+    height:100%; display:flex; flex-direction:column;
+  }
+  .epp-scope .card-prod.lowstock{ border-color: rgba(239,68,68,.5); box-shadow:0 0 0 3px rgba(239,68,68,.12), var(--cardShadow); }
+  .epp-scope .card-prod .media-wrap{ position:relative; background:#f3f4f6; }
+  .epp-scope .card-prod img{ width:100%; height:220px; object-fit:cover; display:block; }
+  .epp-scope .carousel-control-prev, 
+  .epp-scope .carousel-control-next{ width:46px; }
+
+  /* Insignias */
+  .epp-scope .tag-previsto{
+    position:absolute; left:.6rem; top:.6rem; background:rgba(0,0,0,.75); color:#fff; font-size:.7rem; padding:.2rem .5rem;
+    border-radius:999px; display:flex; align-items:center; gap:.35rem;
+  }
+  .epp-scope .tag-previsto .circle{
+    width:16px; height:16px; border-radius:50%; background:#fff; color:#000; display:flex; align-items:center; justify-content:center; font-size:.7rem; line-height:1;
+  }
+  .epp-scope .badge-stocklow{
+    position:absolute; right:.6rem; top:.6rem; background:var(--danger); color:#fff; border-radius:999px; font-size:.7rem;
+    padding:.25rem .5rem; box-shadow:0 0 0 3px rgba(239,68,68,.15);
+  }
+  .epp-scope .variant-pill{ display:inline-block; background:#eef2f7; border-radius:999px; padding:.15rem .55rem; margin:.1rem .2rem; font-size:.78rem; }
+
+  /* Cuerpo del card en columna + ocupar alto disponible */
+  .epp-scope .card-prod .card-body{ display:flex; flex-direction:column; gap:6px; flex:1 1 auto; }
+
+  /* Badges */
+  .epp-scope .badge-reqcap{ background:#f97316; }
+  .epp-scope .badge-inspe { background:#10b981; }
+  .epp-scope .badge-devolv{ background:#64748b; }
+
+  /* Firma + overlay */
+  .epp-scope #sigPad{ border:1px dashed #cbd5e1; border-radius:10px; background:#fff; touch-action:none; width:100%; height:160px; }
+  .epp-scope .small-hint{ font-size:.85rem; color:#6b7280; }
+  .epp-scope .overlay{ position:fixed; inset:0; background:rgba(255,255,255,.65); display:none; align-items:center; justify-content:center; z-index:2000; }
+  .epp-scope .overlay.show{ display:flex; }
+  .epp-scope .loading{ pointer-events:none; opacity:.65; }
+
+  /* Overlay SOLO para este módulo */
+#globalOverlayEPP{
+  position: fixed; inset: 0;
+  background: rgba(255,255,255,.65);
+  display: none;                 /* ⬅️ oculto por defecto */
+  align-items: center; justify-content: center;
+  z-index: 2000;
+}
+#globalOverlayEPP.show{ display: flex; }
+
+  #cartCanvas { display: flex; flex-direction: column; }
+  #cartCanvas .offcanvas-body { 
+    flex: 1 1 auto; 
+    overflow: auto;              /* scroll dentro del carrito */
+    overscroll-behavior: contain;/* evita que el scroll “salte” al body */
+  }
+  #cartCanvas .offcanvas-footer { 
+    position: sticky; 
+    bottom: 0; 
+    background: #fff; 
+    z-index: 1; 
+  }
+
+</style>
+
+</head>
+<body>
+<div class="app-wrap epp-scope">
+
+  <!-- Header -->
+  <div class="search-hero">
+    <div class="big-input">
+      <button id="btnPlus" class="btn btn-plus" type="button" title="Opciones">+</button>
+      <input id="dniInput" placeholder="DNI o ID del trabajador…" />
+      <button id="btnBuscarEPP" class="btn btn-secondary"><i class="fa-solid fa-magnifying-glass"></i></button>
+<button id="btnActualizarEPP" class="btn btn-outline-primary ms-1" title="Actualizar datos">
+  <i class="fa-solid fa-rotate-right"></i>
+</button>
+
+      <button id="btnCart" 
+              class="btn btn-outline-dark ms-1 position-relative"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#cartCanvas">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cartCount">0</span>
+      </button>
+    </div>
+
+    <!-- Chips -->
+    <div id="chipCats" class="chips"></div>
+
+    <!-- Buscador -->
+    <div class="product-search">
+      <input id="productSearch" class="form-control" placeholder="Buscar producto, variante o categoría…" />
+      <button id="btnClearSearch" class="btn btn-outline-secondary">Limpiar</button>
+      <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalMSDS"> NFPA</button>
+    </div>
+  </div>
+
+  <!-- Template Popover -->
+  <div id="popTemplate" class="d-none">
+    <div style="min-width:220px">
+      <div class="mb-2">
+        <label class="form-label mb-1">Almacén</label>
+        <select class="form-select form-select-sm" data-pop="selAlmacen"></select>
+      </div>
+      <div class="form-check form-switch mb-2">
+        <input class="form-check-input" type="checkbox" data-pop="swStock" checked>
+        <label class="form-check-label">Solo con stock</label>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-success flex-fill" data-pop="btnNewProd">+ Nuevo producto</button>
+        <button class="btn btn-sm btn-outline-dark flex-fill" data-pop="btnMovimiento">Movimiento</button>
+      </div>
+      <div class="d-grid gap-2 mt-2">
+        <button class="btn btn-sm btn-outline-primary" data-pop="btnExportStock"><i class="fa-solid fa-file-excel"></i> Exportar stock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Persona -->
+  <div class="persona-box mb-3 d-none" id="personaBoxEPP">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <div class="me-auto">
+        <div><strong>Nombres:</strong> <span id="p_nombresEPP">—</span></div>
+        <div><strong>Empresa:</strong> <span id="p_empresaEPP">—</span> &nbsp;|&nbsp; <strong>Cargo:</strong> <span id="p_cargoEPP">—</span></div>
+        <div><strong>DNI:</strong> <span id="p_dniEPP">—</span> &nbsp;|&nbsp; <strong>Condición:</strong> <span id="p_condicionEPP">—</span></div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="small text-muted">Previstos primero</span>
+        <div class="form-check form-switch m-0"><input class="form-check-input" type="checkbox" id="swAsignadosEPP" checked></div>
+        <button id="btnQuitarPersonaEPP" class="btn btn-sm btn-outline-secondary">Quitar</button>
+      </div>
+    </div>
+    <div class="mt-2 d-flex align-items-center gap-2">
+      <button class="btn btn-sm btn-outline-secondary" id="btnToggleHistEPP">Historial</button>
+      <button class="btn btn-sm btn-outline-primary" id="btnExportHistEPP"><i class="fa-solid fa-file-excel"></i> Exportar historial</button>
+      <span class="small text-muted">Almacén actual: <b id="cartAlmEPP">—</b></span>
+    </div>
+    <div id="historialBoxEPP" class="mt-2 d-none"><div id="historialListEPP" class="table-responsive"></div></div>
+  </div>
+
+  <!-- Grid -->
+  <div class="container-fluid px-0">
+    <div id="cardsRowEPP" class="row g-3 row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5"></div>
+  </div>
+
+</div><!-- /app-wrap -->
+
+<!-- Modal Movimiento -->
+<div class="modal fade" id="movModal" tabindex="-1" data-bs-focus="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4">
+      <div class="modal-header">
+        <h5 class="modal-title" id="movTitle">Movimiento</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="movBody"></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary" id="btnConfirmMov">Registrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Operación -->
+<div class="modal fade" id="opModal" tabindex="-1" data-bs-focus="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4">
+      <div class="modal-header">
+        <h5 class="modal-title" id="opTitle">Operación</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body"><div id="opBody"></div></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button class="btn btn-primary" id="btnAddToCart">Agregar al carrito</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Nuevo producto -->
+<div class="modal fade" id="newProdModal" tabindex="-1" data-bs-focus="false">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content rounded-4">
+      <div class="modal-header">
+        <h5 class="modal-title">Nuevo producto</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-2">
+          <div class="col-md-6"><label class="form-label">Producto base *</label><input id="np_producto" class="form-control" required></div>
+          <div class="col-md-6"><label class="form-label">Variante (opcional)</label><input id="np_variante" class="form-control"></div>
+          <div class="col-md-6"><label class="form-label">Categoría</label><input id="np_categoria" class="form-control" list="dl_categorias" placeholder="Elige o escribe nueva"><datalist id="dl_categorias"></datalist></div>
+          <div class="col-md-6"><label class="form-label">Imagen (URL)</label><input id="np_img" class="form-control" placeholder="https://..."></div>
+          <div class="col-md-6"><label class="form-label">Especificación (URL)</label><input id="np_file" class="form-control" placeholder="https://..."></div>
+          <div class="col-md-6"><label class="form-label">Stock mínimo (alerta)</label><input id="np_minimo" type="number" min="0" class="form-control" placeholder="0"></div>
+
+          <div class="col-12 mt-2"><div class="form-check">
+            <input class="form-check-input" type="checkbox" id="np_stockcheck">
+            <label class="form-check-label" for="np_stockcheck">Crear ingreso inicial</label>
+          </div></div>
+
+          <div id="np_stockbox" class="row g-2 d-none">
+            <div class="col-4"><label class="form-label">Cantidad</label><input id="np_cant" type="number" min="1" class="form-control" value="1"></div>
+            <div class="col-4"><label class="form-label">Costo unit.</label><input id="np_costo" type="number" step="0.01" class="form-control"></div>
+            <div class="col-4"><label class="form-label">Moneda</label><select id="np_moneda" class="form-select"><option>PEN</option><option>USD</option></select></div>
+            <div class="col-6"><label class="form-label">Proveedor</label><input id="np_prov" class="form-control"><datalist id="dl_provs"></datalist></div>
+            <div class="col-6"><label class="form-label">Marca</label><input id="np_marca" class="form-control"><datalist id="dl_marcas"></datalist></div>
+            <div class="col-12"><label class="form-label">Observación</label><input id="np_obs" class="form-control" placeholder="Ingreso inicial (nuevo producto)"></div>
+          </div>
+          <div class="form-text">Se agregará en el almacén seleccionado.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary" id="btnSaveNewProd">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Offcanvas Carrito -->
+<div class="offcanvas offcanvas-end"
+     id="cartCanvas"
+     tabindex="-1"
+     data-bs-backdrop="true"
+     data-bs-scroll="false">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Carrito (Entrega/Devolución)</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+
+  <!-- Cuerpo con scroll -->
+  <div class="offcanvas-body">
+    <div class="border rounded p-2 mb-3 bg-light">
+      <div class="small"><b>Trabajador:</b> <span id="cartWorker">—</span></div>
+      <div class="small"><b>Cargo:</b> <span id="cartCargo">—</span></div>
+      <div class="small"><b>DNI:</b> <span id="cartDni">—</span></div>
+      <div class="small"><b>Almacén:</b> <span id="cartAlm2">—</span></div>
+    </div>
+
+    <div id="cartList"></div>
+    <hr/>
+ <div class="mb-2">
+  <label class="form-label">Firma del trabajador</label>
+  <!-- Contenedor con borde y sombra -->
+  <div class="border border-2 rounded-3 shadow-sm p-2 bg-white">
+    <canvas id="sigPad" class="w-100" height="150"></canvas>
+  </div>
+  <div class="d-flex gap-2 mt-2">
+    <button class="btn btn-sm btn-outline-secondary" id="btnSigClear" type="button">Limpiar</button>
+  </div>
+  <div class="small text-muted mt-1">
+    La firma se imprime en el PDF y queda registrada en la entrega.
+  </div>
+</div>
+
+
+    <div class="d-flex justify-content-between">
+      <div class="small text-muted">Total carrito:</div>
+      <div><strong id="cartTotal">0</strong></div>
+    </div>
+  </div>
+
+  <!-- Footer fijo abajo -->
+  <div class="offcanvas-footer p-3 border-top">
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary flex-fill" id="btnCartClear">Vaciar</button>
+      <button class="btn btn-primary flex-fill" id="btnCartExec">Entregar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Overlay -->
+<div id="globalOverlayEPP" class="overlay">
+  <div class="text-center">
+    <div class="spinner-border" role="status"></div>
+    <div class="mt-2">Cargando…</div>
+  </div>
+</div> 
+<script>
+  (() => {
+    const el = document.getElementById('cartCanvas');
+    if (!el) return;
+    el.addEventListener('shown.bs.offcanvas', () => { document.body.style.overflow = 'hidden'; });
+    el.addEventListener('hidden.bs.offcanvas', () => { document.body.style.overflow = ''; });
+  })();
+</script>
+
+<script>
+  
+/* =================== ESTADO =================== */
+const stateEPP = {
+  almacenes: [], stock: [], categorias: [], proveedores: [], marcas: [],
+  matriz: [], matrizGrid: null, persona: null, almacenActual: null,
+  reglasIdx: new Map(), previstoIdx: new Set(), netoByProd:{}, deliveredBase:new Set(),
+  historialRaw: [], historialCollapsed: [],
+  cart: [], searchTerm:''
+};
+const DEFAULT_CATS = ['EPP','Equipos','Herramientas','Materiales','Productos','Otros'];
+const PLACEHOLDER_IMGEPP='https://lh5.googleusercontent.com/d/1ZVsi2Z08waIlQ4_grLJtAyvb0e-lpTbV';
+const CART_KEY = () => `CART_EPP_${stateEPP.almacenActual||'NA'}_${stateEPP.persona?.DNI||'NA'}`;
+
+/* =================== HELPERS =================== */
+const setLoading = (btn,on,text='<i class="fa-solid fa-magnifying-glass"></i>',loading='Cargando…') => {
+  if (!btn) return;
+  if (on) { btn.dataset._txt = btn.innerHTML; btn.innerHTML = `${loading}`; btn.classList.add('loading'); btn.disabled = true; }
+  else { btn.innerHTML = btn.dataset._txt || text; btn.classList.remove('loading'); btn.disabled = false; }
+};
+const toast=(msg)=>{ Swal.fire({toast:true, position:'bottom-end', showConfirmButton:false, timer:1800, icon:'info', title:msg}); };
+const overlay=(show)=>{ const o=document.getElementById('globalOverlayEPP'); if(!o) return; o.classList.toggle('show', !!show); };
+
+/* ==== GAS (tolerante a alias) ==== */
+const FN_ALIASESEPP = {
+  crearProductoConOpcionalIngreso: ['crearProductoConIngresoOpcional','crearProducto','crearProductoConIngreso'],
+  generarFichaPDF: ['generarPDFEntrega','generarPDF'],
+  registrarEntrega: ['registrarEntregaEPP'],
+  registrarDevolucion: ['registrarDevolucionEPP'],
+  registrarMovimiento: ['registrarMovEPP']
+};
+function gasCall(fn, argsObj){
+  return new Promise((resolve,reject)=>{
+    const runner = google.script.run.withSuccessHandler(resolve).withFailureHandler(err=> reject(err?.message || err));
+    const callTry = (name)=>{
+      if (runner[name] && typeof runner[name] === 'function') {
+        const args = Array.isArray(argsObj) ? argsObj : (argsObj===undefined ? [] : [argsObj]);
+        runner[name](...args); return true;
+      }
+      return false;
+    };
+    if (callTry(fn)) return;
+    for (const alt of (FN_ALIASESEPP[fn] || [])) if (callTry(alt)) return;
+    reject(`No existe función GAS '${fn}'. Verifica que esté en tu .gs y desplegada.`);
+  });
+}
+const PRODUCT_META_CACHE = new Map();
+
+async function ensureProductMeta(products){
+  const alm = stateEPP.almacenActual || '';
+  const need = [...new Set(products)].filter(p => !PRODUCT_META_CACHE.has(p));
+  if (!need.length) return;
+  await Promise.all(
+    need.map(p =>
+      gasCall('getProductoMeta', [alm, p])
+        .then(res => PRODUCT_META_CACHE.set(p, res || {file:'', img:'', categoria:''}))
+        .catch(() => PRODUCT_META_CACHE.set(p, {file:'', img:'', categoria:''}))
+    )
+  );
+}
+
+/* =================== POP “+” =================== */
+let plusPopover;
+function initPlusPopover(){
+  const btn = document.getElementById('btnPlus');
+  if (plusPopover) { plusPopover.dispose(); }
+  plusPopover = new bootstrap.Popover(btn, {
+    html: true, placement: 'bottom', container: 'body', sanitize: false, trigger: 'click',
+    content: document.getElementById('popTemplate').innerHTML
+  });
+  btn.addEventListener('shown.bs.popover', () => {
+    const pop = document.querySelector('.popover');
+    const selAlm = pop.querySelector('[data-pop="selAlmacen"]');
+    const swStock = pop.querySelector('[data-pop="swStock"]');
+    const btnNP   = pop.querySelector('[data-pop="btnNewProd"]');
+    const btnMov  = pop.querySelector('[data-pop="btnMovimiento"]');
+    const btnExportStock = pop.querySelector('[data-pop="btnExportStock"]');
+
+    selAlm.innerHTML = stateEPP.almacenes.map(a=>{
+      const n=a.NOMBRE||a.Nombre||a.ALMACEN||a.ID||'';
+      return `<option value="${n}">${n}</option>`;
+    }).join('');
+    selAlm.value = stateEPP.almacenActual || selAlm.value;
+    selAlm.onchange = onChangeAlmacen;
+
+    swStock.checked = !!stateEPP.onlyStock;
+    swStock.onchange = () => { stateEPP.onlyStock = swStock.checked; loadPage(true); };
+
+    btnNP.onclick = () => { bootstrap.Popover.getInstance(btn)?.hide(); openNewProduct(); };
+    btnMov.onclick = () => { bootstrap.Popover.getInstance(btn)?.hide(); openMov(); };
+    btnExportStock.onclick = () => { bootstrap.Popover.getInstance(btn)?.hide(); exportStockXlsx(); };
+  });
+}
+
+/* Cerrar el popover al hacer clic fuera (#1) */
+document.addEventListener('click', (e)=>{
+  const btn = document.getElementById('btnPlus');
+  const pop = document.querySelector('.popover');
+  if(!pop) return;
+  const isInside = pop.contains(e.target) || btn.contains(e.target);
+  if(!isInside) bootstrap.Popover.getInstance(btn)?.hide();
+});
+
+/* =================== FIRMA =================== */
+function initSignaturePad(){
+  const c = document.getElementById('sigPad');
+  const ctx = c.getContext('2d', { willReadFrequently:true });
+  function resize(){
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = c.parentElement.clientWidth || 600;
+    const cssH = 160;
+    c.width  = Math.floor(cssW * dpr);
+    c.height = Math.floor(cssH * dpr);
+    c.style.width  = cssW + 'px';
+    c.style.height = cssH + 'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  document.getElementById('cartCanvas').addEventListener('shown.bs.offcanvas', resize);
+
+  const pos = (e)=>{ const r = c.getBoundingClientRect(); const t = e.touches?.[0] || e; return { x: t.clientX - r.left, y: t.clientY - r.top }; };
+  let down=false, last=null;
+  const start = (e)=>{ down=true; last=pos(e); e.preventDefault(); };
+  const move  = (e)=>{ if(!down || !last) return; const p=pos(e); if(!p) return; ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last=p; e.preventDefault(); };
+  const end   = ()=>{ down=false; last=null; };
+  c.addEventListener('pointerdown', start);
+  c.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', end);
+  c.addEventListener('touchstart', start, {passive:false});
+  c.addEventListener('touchmove',  move,  {passive:false});
+  c.addEventListener('touchend',   end);
+  document.getElementById('btnSigClear').onclick = ()=> ctx.clearRect(0,0,c.width,c.height);
+}
+function getSignatureDataUrl(){
+  const c=document.getElementById('sigPad'); if(!c) return null;
+  const ctx=c.getContext('2d');
+  const img=ctx.getImageData(0,0,c.width,c.height).data;
+  for(let i=3;i<img.length;i+=4){ if(img[i]!==0) return c.toDataURL('image/png'); }
+  return null;
+}
+
+/* =================== INIT =================== */
+document.addEventListener('DOMContentLoaded', async ()=>{
+  initPlusPopover();
+  document.getElementById('btnBuscarEPP').addEventListener('click', buscarPersona);
+  document.getElementById('btnCartClear').addEventListener('click', cartClear);
+  document.getElementById('btnCartExec').addEventListener('click', cartExec);
+  document.getElementById('btnQuitarPersonaEPP').addEventListener('click', quitarPersona);
+  document.getElementById('swAsignadosEPP').addEventListener('change', renderCards);
+  document.getElementById('btnToggleHistEPP').addEventListener('click', ()=> document.getElementById('historialBoxEPP').classList.toggle('d-none'));
+  document.getElementById('btnExportHistEPP').addEventListener('click', exportHistorialXlsx);
+  document.getElementById('productSearch').addEventListener('input', (e)=>{ stateEPP.searchTerm=(e.target.value||'').toLowerCase(); renderCards(); });
+  document.getElementById('btnClearSearch').addEventListener('click', ()=>{ document.getElementById('productSearch').value=''; stateEPP.searchTerm=''; renderCards(); });
+
+  initSignaturePad();
+
+  // 🚫 Sin overlay: refreshInit inicia SSR (loadPage(true)) y verás skeletons
+  await refreshInit(localStorage.getItem('ALMACEN_ACTUAL')||'');
+});
+
+
+/* =================== BACKEND SYNC =================== */
+async function refreshInit(almacenId){
+  const data = await gasCall('getInit', almacenId||'');
+  stateEPP.almacenes   = data.almacenes||[];
+  stateEPP.productos   = data.productos||[];           // nuevo
+  stateEPP.categorias  = (data.categorias||[]).filter(Boolean);
+  DEFAULT_CATS.forEach(d=>{ if(!stateEPP.categorias.includes(d)) stateEPP.categorias.push(d); });
+  stateEPP.categorias.sort((a,b)=>a.localeCompare(b));
+  stateEPP.proveedores = data.proveedores||[];
+  stateEPP.marcas      = data.marcas||[];
+  stateEPP.matriz      = data.matriz||[];
+  stateEPP.matrizGrid  = data.matrizGrid||null;
+
+  buildReglasAndPrevistos();
+  fillChips();
+
+  // Selección de almacén
+  const id = almacenId || stateEPP.almacenes[0]?.NOMBRE || stateEPP.almacenes[0]?.Nombre || stateEPP.almacenes[0]?.ALMACEN || '';
+  stateEPP.almacenActual = id;
+  localStorage.setItem('ALMACEN_ACTUAL', id||'');
+  const el1=document.getElementById('cartAlmEPP');  if(el1) el1.textContent=id||'—';
+  const el2=document.getElementById('cartAlm2'); if(el2) el2.textContent=id||'—';
+
+  // Primera página SSR (30)
+  await loadPage(true);
+
+  // (una sola vez) cambia handlers de búsqueda a SSR con debounce
+  upgradeSearchHandlersToSSR();
+}
+
+function buildReglasAndPrevistos(){
+  stateEPP.reglasIdx.clear(); stateEPP.previstoIdx.clear();
+  (stateEPP.matriz||[]).forEach(r=>{
+    const pb=(r['Producto base']||r.ProductoBase||r.PRODUCTO_BASE||'').toString().trim();
+    const cg=(r.Cargo||r.CARGO||'').toString().trim();
+    if(!pb||!cg) return;
+    stateEPP.reglasIdx.set(`${pb}||${cg}`,{
+      DEVOLVIBLE: String(r.Devolvible||r.DEVOLVIBLE||'No'),
+      VIDA_UTIL_DIAS: Number(r['Vida útil (días)']||r.VidaUtilDias||r.VIDA_UTIL_DIAS||0),
+      FREC_INSP: String(r['Frec. inspección']||r.FrecInspeccion||r.FREC_INSP_DIAS||'').trim(),
+      REQ_CAP_TEMA: String(r['Req. capacitación']||r.ReqCapacitacion||r.REQ_CAPACITACION||'').trim()
+    });
+  });
+  if(stateEPP.matrizGrid && stateEPP.matrizGrid.byProduct){
+    const byP=stateEPP.matrizGrid.byProduct;
+    Object.keys(byP).forEach(pb=>{
+      const rec=byP[pb]||{};
+      (rec.previstoCargos||[]).forEach(cg=> stateEPP.previstoIdx.add(`${pb}||${cg}`));
+      const hasMeta= String(rec.REQ_CAP_TEMA||rec.FREC_INSP||'').trim().length>0 || Number(rec.VIDA_UTIL_DIAS||0)>0;
+      if(hasMeta){
+        stateEPP.reglasIdx.set(`${pb}||*`,{
+          DEVOLVIBLE:'No',
+          VIDA_UTIL_DIAS:Number(rec.VIDA_UTIL_DIAS||0),
+          FREC_INSP:String(rec.FREC_INSP||'').trim(),
+          REQ_CAP_TEMA:String(rec.REQ_CAP_TEMA||'').trim()
+        });
+      }
+    });
+  }
+}
+function getReglas(pb, cargo){
+  const key=`${String(pb||'').trim()}||${String(cargo||'').trim()}`;
+  return stateEPP.reglasIdx.get(key) || stateEPP.reglasIdx.get(`${String(pb||'').trim()}||*`) || { DEVOLVIBLE:'No', VIDA_UTIL_DIAS:0, FREC_INSP:'', REQ_CAP_TEMA:'' };
+}
+
+/* =================== UI: chips / almacén =================== */
+function fillChips(){
+  const box=document.getElementById('chipCats');
+  box.innerHTML=['Todos',...stateEPP.categorias].map(c=>`<span class="chip" data-cat="${c}">${c}</span>`).join('');
+  box.querySelectorAll('.chip').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      box.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+      el.classList.add('active');
+      loadPage(true); // SSR
+    });
+  });
+  box.querySelector('.chip')?.classList.add('active');
+}
+
+async function onChangeAlmacen(e){
+  const id = e.target.value;
+
+  // Mostrar spinner global al instante
+  overlay(true);
+
+  try{
+    // Persistir selección
+    stateEPP.almacenActual = id;
+    localStorage.setItem('ALMACEN_ACTUAL', id);
+
+    // Refrescar catálogos y repaginar (dentro llama a loadPage(true) con skeletons)
+    await refreshInit(id);
+  }catch(err){
+    console.error(err);
+    Swal.fire('Error al cambiar de almacén', String(err), 'error');
+  }finally{
+    // Ocultar spinner; si aún viene la primera página, verás skeletons ya colocados
+    overlay(false);
+  }
+}
+
+
+
+/* =================== Persona =================== */
+async function buscarPersona(){
+  const dni=document.getElementById('dniInput').value.trim();
+  if(!dni){ Swal.fire('Dato faltante','Ingresa el DNI','info'); return; }
+  const btn=document.getElementById('btnBuscarEPP'); setLoading(btn,true,'Buscar','Buscando…');
+  try{
+    const p=await gasCall('getPersonaByDni', dni);
+    if(!p){ Swal.fire('Sin resultados','No se encontró persona con ese DNI','warning'); return; }
+    stateEPP.persona=p;
+    document.getElementById('p_nombresEPP').textContent=p.NOMBRES||'-';
+    document.getElementById('p_empresaEPP').textContent=p.EMPRESA||'-';
+    document.getElementById('p_cargoEPP').textContent=p.CARGO||'-';
+    document.getElementById('p_dniEPP').textContent=p.DNI||'-';
+    document.getElementById('p_condicionEPP').textContent=p.CONDICION||'-';
+    document.getElementById('personaBoxEPP').classList.remove('d-none');
+    document.getElementById('cartWorker').textContent=p.NOMBRES||'—';
+    document.getElementById('cartCargo').textContent=p.CARGO||'—';
+    document.getElementById('cartDni').textContent=p.DNI||'—';
+    renderCards();
+
+    // Traer TODO el historial (limit=0) para poder exportar
+    gasCall('getHistorialByDni', [dni, 0]).then(list=>{
+      stateEPP.historialRaw = list||[];
+      renderHistorial(list||[]);
+      stateEPP.deliveredBase=new Set((list||[]).filter(x=>x.OPERACION==='Entrega').map(x=>x.PRODUCTO));
+      renderCards();
+    }).catch(()=>{});
+
+    gasCall('getCostoNetoByDni', dni).then(rows=>{
+      stateEPP.netoByProd={};
+      (rows||[]).forEach(r=>{
+        const key = r.VARIANTE ? `${r.PRODUCTO}||${r.VARIANTE}` : r.PRODUCTO;
+        stateEPP.netoByProd[key] = {MONTO:r.MONTO_NETO, MONEDA:r.MONEDA};
+      });
+      renderCards();
+    }).catch(()=>{});
+    loadCart();
+  }catch(e){ Swal.fire('Error', String(e), 'error'); }
+  finally{ setLoading(btn,false); }
+}
+function quitarPersona(){
+  const oldKey = CART_KEY();
+  stateEPP.persona = null;
+  stateEPP.netoByProd = {};
+  stateEPP.deliveredBase = new Set();
+  stateEPP.historialRaw = [];
+  stateEPP.historialCollapsed = [];
+  stateEPP.cart = [];
+  try{ localStorage.removeItem(oldKey); }catch(e){}
+  document.getElementById('personaBoxEPP').classList.add('d-none');
+  document.getElementById('historialBoxEPP').classList.add('d-none');
+  ['cartWorker','cartCargo','cartDni'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent='—'; });
+  const c=document.getElementById('sigPad'); if(c){ const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); }
+  renderCart(); renderCards();
+  toast('Trabajador quitado');
+}
+
+/* ======= Historial (colapsar Devoluciones en Entregas) ======= */
+/* #1: Si el producto fue marcado como devolvible y se devuelve, no duplicar fila:
+        marcar la Entrega como "Devuelto" o "Devuelto parcial" y ocultar la fila de Devolución en la UI. */
+function collapseHistorial(list){
+  const asc = [...list].sort((a,b)=> new Date(a.FECHA) - new Date(b.FECHA));
+  const stacks = new Map(); // key -> [{idx, remaining}]
+  const aug = asc.map((x,i)=> ({...x, __i:i, STATUS:'', __HIDE:false}));
+
+  for (const row of aug){
+    const key = (row.PRODUCTO||'') + '||' + (row.VARIANTE||'');
+    if (row.OPERACION==='Entrega' && String(row.DEVOLVIBLE||'').trim().toLowerCase().startsWith('s')){
+      const arr = stacks.get(key)||[];
+      arr.push({idx: row.__i, remaining: Number(row.CANTIDAD||0)});
+      stacks.set(key, arr);
+    } else if (row.OPERACION==='Devolución'){
+      let q = Number(row.CANTIDAD||0);
+      const arr = stacks.get(key)||[];
+      let matched = false;
+      while (q>0 && arr.length){
+        const top = arr[arr.length-1];
+        const e = aug[top.idx];
+        const use = Math.min(top.remaining, q);
+        top.remaining -= use;
+        q -= use;
+        matched = true;
+        if (top.remaining===0){
+          e.STATUS = 'Devuelto';
+          arr.pop();
+        }else{
+          const entregada = Number(e.CANTIDAD||0);
+          const devuelta  = entregada - top.remaining;
+          e.STATUS = `Devuelto parcial (${devuelta}/${entregada})`;
+        }
+      }
+      if (matched) row.__HIDE = true; // ocultar la fila de Devolución si afectó a alguna Entrega
+    }
+  }
+  const out = aug.filter(r=>!r.__HIDE).sort((a,b)=> new Date(b.FECHA) - new Date(a.FECHA));
+  return out;
+}
+function histBadge(op){
+  const map={
+    'Entrega':'primary', 'Devolución':'secondary',
+    'Ingreso':'success', 'Salida':'danger',
+    'Ajuste +':'info', 'Ajuste -':'warning',
+    'Ajuste':'info', 'Baja':'dark',
+    'Transferencia - Origen':'secondary', 'Transferencia - Destino':'secondary'
+  };
+  const cls = map[op] || 'light text-dark';
+  return `<span class="badge rounded-pill bg-${cls}">${op}</span>`;
+}
+function renderHistorial(list){ 
+  const wrap = document.getElementById('historialBoxEPP');
+  const listBox = document.getElementById('historialListEPP');
+
+  // 🔹 Limpia siempre el contenido
+  listBox.innerHTML = '';
+
+  // 🔹 Si no hay historial, ocultar y salir
+  if (!list || !list.length) {
+    wrap.classList.add('d-none');
+    stateEPP.historialCollapsed = [];
+    return;
+  }
+
+  // 🔹 Mostrar contenedor y preparar historial colapsado
+  wrap.classList.remove('d-none');
+  stateEPP.historialCollapsed = collapseHistorial(list);
+
+  const hoy = new Date();
+
+  // 🔹 Renderizar tabla con nueva columna Vencimiento
+  listBox.innerHTML = `
+    <table class="table table-sm align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Producto</th>
+          <th>Variante</th>
+          <th>Cant</th>
+          <th>Importe</th>
+          <th>Devolvible</th>
+          <th>Vencimiento</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>${
+        stateEPP.historialCollapsed.map(x=>{
+          const dev = String(x.DEVOLVIBLE||'').trim().toLowerCase().startsWith('s');
+          const devHtml = `<span class="badge ${dev?'bg-danger':'bg-success'}">${dev?'Sí':'No'}</span>`;
+
+          const st = x.STATUS
+            ? `<span class="badge ${x.STATUS.startsWith('Devuelto parcial')?'bg-warning':'bg-success'}">${x.STATUS}</span>`
+            : '';
+
+          // 🧮 Calcular vencimiento solo para entregas
+          // 🧮 Calcular vencimiento solo para entregas
+            let fechaVenc = '—';
+            let colorVenc = '';
+            if (x.OPERACION === 'Entrega') {
+              const diasVida = Number(x.VIDA_UTIL_DIAS || 0);
+              if (diasVida > 0 && x.FECHA) {
+                // ✅ Convertir string "2025-10-31" a objeto Date correcto
+                const partes = x.FECHA.split('-');
+                const fEnt = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
+                const fVenc = new Date(fEnt);
+                fVenc.setDate(fEnt.getDate() + diasVida);
+
+                // Formato YYYY-MM-DD
+                const yyyy = fVenc.getFullYear();
+                const mm = String(fVenc.getMonth() + 1).padStart(2, '0');
+                const dd = String(fVenc.getDate()).padStart(2, '0');
+                fechaVenc = `${yyyy}-${mm}-${dd}`;
+
+                // Colores: vencido (verde) / vigente (rojo)
+                const hoy = new Date();
+                colorVenc = fVenc < hoy ? 'bg-danger' : 'bg-success';
+              }
+            }
+            const vencHtml = `<span class="badge ${colorVenc}">${fechaVenc}</span>`;
+
+
+          return `<tr>
+            <td>${x.FECHA||''}</td>
+            <td>${histBadge(x.OPERACION||'')}</td>
+            <td>${x.PRODUCTO||''}</td>
+            <td>${x.VARIANTE||''}</td>
+            <td>${x.CANTIDAD||0}</td>
+            <td>${(x.IMPORTE||0).toFixed(2)} ${x.MONEDA||'PEN'}</td>
+            <td>${devHtml}</td>
+            <td>${vencHtml}</td>
+            <td>${st}</td>
+          </tr>`;
+        }).join('')
+      }</tbody>
+    </table>`;
+}
+
+
+/* ======= Exportar a Excel ======= */
+function xlsxDownload(filename, aoa, sheetName='Hoja1'){
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  XLSX.writeFile(wb, filename);
+}
+function exportHistorialXlsx(){
+  if (!stateEPP.persona){ Swal.fire('Primero busca un trabajador','','info'); return; }
+
+  // Preferimos la lista colapsada; si aún no existe, colapsamos al vuelo desde el raw
+  const list = (stateEPP.historialCollapsed && stateEPP.historialCollapsed.length)
+    ? stateEPP.historialCollapsed
+    : collapseHistorial(stateEPP.historialRaw || []);
+
+  if (!list.length){ Swal.fire('Sin historial para exportar','','info'); return; }
+
+  const headers = ['Fecha','Tipo','Producto','Variante','Cantidad','Costo Unit.','Importe','Moneda','Devolvible','Estado','Firma'];
+  const rows = list.map(x=>{
+    const dev = (String(x.DEVOLVIBLE||'').trim().toLowerCase().startsWith('s')?'Sí':'No');
+    return [
+      x.FECHA||'',
+      x.OPERACION||'',
+      x.PRODUCTO||'',
+      x.VARIANTE||'',
+      x.CANTIDAD||0,
+      x.COSTO_UNITARIO||0,
+      x.IMPORTE||0,
+      x.MONEDA||'PEN',
+      dev,
+      x.STATUS||'',
+      x.FIRMA_URL || '' // ← guardamos la url cruda, luego la convertimos a link
+    ];
+  });
+
+  // Construir hoja
+  const aoa = [headers, ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  // Hipervínculos en la última columna (Firma)
+  const sigColIdx = headers.length - 1;
+  for (let i = 0; i < rows.length; i++){
+    const url = rows[i][sigColIdx];
+    if (url){
+      const cellAddr = XLSX.utils.encode_cell({ r: i+1, c: sigColIdx }); // +1 por cabecera
+      // Texto visible
+      ws[cellAddr] = ws[cellAddr] || {};
+      ws[cellAddr].t = 's';
+      ws[cellAddr].v = 'Ver firma';
+      // Hyperlink nativo
+      ws[cellAddr].l = { Target: url };
+      // Fallback universal (Excel/Sheets): fórmula HYPERLINK
+      ws[cellAddr].f = `HYPERLINK("${url}","Ver firma")`;
+    }
+  }
+
+  // Anchos de columna y autofiltro
+  ws['!cols'] = [
+    { wch:12 }, // Fecha
+    { wch:12 }, // Tipo
+    { wch:26 }, // Producto
+    { wch:18 }, // Variante
+    { wch:8  }, // Cantidad
+    { wch:12 }, // Costo Unit.
+    { wch:12 }, // Importe
+    { wch:8  }, // Moneda
+    { wch:10 }, // Devolvible
+    { wch:18 }, // Estado
+    { wch:12 }  // Firma
+  ];
+  ws['!autofilter'] = { ref: XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:rows.length,c:sigColIdx}}) };
+
+  // Libro y descarga
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Historial');
+
+  const ts = new Date(); const pad=n=>String(n).padStart(2,'0');
+  const name = `Historial_${stateEPP.persona.DNI}_${ts.getFullYear()}${pad(ts.getMonth()+1)}${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}.xlsx`;
+  XLSX.writeFile(wb, name);
+}
+
+
+async function exportStockXlsx(){
+  const filt = currentFilter();
+  const { rows } = await gasCall('searchStockPaged', { ...filt, offset:0, limit:0 }); // 0 = todo lo filtrado
+  const headers = ['ID','Almacén','Producto','Variante','Categoría','Stock','Stock mínimo','Precio','Imagen','Archivo'];
+  const data = (rows||[]).map(r=>[
+    r.ID||'', r.ALMACEN||'', r.PRODUCTO||'', r.VARIANTE||'', r.CATEGORIA||'',
+    r.STOCK||0, r.STOCK_MINIMO||0, r.PRECIO||0, r.IMG||'', r.FILE||''
+  ]);
+  const aoa = [headers, ...data];
+  const ts = new Date(); const pad=n=>String(n).padStart(2,'0');
+  const name = `Stock_${(stateEPP.almacenActual||'ALM')}_${ts.getFullYear()}${pad(ts.getMonth()+1)}${pad(ts.getDate())}.xlsx`;
+  xlsxDownload(name, aoa, 'Stock');
+}
+
+
+/* =================== Cards =================== */
+function renderCards(){
+  const row=document.getElementById('cardsRowEPP');
+  const popSw = document.querySelector('.popover [data-pop="swStock"]');
+  const onlyStock = popSw ? popSw.checked : true;
+
+  const hasPersona = !!stateEPP.persona;
+  const cargo = stateEPP.persona?.CARGO || '';
+  const asignadosFirst = document.getElementById('swAsignadosEPP')?.checked ?? true;
+
+  const activeChip=document.querySelector('#chipCats .chip.active'); 
+  const cat=activeChip?activeChip.dataset.cat:'Todos';
+  const term = (stateEPP.searchTerm||'').toLowerCase();
+
+  // ==== Helpers de fecha ====
+  const pad = (n)=> String(n).padStart(2,'0');
+  const fmt = (d)=> `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+  const addDays = (d, n)=>{ const dt=new Date(d.getTime()); dt.setDate(dt.getDate()+n); return dt; };
+  const toDate = (s)=>{ // FECHA 'yyyy-MM-dd'
+    if(!s) return null;
+    const [Y,M,D] = String(s).split('-').map(Number);
+    if(!Y||!M||!D) return new Date(s);
+    return new Date(Y, M-1, D);
+  };
+
+  // ==== Última entrega por Producto base (para la persona actual) ====
+  const lastEntregaByPB = {};
+  if (hasPersona && Array.isArray(stateEPP.historialRaw)){
+    for (const x of stateEPP.historialRaw){
+      if (String(x.OPERACION||'').toLowerCase() !== 'entrega') continue;
+      const pb = x.PRODUCTO || '';
+      if (!pb) continue;
+      const d = toDate(x.FECHA);
+      if (!d) continue;
+      if (!lastEntregaByPB[pb] || d > lastEntregaByPB[pb]) lastEntregaByPB[pb] = d;
+    }
+  }
+
+  // ==== Agrupar variantes por producto base ====
+  const grouped={};
+  (stateEPP.stock||[]).forEach(r=>{
+    if(cat && cat!=='Todos' && String(r.CATEGORIA||'').toLowerCase()!==cat.toLowerCase()) return;
+    if(onlyStock && Number(r.STOCK||0)<=0) return;
+
+    const hay = [r.PRODUCTO, r.VARIANTE, r.CATEGORIA].map(x=>(x||'').toLowerCase()).some(x=> x.includes(term));
+    if(term && !hay) return;
+
+    const pb=r.PRODUCTO;
+    grouped[pb] = grouped[pb] || { variants:[], total:0, categoria:r.CATEGORIA||'', imgs:new Set(), file:r.FILE||'', min:0 };
+    grouped[pb].variants.push({ 
+      producto:r.PRODUCTO, 
+      variante:r.VARIANTE||'', 
+      stock:Number(r.STOCK||0), 
+      precio:Number(r.PRECIO||0), 
+      img:r.IMG||'', 
+      file:r.FILE||'' 
+    });
+    grouped[pb].total += Number(r.STOCK||0);
+    grouped[pb].min = Math.max(grouped[pb].min, Number(r.STOCK_MINIMO||0));
+    if(r.IMG) grouped[pb].imgs.add(r.IMG);
+    if(!grouped[pb].file && r.FILE) grouped[pb].file=r.FILE;
+  });
+
+  let pbs=Object.keys(grouped);
+  if(!pbs.length){ 
+    row.innerHTML='<div class="col-12"><div class="alert alert-light border">Sin resultados</div></div>'; 
+    return; 
+  }
+
+  // ==== Ordenar: previstos primero (si hay persona/cargo) ====
+  if(asignadosFirst && cargo){
+    pbs.sort((a,b)=>{
+      const ap=stateEPP.previstoIdx.has(`${a}||${cargo}`); 
+      const bp=stateEPP.previstoIdx.has(`${b}||${cargo}`);
+      return (ap===bp) ? a.localeCompare(b) : (ap?-1:1);
+    });
+  }else{
+    pbs.sort((a,b)=>a.localeCompare(b));
+  }
+
+  row.innerHTML = pbs.map(pb=>{
+    const g=grouped[pb];
+    const lowStock = g.total <= (g.min||0);
+    const imgs = Array.from(g.imgs).filter(Boolean);
+    const carId = `car_${btoa(pb).replace(/=/g,'')}`;
+    const imgHtml = (!imgs.length
+      ? [`<img src="${PLACEHOLDER_IMGEPP}" onerror="this.src='${PLACEHOLDER_IMGEPP}'" alt="">`]
+      : imgs.length===1
+        ? [`<img src="${imgs[0]}" onerror="this.src='${PLACEHOLDER_IMGEPP}'" alt="">`]
+        : [`
+          <div id="${carId}" class="carousel slide" data-bs-ride="false">
+            <div class="carousel-inner">
+              ${imgs.map((u,i)=>`<div class="carousel-item ${i===0?'active':''}"><img src="${u}" onerror="this.src='${PLACEHOLDER_IMGEPP}'" class="d-block w-100" alt=""></div>`).join('')}
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#${carId}" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>
+            <button class="carousel-control-next" type="button" data-bs-target="#${carId}" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>
+          </div>`]).join('');
+
+    // Reglas (para vida útil) — solo si hay persona
+    const reglas = hasPersona ? getReglas(pb, cargo) : { VIDA_UTIL_DIAS:0, DEVOLVIBLE:'No', FREC_INSP:'', REQ_CAP_TEMA:'' };
+    const vida   = hasPersona ? Number(reglas.VIDA_UTIL_DIAS||0) : 0;
+
+    const cap = cargo ? reglas.REQ_CAP_TEMA : '';
+    const fre = cargo ? reglas.FREC_INSP   : '';
+    const devolv = cargo ? (String(reglas.DEVOLVIBLE||'').toLowerCase().startsWith('s')) : false;
+    const previsto = cargo && stateEPP.previstoIdx.has(`${pb}||${cargo}`);
+    const delivered = cargo && stateEPP.deliveredBase.has(pb);
+
+    const variantsHtml = g.variants.map(v=> `<span class="variant-pill">${v.variante||'(Standard)'} (${v.stock})</span>`).join('');
+    const priceList = (g.variants||[]).map(v=>Number(v.precio||0)).filter(n=>n>0);
+    const priceLine = priceList.length ? `<div class="small"><b>Precio:</b> ${
+      (Math.min(...priceList)===Math.max(...priceList)) ? Math.min(...priceList).toFixed(2)
+      : `${Math.min(...priceList).toFixed(2)} – ${Math.max(...priceList).toFixed(2)}`
+    }</div>` : '';
+
+    const specBtn = g.file ? `<a class="btn btn-sm btn-outline-dark" href="${g.file}" target="_blank"><i class="fa-solid fa-file"></i></a>` 
+                           : `<button class="btn btn-sm btn-outline-dark" disabled><i class="fa-solid fa-file"></i></button>`;
+    const personaBtns = stateEPP.persona ? `
+      <button class="btn btn-sm btn-primary" onclick='openOp("${pb.replace(/"/g,'&quot;')}", "Entrega")'>Entregar</button>
+      <button class="btn btn-sm btn-outline-secondary" onclick='openOp("${pb.replace(/"/g,'&quot;')}", "Devolución")'>Devolver</button>
+      <button class="btn btn-sm btn-outline-dark" onclick='openMov("${pb.replace(/"/g,'&quot;')}")'><i class="fa-solid fa-arrow-right-arrow-left"></i></button>
+      ${specBtn}
+    ` : `<button class="btn btn-sm btn-outline-dark" onclick='openMov("${pb.replace(/"/g,'&quot;')}")'><i class="fa-solid fa-arrow-right-arrow-left"></i></button> ${specBtn}`;
+
+    // ==== SOLO VIDA ÚTIL: Próximo cambio desde la última entrega ====
+    let vidaHtml = '';
+    if (hasPersona && vida > 0){
+      const last = lastEntregaByPB[pb] || null;
+      if (last){
+        const proxCambio = addDays(last, vida);
+        vidaHtml = `<div class="small text-muted"><b>Próximo cambio:</b> ${fmt(proxCambio)}</div>`;
+      }
+    }
+
+    return `
+    <div class="col">
+      <div class="card card-prod ${lowStock?'lowstock':''}">
+        <div class="media-wrap">
+          ${imgHtml}
+          ${previsto ? `<div class="tag-previsto"><span>Previsto</span><span class="circle">${delivered?'✓':'✕'}</span></div>` : ''}
+          ${lowStock ? `<span class="badge-stocklow">Stock bajo</span>` : ''}
+        </div>
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex align-items-center gap-2">
+            <h6 class="m-0">${pb}</h6>
+            <div class="ms-auto">
+              ${cap?`<span class="badge badge-reqcap me-1" title="${cap}" onclick="Swal.fire('Capacitación requerida', \`${cap}\`, 'info')"><i class="fa-solid fa-graduation-cap"></i></span>`:''}
+              ${fre?`<span class="badge badge-inspe me-1" title="${fre}" onclick="Swal.fire('Frecuencia de inspección', \`${fre}\`, 'info')"><i class="fa-solid fa-square-check"></i></span>`:''}
+              ${devolv?`<span class="badge badge-devolv me-1">Devolvible</span>`:''}
+            </div>
+          </div>
+          <div class="text-muted small">${g.categoria||''}</div>
+          ${vidaHtml}
+          <div class="small"><b>Disponible total:</b> ${g.total}</div>
+          <div>${variantsHtml}</div>
+          ${priceLine}
+          <div class="mt-auto pt-2 d-flex flex-wrap gap-2 border-top">${personaBtns}</div>
+
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+
+/* =================== Operación -> carrito =================== */
+let opModal=null, movModal=null, newProdModal=null, currentOp=null;
+
+function priceOf(productoBase, variante){
+  const r = stateEPP.stock.find(s=> s.PRODUCTO===productoBase && (s.VARIANTE||'')===(variante||''));
+  return r ? Number(r.PRECIO||0) : 0;
+}
+function openOp(productoBase, tipo){
+  if(!stateEPP.persona){ Swal.fire('Trabajador requerido','Busca un DNI antes de operar','info'); return; }
+  if(!opModal){ opModal=new bootstrap.Modal(document.getElementById('opModal')); }
+
+  const variants=(stateEPP.stock||[]).filter(r=>r.PRODUCTO===productoBase)
+    .map(r=>({ producto:r.PRODUCTO, variante:r.VARIANTE||'', stock:Number(r.STOCK||0), precio:Number(r.PRECIO||0) }))
+    .sort((a,b)=> a.variante.localeCompare(b.variante));
+  const hasVar=variants.length>1 || (variants.length===1 && variants[0].variante);
+
+  document.getElementById('opTitle').textContent=`${tipo} — ${productoBase}`;
+  document.getElementById('opBody').innerHTML=`
+    <div class="mb-2 small text-muted">Almacén: <b>${stateEPP.almacenActual||'-'}</b> • Trabajador: <b>${stateEPP.persona?.NOMBRES||'-'}</b> (${stateEPP.persona?.DNI||'-'})</div>
+    <div class="row g-2">
+      ${hasVar?`<div class="col-12"><label class="form-label">Variante</label><select id="op_var" class="form-select">${variants.map(v=>`<option value="${v.variante}">${v.variante||'(Standard)'} (disp. ${v.stock})</option>`).join('')}</select></div>`:`<input type="hidden" id="op_var" value="">`}
+      <div class="col-4"><label class="form-label">Cantidad</label><input id="op_cant" type="number" min="1" class="form-control" value="1"></div>
+      <div class="col-4"><label class="form-label">Precio unit.</label><input id="op_precio" type="number" step="0.01" class="form-control"></div>
+      <div class="col-4"><label class="form-label">Moneda</label><select id="op_moneda" class="form-select"><option>PEN</option><option>USD</option></select></div>
+      ${tipo==='Entrega'?`<div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="op_devolv" ${ (getReglas(productoBase,stateEPP.persona?.CARGO||'').DEVOLVIBLE||'').toLowerCase().startsWith('s')?'checked':'' }><label class="form-check-label" for="op_devolv">Devolvible</label></div></div>`:''}
+      <div class="col-12"><label class="form-label">Observación</label><input id="op_obs" class="form-control"></div>
+    </div>`;
+
+  const setUnit = ()=>{
+    const varSel = document.getElementById('op_var')?.value || '';
+    const unit = priceOf(productoBase, varSel);
+    const inp = document.getElementById('op_precio');
+    if(unit){ inp.value = unit.toFixed(2); } else { inp.value=''; inp.placeholder='auto'; }
+  };
+  setUnit();
+  const sel = document.getElementById('op_var');
+  if(sel) sel.addEventListener('change', setUnit);
+
+  currentOp={ tipo, productoBase };
+  document.getElementById('btnAddToCart').onclick = addToCart;
+  opModal.show();
+}
+/* MERGE ítems + edición cantidad (#2) */
+function addToCart(){
+  const v = (id)=>document.getElementById(id)?.value;
+  const item = {
+    tipo: currentOp.tipo,
+    producto: currentOp.productoBase,
+    variante: v('op_var')||'',
+    cantidad: Number(v('op_cant')||1),
+    precioUnit: v('op_precio') ? Number(v('op_precio')) : null,
+    moneda: v('op_moneda') || 'PEN',
+    devolvible: document.getElementById('op_devolv')?.checked || false,
+    obs: v('op_obs')||''
+  };
+  if(item.cantidad<=0){ Swal.fire('Cantidad inválida','','info'); return; }
+  const ix = stateEPP.cart.findIndex(x =>
+    x.tipo===item.tipo && x.producto===item.producto &&
+    (x.variante||'')===(item.variante||'') && (x.moneda||'PEN')===(item.moneda||'PEN')
+  );
+  if (ix>-1) {
+    stateEPP.cart[ix].cantidad += item.cantidad;
+    if (item.precioUnit!=null && item.precioUnit!=='') stateEPP.cart[ix].precioUnit = Number(item.precioUnit);
+    if (item.obs) stateEPP.cart[ix].obs = item.obs;
+  } else {
+    stateEPP.cart.push(item);
+  }
+  saveCart(); renderCart(); toast('Agregado al carrito'); opModal.hide();
+}
+
+/* =================== Carrito =================== */
+function estimateUnit(it){
+  if(it.precioUnit!=null && it.precioUnit!=='') return Number(it.precioUnit)||0;
+  const r = stateEPP.stock.find(s => s.PRODUCTO===it.producto && (s.VARIANTE||'')===(it.variante||''));
+  return r ? Number(r.PRECIO||0) : 0;
+}
+function renderCart(){
+  const wrap=document.getElementById('cartList');
+  document.getElementById('cartCount').textContent = stateEPP.cart.length;
+  let total=0;
+  wrap.innerHTML = (stateEPP.cart||[]).map((it,idx)=>{
+    const unit = estimateUnit(it);
+    const imp  = unit * (it.cantidad||0);
+    total += imp;
+
+    // 🔎 Verificar si el producto está previsto para el cargo actual
+    const cargo = stateEPP.persona?.CARGO || '';
+    const key = `${it.producto}||${cargo}`;
+    const previsto = stateEPP.previstoIdx?.has(key);
+
+    const warn = !previsto ? `<div class="text-danger fw-bold small">⚠ Producto no previsto</div>` : '';
+    const borderClass = previsto ? 'border-success' : 'border-danger';
+
+    return `
+    <div class="border ${borderClass} rounded p-2 mb-2">
+      <div class="d-flex align-items-center gap-2">
+        <div><b>${it.tipo}</b> — ${it.producto} ${it.variante?('('+it.variante+')'):''}</div>
+        <div class="ms-auto d-flex align-items-center gap-2">
+          <div class="input-group input-group-sm" style="width:120px;">
+            <button class="btn btn-outline-secondary" type="button" onclick="cartDec(${idx})">–</button>
+            <input class="form-control text-center" value="${it.cantidad}" oninput="cartSetQty(${idx}, this.value)" />
+            <button class="btn btn-outline-secondary" type="button" onclick="cartInc(${idx})">+</button>
+          </div>
+          <button class="btn btn-sm btn-link text-danger" onclick="delCart(${idx})">Quitar</button>
+        </div>
+      </div>
+      <div class="small text-muted">Precio: ${unit?unit.toFixed(2):'auto'} ${it.moneda||'PEN'} • Importe: <b>${imp?imp.toFixed(2):'—'}</b></div>
+      ${warn}
+      <div class="small">Obs: ${it.obs||'—'}</div>
+    </div>`;
+  }).join('') || '<div class="text-muted">Carrito vacío</div>';
+  document.getElementById('cartTotal').textContent = total.toFixed(2);
+}
+
+function cartInc(i){ stateEPP.cart[i].cantidad = Number(stateEPP.cart[i].cantidad||0)+1; saveCart(); renderCart(); }
+function cartDec(i){ stateEPP.cart[i].cantidad = Math.max(1, Number(stateEPP.cart[i].cantidad||0)-1); saveCart(); renderCart(); }
+function cartSetQty(i, val){ const n = Math.max(1, parseInt(val||'1',10)||1); stateEPP.cart[i].cantidad = n; saveCart(); renderCart(); }
+function delCart(i){ stateEPP.cart.splice(i,1); saveCart(); renderCart(); }
+function saveCart(){ try{ localStorage.setItem(CART_KEY(), JSON.stringify(stateEPP.cart||[])); }catch(e){} }
+function loadCart(){ try{ stateEPP.cart = JSON.parse(localStorage.getItem(CART_KEY())||'[]'); renderCart(); }catch(e){ stateEPP.cart=[]; } }
+function cartClear(){ stateEPP.cart=[]; saveCart(); renderCart(); }
+
+/* =================== PDF en cliente =================== */
+function generarPDFCliente(persona, almacen, items, firmaDataUrl, opts={}){ 
+  const { jsPDF } = window.jspdf;
+  const { open=true } = opts;
+
+  const doc = new jsPDF();
+  const M = 14;
+  const RIGHT = 200; 
+  let y = M;
+
+  function clip(text, maxW){
+    if (!text) return '';
+    let t = String(text);
+    while (doc.getTextWidth(t) > maxW && t.length > 3){
+      t = t.slice(0, -2);
+    }
+    if (doc.getTextWidth(t) > maxW) t = t.slice(0, -3) + '…';
+    return t;
+  }
+
+  // =======================
+  // ENCABEZADO
+  // =======================
+  doc.setFontSize(14);
+  doc.text('Ficha de Entrega de EPP y Productos', 105, y, {align:'center'}); 
+  y+=6;
+
+  // Datos del empleador (letras pequeñas)
+  doc.setFontSize(8);
+  doc.text('DATOS DEL EMPLEADOR', 105, y, {align:'center'}); y+=4;
+  doc.setFontSize(6);
+  doc.text('RAZÓN SOCIAL: CHINA INTERNATIONA WATER & ELECTRIC CORP.', M, y); y+=4;
+  doc.text('RUC: 20347029697', M, y); y+=4;
+  doc.text('DOMICILIO: AV. VICTOR ANDRES BELAUNDE NRO. 147 INT. 401 URB. EL ROSARIO (VIA PRINCIPAL NRO 103 EDIFICIO REAL DIEZ) LIMA - SAN ISIDRO', M, y, {maxWidth: 180}); y+=6;
+  doc.text('ACTIVIDAD ECONÓMICA: OBRAS CIVILES Y ELECTROMECÁNICAS', M, y); y+=4;
+  doc.text('N° DE TRABAJADORES: 370', M, y); y+=6;
+
+  // =======================
+  // DATOS DEL TRABAJADOR
+  // =======================
+  doc.setFontSize(10);
+  const pad=(n)=>String(n).padStart(2,'0'); const now=new Date();
+  doc.text(`Trabajador: ${persona.NOMBRES} (${persona.DNI})`, M, y); y+=6;
+  doc.text(`Empresa: ${persona.EMPRESA}  |  Cargo: ${persona.CARGO}`, M, y); y+=6;
+  doc.text(`Almacén: ${almacen}  |  Fecha: ${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`, M, y); y+=8;
+
+  // =======================
+  // CABECERA TABLA
+  // =======================
+  const X_TIPO = M;              
+  const X_PROD = M+18;           
+  const X_VAR  = M+110;          
+  const X_CANT = M+140;          
+  const X_PUNI = M+150;          
+  const X_MON  = M+160;          
+  const X_IMP  = 198;            
+
+  doc.setFontSize(10);
+  doc.text('Tipo', X_TIPO, y);
+  doc.text('Producto', X_PROD, y);
+  doc.text('Variante', X_VAR, y);
+  doc.text('Cant', X_CANT, y, {align:'right'});
+  doc.text('P.Unit', X_PUNI, y, {align:'right'});
+  doc.text('Mon', X_MON, y);
+  doc.text('Importe', X_IMP, y, {align:'right'});
+  y+=3; doc.line(M, y, RIGHT, y); y+=4;
+
+  const ROW_H = 6;
+
+  // Filas
+  (items||[]).forEach(it=>{
+    const unit = (it.precioUnit!=null && it.precioUnit!=='') ? Number(it.precioUnit) : (estimateUnit(it)||0);
+    const imp  = unit * (Number(it.cantidad)||0);
+
+    const tipo = clip(String(it.tipo||''), 18);
+    const prod = clip(String(it.producto||''), 80); 
+    const vari = clip(String(it.variante||'-'), 28);
+
+    const isDev = /^devol/i.test(String(it.tipo||''));
+    if (isDev){
+      doc.setFillColor(255, 240, 240);
+      doc.rect(M-2, y-4.5, (RIGHT - (M-2)), ROW_H+1.5, 'F');
+    }
+
+    doc.text(tipo, X_TIPO, y);
+    doc.text(prod, X_PROD, y);
+    doc.text(vari, X_VAR, y);
+    doc.text(String(it.cantidad||0), X_CANT, y, {align:'right'});
+    doc.text(unit?unit.toFixed(2):'-', X_PUNI, y, {align:'right'});
+    doc.text(String(it.moneda||'PEN'), X_MON, y);
+    doc.text(imp?imp.toFixed(2):'-', X_IMP, y, {align:'right'});
+
+    y += ROW_H;
+    if (y > 260){ doc.addPage(); y = M; }
+  });
+
+  // Firma
+  y += 12;
+  if (firmaDataUrl){
+    try { doc.addImage(firmaDataUrl, 'PNG', M, y, 60, 24); } catch(_) {}
+    y += 28;
+  }
+  doc.text('Firma del trabajador', M, y);
+
+  const url = doc.output('bloburl');
+  if (open) window.open(url, '_blank');
+  return url;
+}
+
+
+
+
+function stockMetaOf(producto, variante){
+  const rows = (stateEPP.stock||[]).filter(s => s.PRODUCTO === producto);
+
+  let file = '';
+  let img  = '';
+  let categoria = '';
+
+  const exact = rows.find(s => (s.VARIANTE||'') === (variante||''));
+  if (exact){
+    file = exact.FILE || '';
+    img  = exact.IMG  || '';
+    categoria = exact.CATEGORIA || '';
+  }
+  if (!file){
+    const anyF = rows.find(s => s.FILE);
+    if (anyF) file = anyF.FILE;
+  }
+  if (!img){
+    const anyI = rows.find(s => s.IMG);
+    if (anyI) img = anyI.IMG;
+  }
+  if (!categoria){
+    const anyC = rows.find(s => s.CATEGORIA);
+    if (anyC) categoria = anyC.CATEGORIA;
+  }
+
+  const cached = PRODUCT_META_CACHE.get(producto);
+  if ((!file || !img || !categoria) && cached){
+    if (!file) file = cached.file || file;
+    if (!img)  img  = cached.img  || img;
+    if (!categoria) categoria = cached.categoria || categoria;
+  }
+  return { file, img, categoria };
+}
+
+/* =================== Ejecutar carrito =================== */
+async function cartExec(){ 
+  if (!stateEPP.persona){ Swal.fire('Trabajador requerido','Busca un DNI','info'); return; }
+  if (!stateEPP.cart?.length){ Swal.fire('Carrito vacío','','info'); return; }
+
+  const dni     = stateEPP.persona.DNI;
+  const nombres = stateEPP.persona.NOMBRES;
+  const empresa = stateEPP.persona.EMPRESA;
+  const cargo   = stateEPP.persona.CARGO;
+  const alm     = stateEPP.almacenActual;
+  const itemsForDoc = [...stateEPP.cart]; // conservar para PDF/WhatsApp
+
+  // Firma
+  const sigData = (typeof getSignatureDataUrl === 'function') ? getSignatureDataUrl() : null;
+  const getFirmaUrl = ()=> new Promise((resolve)=>{
+    if(!sigData) return resolve(null);
+    google.script.run
+      .withSuccessHandler(res=> resolve(res && res.ok ? res.url : null))
+      .withFailureHandler(()=> resolve(null))
+      .saveSignature(sigData);
+  });
+
+  Swal.fire({title:'Procesando entrega...', allowOutsideClick:false, allowEscapeKey:false, didOpen:()=>Swal.showLoading()});
+
+  try{
+    const firmaUrl = await getFirmaUrl();
+
+    // 🔧 Payload completo
+    const payload = {
+      dni, nombres, empresa, cargo,
+      almacen: alm,
+      firmaUrl: firmaUrl || null,
+      items: stateEPP.cart.map(it => ({
+        tipo: it.tipo,
+        producto: it.producto,
+        variante: it.variante || '',
+        cantidad: it.cantidad || 0,
+        obs: it.obs || '',
+        devolvible: it.devolvible || '',
+        vida_util: it.vida_util || '',
+        freq: it.freq || '',
+        precioUnit: it.precioUnit || '',
+        moneda: it.moneda || 'PEN'
+      }))
+    };
+
+    // 🧩 Paso 1: ejecutar entrega
+    await new Promise((resolve, reject)=>{
+      google.script.run
+        .withSuccessHandler(res=> res && res.ok ? resolve(res) : reject(res?.message || 'Error en servidor'))
+        .withFailureHandler(err=> reject(err?.message || err))
+        .execCart(payload);
+    });
+
+    // 💥 Mostrar éxito INMEDIATAMENTE
+    Swal.fire({
+      icon:'success',
+      title:'Entrega procesada',
+      html: `
+        <p>Los datos se están actualizando en segundo plano.</p>
+        <div class="d-grid gap-2">
+          <button id="btnViewPdf" class="btn btn-primary" disabled>Generando PDF...</button>
+          <a id="btnWhats" class="btn btn-success disabled" style="pointer-events:none;opacity:0.6;" target="_blank">WhatsApp</a>
+        </div>
+      `,
+      showConfirmButton:false,
+      didOpen: ()=>{ Swal.stopTimer(); }
+    });
+
+    // 🔁 Ejecutar tareas pesadas en paralelo (sin bloquear Swal)
+    (async()=>{
+      // PDF servidor
+      let pdfPublicUrl = null;
+      try{
+        const r = await gasCall('generarFichaPDF', {
+          dni, nombres, empresa, cargo,
+          almacen: alm, items: itemsForDoc, firmaUrl: firmaUrl || null
+        });
+        if (r && r.ok && r.url) pdfPublicUrl = r.url;
+      }catch(_){}
+
+      // PDF cliente
+      const personaForPdf = { NOMBRES:nombres, DNI:dni, EMPRESA:empresa, CARGO:cargo };
+      const clientPdfUrl = (typeof generarPDFCliente === 'function')
+        ? generarPDFCliente(personaForPdf, alm, itemsForDoc, sigData, { open:false })
+        : null;
+
+      // 🧩 Enriquecer items con datos adicionales (file, frec, reqCap)
+      for (const it of itemsForDoc){
+        const prod = it.producto || '';
+        const vari = it.variante || '';
+        const meta = typeof stockMetaOf === 'function' ? stockMetaOf(prod, vari) : {};
+        const reglas = typeof getReglas === 'function' ? getReglas(prod, cargo) : {};
+        it.file  = meta?.file || '';
+        it.frec  = reglas?.FREC_INSP || '';
+        it.reqCap = reglas?.REQ_CAP_TEMA || '';
+      }
+
+      // WhatsApp message
+      const pad = n=>String(n).padStart(2,'0');
+      const now = new Date();
+      const fecha = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      const lines = [
+        '*Ficha de Entrega de EPP*',
+        `Trabajador: ${nombres} (${dni})`,
+        `Empresa: ${empresa}  |  Cargo: ${cargo}`,
+        `Almacén: ${alm}  |  Fecha: ${fecha}`,
+        '',
+        '*Detalle:*'
+      ];
+      for(const it of itemsForDoc){
+        const unit = (it.precioUnit!=null && it.precioUnit!=='') ? Number(it.precioUnit) : (estimateUnit(it)||0);
+        const imp  = unit * (Number(it.cantidad)||0);
+        lines.push(`- ${it.tipo}: ${it.producto}${it.variante?` (${it.variante})`:''} x ${it.cantidad} • ${imp.toFixed(2)} PEN`);
+        if (it.frec)  lines.push(`   • Frec. inspección: ${it.frec}`);
+        if (it.reqCap) lines.push(`   • Req. capacitación: ${it.reqCap}`);
+        if (it.file)  lines.push(`   • Especificación: ${it.file}`);
+      }
+      if (pdfPublicUrl){ lines.push('', `Ficha PDF: ${pdfPublicUrl}`); }
+
+      const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(lines.join('\n'))}`;
+
+      // Refrescar historial y meta (sin bloquear Swal)
+      refreshAfterMutation({ refetchInit:false });
+      ensureProductMeta(itemsForDoc.map(it=>it.producto));
+
+      // Vaciar carrito y limpiar firma
+      cartClear();
+      const c=document.getElementById('sigPad'); 
+      if(c){ const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); }
+
+      // Actualizar Swal cuando todo termine
+      const btnPdf = document.getElementById('btnViewPdf');
+      const btnWa  = document.getElementById('btnWhats');
+      if(btnPdf && clientPdfUrl){ 
+        btnPdf.textContent = 'Ver / Imprimir PDF';
+        btnPdf.disabled = false;
+        btnPdf.onclick = ()=> window.open(clientPdfUrl, '_blank');
+      }
+      if(btnWa && waUrl){ 
+        btnWa.classList.remove('disabled');
+        btnWa.style.opacity = 1;
+        btnWa.style.pointerEvents = 'auto';
+        btnWa.href = waUrl;
+        btnWa.target = '_blank'; // ✅ aseguro nueva pestaña
+      }
+    })();
+
+  }catch(err){
+    console.error(err);
+    Swal.close();
+    Swal.fire('Error', String(err), 'error');
+  }
+}
+
+
+/* =================== Movimiento =================== */
+function openMov(productoBaseOpt){
+  if(!movModal){ movModal=new bootstrap.Modal(document.getElementById('movModal')); }
+  const pb = productoBaseOpt||'';
+  document.getElementById('movTitle').textContent = 'Movimiento';
+  document.getElementById('movBody').innerHTML = `
+    <div class="row g-2">
+      <div class="col-12"><label class="form-label">Tipo</label>
+        <select id="m_tipo" class="form-select">
+          <option>Ingreso</option><option>Transferencia</option><option>Ajuste +</option><option>Ajuste -</option><option>Baja</option>
+        </select>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Producto base</label>
+        <input id="m_producto" class="form-control" value="${pb}" list="dl_prodBase">
+        <datalist id="dl_prodBase">${[...new Set((stateEPP.stock||[]).map(r=>r.PRODUCTO))].map(n=>`<option value="${n}">`).join('')}</datalist>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Variante</label>
+        <div class="input-group">
+          <select id="m_var_sel" class="form-select"></select>
+          <button class="btn btn-outline-success" type="button" id="m_var_add">+</button>
+        </div>
+        <input type="hidden" id="m_variante">
+        <div id="m_preview" class="mt-2"></div>
+      </div>
+
+      <div class="col-4"><label class="form-label">Cantidad</label><input id="m_cant" type="number" min="1" class="form-control" value="1"></div>
+      <div class="col-4"><label class="form-label">Costo unit.</label><input id="m_costo" type="number" step="0.01" class="form-control"></div>
+      <div class="col-4"><label class="form-label">Moneda</label><select id="m_moneda" class="form-select"><option>PEN</option><option>USD</option></select></div>
+
+      <div class="col-6"><label class="form-label">Proveedor</label><input id="m_prov" class="form-control"></div>
+      <div class="col-6"><label class="form-label">Marca</label><input id="m_marca" class="form-control"></div>
+
+      <div class="col-12 d-none" id="destBox"><label class="form-label">Almacén destino</label><select id="m_destino" class="form-select"></select></div>
+
+      <div class="col-12"><label class="form-label">Observación</label><input id="m_obs" class="form-control"></div>
+    </div>`;
+
+  document.getElementById('m_destino').innerHTML = stateEPP.almacenes
+    .map(a=>a.NOMBRE||a.Nombre||a.ALMACEN||a.ID||'').filter(n=>n && n!==stateEPP.almacenActual)
+    .map(n=>`<option value="${n}">${n}</option>`).join('');
+
+  function buildVarOptions(prod){
+    const vars = (stateEPP.stock||[]).filter(r=>r.PRODUCTO===prod).map(r=>r.VARIANTE||'').sort((a,b)=>a.localeCompare(b));
+    const sel = document.getElementById('m_var_sel');
+    sel.innerHTML = vars.map(v=>`<option value="${v}">${v||'(Standard)'}</option>`).join('') +
+                    `<option value="__NEW__">➕ Nueva variante…</option>`;
+    document.getElementById('m_variante').value = vars[0] || '';
+    sel.value = vars[0] || '';
+    refreshPreview(prod);
+  }
+  function refreshPreview(prod){
+    const imgs = [...new Set((stateEPP.stock||[]).filter(r=>r.PRODUCTO===prod && r.IMG).map(r=>r.IMG))];
+    const box = document.getElementById('m_preview');
+    if (!imgs.length){ box.innerHTML = ''; return; }
+    if (imgs.length===1){ box.innerHTML = `<img src="${imgs[0]}" alt="" class="img-fluid rounded">`; return; }
+    const cid = 'movCar_'+Math.random().toString(36).slice(2);
+    box.innerHTML = `
+      <div id="${cid}" class="carousel slide" data-bs-ride="false">
+        <div class="carousel-inner">
+          ${imgs.map((u,i)=>`<div class="carousel-item ${i===0?'active':''}"><img src="${u}" class="d-block w-100 rounded" alt=""></div>`).join('')}
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#${cid}" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>
+        <button class="carousel-control-next" type="button" data-bs-target="#${cid}" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>
+      </div>`;
+  }
+
+  const inpProd = document.getElementById('m_producto');
+  const selVar  = document.getElementById('m_var_sel');
+  const hidVar  = document.getElementById('m_variante');
+  const btnAddV = document.getElementById('m_var_add');
+
+  if (pb) buildVarOptions(pb);
+  inpProd.addEventListener('change', ()=>{ const prod = inpProd.value.trim(); if (prod) buildVarOptions(prod); });
+  selVar.addEventListener('change', async ()=>{
+    const val = selVar.value;
+    if (val==='__NEW__'){
+      const {value:newV} = await Swal.fire({title:'Nueva variante', input:'text', inputPlaceholder:'Ej. Talla 43', showCancelButton:true});
+      if (newV){
+        const opt = document.createElement('option'); opt.value = newV; opt.textContent = newV;
+        selVar.insertBefore(opt, selVar.lastElementChild); selVar.value = newV; hidVar.value = newV;
+      }else{ selVar.selectedIndex = 0; hidVar.value = selVar.value || ''; }
+    }else{
+      hidVar.value = val || '';
+    }
+  });
+  btnAddV.addEventListener('click', ()=> { selVar.value='__NEW__'; selVar.dispatchEvent(new Event('change')); });
+
+  const tipoSel = document.getElementById('m_tipo');
+  const refreshForm = ()=>{
+    const t=tipoSel.value;
+    const showTransfer = (t==='Transferencia');
+    document.getElementById('destBox').classList.toggle('d-none', !showTransfer);
+    const disableCost = (t==='Ajuste -' || t==='Baja');
+    document.getElementById('m_costo').disabled = disableCost || showTransfer;
+    document.getElementById('m_moneda').disabled = disableCost || showTransfer;
+    document.getElementById('m_prov').disabled = (t!=='Ingreso');
+    document.getElementById('m_marca').disabled = (t!=='Ingreso');
+  };
+  tipoSel.addEventListener('change', refreshForm);
+  refreshForm();
+
+  document.getElementById('btnConfirmMov').onclick = confirmMov;
+  movModal.show();
+}
+function confirmMov(){
+  const btn = document.getElementById('btnConfirmMov');
+  setLoading(btn, true, 'Registrar', 'Guardando…');
+
+  (async () => {
+    try{
+      const t = document.getElementById('m_tipo').value;
+      const payload = {
+        tipo: t,
+        producto: document.getElementById('m_producto').value,
+        variante: document.getElementById('m_variante').value,
+        cantidad: Number(document.getElementById('m_cant').value || 0),
+        costoUnit: document.getElementById('m_costo').disabled ? '' : document.getElementById('m_costo').value,
+        moneda: document.getElementById('m_moneda').disabled ? 'PEN' : document.getElementById('m_moneda').value,
+        proveedor: document.getElementById('m_prov').disabled ? '' : document.getElementById('m_prov').value,
+        marca: document.getElementById('m_marca').disabled ? '' : document.getElementById('m_marca').value,
+        destino: (t === 'Transferencia') ? document.getElementById('m_destino').value : '',
+        obs: document.getElementById('m_obs').value,
+        almacen: stateEPP.almacenActual
+      };
+
+      const res = await gasCall('registrarMovimiento', payload);
+
+      if (res && res.ok){
+        toast('Movimiento registrado');
+
+        // cierra modal de movimiento
+        try{
+          const movEl = document.getElementById('movModal');
+          if (movEl) bootstrap.Modal.getOrCreateInstance(movEl).hide();
+        }catch(_){}
+
+        // refresca cards (SSR)
+        if (typeof refreshAfterMutation === 'function'){
+          await refreshAfterMutation({ refetchInit: false }); // usa la que ya te pasé
+        } else {
+          // fallback si no añadiste refreshAfterMutation
+          await loadPage(true);
+        }
+      }else{
+        Swal.fire('No se pudo registrar', res?.message || '', 'error');
+      }
+    }catch(e){
+      Swal.fire('Error', String(e), 'error');
+    }finally{
+      setLoading(btn, false);
+    }
+  })();
+}
+
+/* =================== Nuevo producto =================== */
+function openNewProduct(){
+  if(!newProdModal){ newProdModal=new bootstrap.Modal(document.getElementById('newProdModal')); }
+  document.getElementById('dl_categorias').innerHTML = stateEPP.categorias.map(c=>`<option value="${c}">`).join('');
+  document.getElementById('dl_provs').innerHTML = stateEPP.proveedores.map(c=>`<option value="${c}">`).join('');
+  document.getElementById('dl_marcas').innerHTML = stateEPP.marcas.map(c=>`<option value="${c}">`).join('');
+  const chk=document.getElementById('np_stockcheck'); const box=document.getElementById('np_stockbox');
+  chk.onchange=()=> box.classList.toggle('d-none', !chk.checked);
+  document.getElementById('btnSaveNewProd').onclick = saveNewProduct;
+  newProdModal.show();
+}
+async function saveNewProduct(){
+  const btn=this; setLoading(btn,true,'Guardar','Guardando…');
+  try{
+    const patch={
+      producto:document.getElementById('np_producto').value.trim(),
+      variante:document.getElementById('np_variante').value.trim(),
+      categoria:document.getElementById('np_categoria').value.trim(),
+      img:document.getElementById('np_img').value.trim(),
+      file:document.getElementById('np_file').value.trim(),
+      minimo:Number(document.getElementById('np_minimo').value||0),
+      crearIngreso: document.getElementById('np_stockcheck').checked,
+      cant:Number(document.getElementById('np_cant').value||0),
+      costo:document.getElementById('np_costo').value,
+      moneda:document.getElementById('np_moneda').value,
+      prov:document.getElementById('np_prov').value,
+      marca:document.getElementById('np_marca').value,
+      obs:document.getElementById('np_obs').value,
+      almacen: stateEPP.almacenActual
+    };
+    const r = await gasCall('crearProductoConOpcionalIngreso', patch);
+    if(r && r.ok){
+      newProdModal.hide();
+
+      // 🔄 Reload de catálogos y primera página con skeletons (sin overlay)
+      await refreshInit(stateEPP.almacenActual);
+
+      const lines=[];
+      lines.push(`*Nuevo producto ingresado a almacén*`);
+      lines.push(`Almacén: ${stateEPP.almacenActual}`);
+      lines.push(`Producto: ${patch.producto}${patch.variante?(' ('+patch.variante+')'):''}`);
+      if (patch.crearIngreso && patch.cant>0){
+        lines.push(`Ingreso inicial: ${patch.cant} unid. a ${patch.costo || 'auto'} ${patch.moneda||'PEN'}`);
+      }
+      if (patch.categoria) lines.push(`Categoría: ${patch.categoria}`);
+      if (patch.img) lines.push(`Imagen: ${patch.img}`);
+      if (patch.file) lines.push(`Especificación: ${patch.file}`);
+
+      Swal.fire({
+        icon:'success',
+        title:'Producto guardado',
+        html:`<div class="d-grid gap-2">
+          <button id="btnShareNewProd" class="btn btn-success">Compartir por WhatsApp</button>
+          <button class="btn btn-outline-secondary" onclick="Swal.close()">Cerrar</button>
+        </div>`,
+        showConfirmButton:false,
+        didOpen: ()=>{
+          document.getElementById('btnShareNewProd').onclick = ()=>{
+            const url=`https://api.whatsapp.com/send?text=${encodeURIComponent(lines.join('\n'))}`;
+            window.open(url, '_blank');
+          };
+        }
+      });
+    } else {
+      Swal.fire('No se pudo guardar', r?.message||'', 'error');
+    }
+  }catch(e){ Swal.fire('Error', String(e), 'error'); }
+  finally{ setLoading(btn,false); }
+}
+
+
+//skeleton
+/* =================== PAGINACIÓN SSR (30 en 30) =================== */
+function getPAGE(){
+  if(!window._SSR_PAGE){
+    window._SSR_PAGE = { limit:30, offset:0, loading:false, done:false, io:null, sentinel:null, filterHash:'' };
+  }
+  return window._SSR_PAGE;
+}
+
+function debounce(fn, ms=250){
+  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
+}
+
+function currentFilter(){
+  const cat = document.querySelector('#chipCats .chip.active')?.dataset.cat || 'Todos';
+  return {
+    almacenId: stateEPP.almacenActual || '',
+    term: (stateEPP.searchTerm||'').toLowerCase(),
+    cat,
+    onlyStock: !!stateEPP.onlyStock
+  };
+}
+
+function hashFilter(o){ try{ return JSON.stringify(o); }catch(e){ return ''; } }
+
+function ensureSkeletonStyles(){
+  if (document.getElementById('sk-styles')) return;
+  const css = `
+  .shimmer{position:relative;overflow:hidden}
+  .shimmer::after{content:'';position:absolute;inset:0;transform:translateX(-100%);
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent);
+    animation:shimmer 1.2s infinite;}
+  @keyframes shimmer{100%{transform:translateX(100%)}}
+  .sk{border-radius:12px;background:#f1f3f5}
+  .sk-img{height:140px;background:#e9ecef;border-radius:12px 12px 0 0}
+  .sk-line{height:10px;background:#dee2e6;border-radius:8px;margin:.4rem 0}
+  .sk-chip-row{display:flex;gap:.4rem;margin-top:.4rem}
+  .sk-chip{height:22px;width:60px;background:#dee2e6;border-radius:999px;display:inline-block}
+  .sk-pill{height:18px;background:#dee2e6;border-radius:999px;display:inline-block}
+  `;
+  const st=document.createElement('style'); st.textContent=css; st.id='sk-styles'; document.head.appendChild(st);
+}
+
+function ensureSentinel(){
+  const PAGE = getPAGE();
+  const row = document.getElementById('cardsRowEPP');
+  if (!PAGE.sentinel){
+    PAGE.sentinel = document.createElement('div');
+    PAGE.sentinel.id = 'ioSentinel';
+    PAGE.sentinel.style.height='1px';
+  }
+  if (row && !row.contains(PAGE.sentinel)) row.appendChild(PAGE.sentinel);
+  if (!PAGE.io){
+    PAGE.io = new IntersectionObserver((entries)=>{
+      for(const en of entries){
+        if(en.isIntersecting && !PAGE.loading && !PAGE.done){
+          loadPage(false);
+        }
+      }
+    }, {root:null, rootMargin:'800px 0px 800px 0px', threshold:0});
+  }
+  PAGE.io.observe(PAGE.sentinel);
+}
+
+function clearSentinel(){
+  const PAGE = getPAGE();
+  if (PAGE.io && PAGE.sentinel){ try{ PAGE.io.unobserve(PAGE.sentinel);}catch(_e){} }
+}
+
+function showSkeleton(n=12){
+  ensureSkeletonStyles();
+  const row = document.getElementById('cardsRowEPP');
+  if (!row) return;
+  const ph = [];
+  for(let i=0;i<n;i++){
+    ph.push(`<div class="col">
+      <div class="card sk shimmer">
+        <div class="sk-img"></div>
+        <div class="card-body d-flex flex-column">
+          <div class="sk-line w-75"></div>
+          <div class="sk-line w-50"></div>
+          <div class="sk-chip-row">
+            <span class="sk-chip"></span><span class="sk-chip"></span>
+          </div>
+          <div class="d-flex justify-content-between mt-2">
+            <span class="sk-pill w-25"></span>
+            <span class="sk-pill w-25"></span>
+          </div>
+        </div>
+      </div>
+    </div>`);
+  }
+  row.insertAdjacentHTML('beforeend', ph.join(''));
+}
+
+function hideSkeleton(){
+  document.querySelectorAll('#cardsRowEPP .card.sk').forEach(el=> el.parentElement?.remove());
+}
+
+async function loadPage(reset=false){
+  const PAGE = getPAGE();
+  const filt = currentFilter();
+  const h = hashFilter(filt);
+  if (reset || (PAGE.filterHash && h!==PAGE.filterHash)){
+    clearSentinel();
+    PAGE.offset = 0; PAGE.done=false;
+    PAGE.filterHash = h;
+    stateEPP.stock = []; // limpiamos datos de página
+    const row = document.getElementById('cardsRowEPP');
+    if (row) row.innerHTML = ''; // limpio grilla
+  }
+
+  if (PAGE.loading || PAGE.done) return;
+  PAGE.loading = true;
+  showSkeleton(8);
+  try{
+    const { total, rows } = await gasCall('searchStockPaged', { ...filt, offset: PAGE.offset, limit: PAGE.limit });
+    hideSkeleton();
+    stateEPP.stock = stateEPP.stock.concat(rows||[]);
+    PAGE.offset += (rows||[]).length;
+    if (PAGE.offset >= (total||0)) PAGE.done = true;
+    renderCards();         // tu render actual
+    ensureSentinel();      // vuelve a observar al final de la grilla
+  }catch(e){
+    hideSkeleton();
+    console.error(e);
+  }finally{
+    PAGE.loading = false;
+  }
+}
+
+/** (opcional pero recomendado) Reemplaza handlers de búsqueda por SSR con debounce */
+function upgradeSearchHandlersToSSR(){
+  if (window._SSR_HANDLERS_WIRED) return;
+  window._SSR_HANDLERS_WIRED = true;
+
+  const inp = document.getElementById('productSearch');
+  const btn = document.getElementById('btnClearSearch');
+  if (inp){
+    inp.addEventListener('input', debounce((e)=>{
+      stateEPP.searchTerm = (e.target.value||'').toLowerCase();
+      loadPage(true);
+    }, 250));
+  }
+  if (btn){
+    btn.addEventListener('click', ()=>{
+      const el=document.getElementById('productSearch');
+      if (el) el.value='';
+      stateEPP.searchTerm='';
+      loadPage(true);
+    });
+  }
+}
+async function refreshAfterMutation({refetchInit=false} = {}){
+  try{
+    // 1) invalidar caches del servidor (stock, mov, registro)
+    await gasCall('invalidateStockCache');
+
+    // 2) refrescar grilla SSR
+    if(!refetchInit){
+      await loadPage(true); // primera página con el filtro actual (skeletons)
+    } else {
+      await refreshInit(stateEPP.almacenActual || ''); // si cambió catálogo
+    }
+
+    // 3) 🔁 refrescar HISTORIAL y NETO para la persona actual (si hay)
+    if (stateEPP.persona?.DNI){
+      const dni = stateEPP.persona.DNI;
+
+      try{
+        const list = await gasCall('getHistorialByDni', [dni, 0]); // 0 = todo
+        stateEPP.historialRaw = list || [];
+        renderHistorial(stateEPP.historialRaw);
+
+        // actualizar “entregados” para la insignia Previsto ✓/✕
+        stateEPP.deliveredBase = new Set(
+          (stateEPP.historialRaw||[])
+            .filter(x => x.OPERACION === 'Entrega')
+            .map(x => x.PRODUCTO)
+        );
+
+        // costo neto por producto/variante
+        const net = await gasCall('getCostoNetoByDni', dni);
+        stateEPP.netoByProd = {};
+        (net||[]).forEach(r=>{
+          const key = r.VARIANTE ? `${r.PRODUCTO}||${r.VARIANTE}` : r.PRODUCTO;
+          stateEPP.netoByProd[key] = { MONTO:r.MONTO_NETO, MONEDA:r.MONEDA };
+        });
+
+        // re-render para que badges/estado se reflejen
+        renderCards();
+      }catch(e){
+        console.error('refreshAfterMutation (historial) error:', e);
+      }
+    }
+  }catch(err){
+    console.error('refreshAfterMutation error:', err);
+    // Fallback: al menos repaginar
+    await loadPage(true);
+  }
+}
+
+
+//ACTUALIZAR
+document.getElementById('btnActualizarEPP').addEventListener('click', async ()=>{
+  const btn = document.getElementById('btnActualizarEPP');
+  if(!btn) return;
+
+  // 🔄 animación del botón
+  btn.disabled = true;
+  const oldHTML = btn.innerHTML;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+
+  try{
+    // Mostrar overlay global mientras actualiza
+    overlay(true);
+
+    // Refrescar datos desde el backend
+    await refreshInit(stateEPP.almacenActual || '');
+
+    // Mostrar confirmación visual
+    btn.innerHTML = `<i class="fa-solid fa-check text-success"></i>`;
+    setTimeout(()=> btn.innerHTML = oldHTML, 1500);
+  }catch(err){
+    console.error(err);
+    btn.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-danger"></i>`;
+    setTimeout(()=> btn.innerHTML = oldHTML, 1500);
+  }finally{
+    overlay(false);
+    btn.disabled = false;
+  }
+});
+
+</script>
+
+</body>
+</html>

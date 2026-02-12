@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Avisos</title>
+    <style>
+        :root {
+            --primary-color: #6b7280;
+            --secondary-color: #4b5563;
+            --accent-color: #9ca3af;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --purple-color: #8b5cf6;
+            --teal-color: #14b8a6;
+            --pink-color: #ec4899;
+            --orange-color: #f97316;
+        }
+
+        body {
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+
+        .header-section {
+            display: none;
+        }
+
+        .titulo-card {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            color: #334155;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .titulo-card .company-logo {
+            font-size: 3rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .titulo-card .company-title {
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .titulo-card .company-subtitle {
+            font-size: 1.2;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            font-style: italic;
+        }
+
+        .titulo-card .company-date {
+            font-size: 0.95rem;
+            color: #64748b;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Contenedor de botones */
+        .buttons-container {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .titulo-card .btn-header {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            border: none;
+            color: white;
+            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            flex: 1;
+            min-width: 200px;
+            max-width: 200px;
+        }
+
+        .titulo-card .btn-header:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+            color: white;
+        }
+
+        /* Botón de marcador de asistencia */
+        .titulo-card .btn-asistencia {
+            background: linear-gradient(135deg, var(--purple-color), #7c3aed);
+            border: none;
+            color: white;
+            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+            flex: 1;
+            min-width: 200px;
+            max-width: 200px;
+        }
+
+        .titulo-card .btn-asistencia:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+            color: white;
+        }
+
+        .control-buttons {
+            display: none;
+        }
+
+        .btn-custom {
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+
+        .btn-refresh {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            border: none;
+            color: white;
+        }
+
+        /* Contenedor de avisos con posición relativa para el contexto de apilamiento */
+        #avisosContainer {
+            position: relative;
+        }
+
+        /* Wrapper de columna para manejar el z-index */
+        .aviso-col-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        .aviso-col-wrapper.submenu-activo {
+            z-index: 1000;
+        }
+
+        .aviso-card {
+            border-radius: 20px;
+            padding: 1.2rem;
+            color: white;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            border: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: visible; /* Cambiado de hidden a visible */
+            height: 100%;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .aviso-card::before {
+            display: none;
+        }
+
+        .aviso-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+        }
+
+        .aviso-card-blue {
+            background: linear-gradient(135deg, #22d3ee 0%, #0ea5e9 100%);
+        }
+
+        .aviso-card-green {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .aviso-card-purple {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+
+        .aviso-card-pink {
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+        }
+
+        .aviso-card-teal {
+            background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+        }
+
+        .aviso-card-orange {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        }
+
+        .aviso-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 1rem;
+        }
+
+        .aviso-title {
+            font-size: 1.0rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.75rem;
+            line-height: 1.3;
+        }
+
+        .aviso-date {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .aviso-description {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: auto;
+            flex-grow: 1;
+        }
+
+        .aviso-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            margin-top: 1rem;
+            align-self: flex-start;
+        }
+
+        .aviso-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateX(3px);
+        }
+
+        .loading-state, .error-state, .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========== ESTILOS MEJORADOS PARA SUBMENÚ ========== */
+        .aviso-card-categoria {
+            cursor: pointer;
+        }
+
+        .submenu-avisos {
+            display: none;
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+            z-index: 1001;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .submenu-avisos.activo {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Items del submenú - Diseño compacto como botones */
+        .submenu-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+            display: flex;
+            align-items: flex-start; /* Cambiado de center a flex-start */
+            gap: 12px;
+            min-height: 60px; /* Aumentado para dar espacio */
+        }
+
+        .submenu-item:last-child {
+            border-bottom: none;
+        }
+
+        .submenu-item:hover {
+            background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .submenu-item-icon {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.95rem;
+            margin-top: 2px; /* Alinear con el título */
+        }
+
+        .submenu-item-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .submenu-item-title {
+            color: #1e293b;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin: 0;
+            line-height: 1.3;
+            /* Removido: white-space, overflow, text-overflow */
+            word-wrap: break-word;
+        }
+
+        /* Nuevo contenedor para descripción y fecha */
+        .submenu-item-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: nowrap;
+            width: 100%;
+        }
+
+        .submenu-item-desc {
+            color: #64748b;
+            font-size: 0.75rem;
+            margin: 0;
+            line-height: 1.3;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .submenu-item-fecha {
+            flex-shrink: 0;
+            font-size: 0.7rem;
+            color: #8B0000 ;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            margin-left: auto; /* ✅ Ya lo tienes */
+            text-align: right; /* ✅ AGREGADO */
+        }
+
+        .submenu-item-fecha i {
+            font-size: 0.65rem;
+        }
+
+        /* Icono de chevron animado */
+        .aviso-card-categoria .aviso-link i {
+            transition: transform 0.3s ease;
+        }
+
+        .aviso-card-categoria.submenu-abierto .aviso-link i {
+            transform: rotate(180deg);
+        }
+
+        /* ========== RESPONSIVE PARA MÓVILES ========== */
+        @media (max-width: 768px) {
+            .titulo-card {
+                padding: 1.2rem;
+            }
+
+            .titulo-card .company-logo {
+                font-size: 2rem;
+            }
+
+            .titulo-card .company-subtitle {
+                font-size: 1.0rem;
+            }
+
+            /* Responsive para botones */
+            .buttons-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .titulo-card .btn-header,
+            .titulo-card .btn-asistencia {
+                min-width: 100%;
+                max-width: 100%;
+            }
+
+            /* Asegurar que las tarjetas ocupen todo el ancho en móvil */
+            #avisosContainer .col {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            /* Submenú en móvil - más compacto */
+            .submenu-avisos {
+                max-height: 300px;
+                overflow-y: auto;
+            }
+
+            .submenu-item {
+                padding: 10px 12px;
+                min-height: 45px;
+            }
+
+            .submenu-item-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 0.8rem;
+            }
+
+            .submenu-item-title {
+                font-size: 0.75rem;
+            }
+
+            .submenu-item-desc {
+                font-size: 0.7rem;
+            }
+
+            .submenu-item-fecha {
+                font-size: 0.65rem;
+            }
+
+            /* Ocultar descripción en móviles muy pequeños */
+            @media (max-width: 400px) {
+                .submenu-item-desc {
+                    display: none;
+                }
+            }
+        }
+
+        /* Scrollbar personalizado para submenú */
+        .submenu-avisos::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .submenu-avisos::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .submenu-avisos::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .submenu-avisos::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Título Card -->
+    <div class="container" style="padding-top: 2rem;">
+        <div class="titulo-card">
+            <i class="fa-solid fa-shield-halved company-logo" id="iconoEmpresa"></i>
+            <h7 class="company-title" id="tituloSeguridad">Frase de Seguridad de la Semana</h7>
+            <H2 class="company-subtitle" id="fraseSeguridad">"La seguridad no es un accidente, es una elección consciente que tomamos cada día"</H2>
+            <div class="company-date" id="fechaSeguridad">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>Actualizado hoy</span>
+            </div>
+            
+            <!-- Contenedor de botones -->
+            <div class="buttons-container">
+                <button class="btn btn-header" onclick="actualizarAvisos()">
+                    <i class="fa-solid fa-arrows-rotate me-2"></i>Actualizar Avisos
+                </button>
+                <button class="btn btn-asistencia" onclick="abrirMarcadorAsistencia()">
+                    <i class="fa-solid fa-user-check me-2"></i>Marcador de Asistencia
+                </button>
+            </div>
+        </div>
+        <!-- Avisos Container -->
+        <div id="avisosContainer" class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4"></div>
+    </div>
+
+    <script>
+    const CACHE_KEY = 'avisos_cache';
+    let datosCache = null;
+    let todosLosAvisos = [];
+
+    function mostrarAvisos(data) {
+        const contenedor = document.getElementById('avisosContainer');
+        contenedor.innerHTML = '';
+
+        console.log('Datos recibidos:', data);
+        
+        todosLosAvisos = data || [];
+
+        if (data && data.length > 0) {
+            const primeraFila = data[0];
+            
+            const tituloElement = document.getElementById('tituloSeguridad');
+            if (tituloElement && primeraFila.titulo) {
+                tituloElement.textContent = primeraFila.titulo;
+            }
+            
+            const fraseElement = document.getElementById('fraseSeguridad');
+            if (fraseElement && primeraFila.descripcion) {
+                fraseElement.textContent = `"${primeraFila.descripcion}"`;
+            }
+            
+            const fechaElement = document.getElementById('fechaSeguridad');
+            if (fechaElement && primeraFila.fecha) {
+                fechaElement.innerHTML = `
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>${primeraFila.fecha}</span>
+                `;
+            }
+            
+            data = data.slice(1);
+        }
+
+        if (!data || data.length === 0) {
+            contenedor.innerHTML = `
+                <div class="col-12">
+                    <div class="empty-state fade-in">
+                        <i class="fa-solid fa-inbox fs-1 text-muted mb-3"></i>
+                        <h5 class="text-muted">No hay avisos disponibles</h5>
+                        <p class="text-muted small">Los nuevos avisos aparecerán aquí cuando estén disponibles.</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        const categoriasPrincipales = data.filter(aviso => aviso.esCategoria === true);
+
+        if (categoriasPrincipales.length === 0) {
+            mostrarAvisosNormales(data, contenedor);
+            return;
+        }
+
+        const colores = ['blue', 'green', 'purple', 'pink', 'teal', 'orange'];
+        const iconos = ['fa-bullhorn', 'fa-bell', 'fa-exclamation-circle', 'fa-info-circle', 'fa-warning', 'fa-star'];
+
+        categoriasPrincipales.forEach((categoria, index) => {
+            const color = colores[index % colores.length];
+            const icono = iconos[index % iconos.length];
+            
+            const subcategorias = todosLosAvisos.filter(aviso => 
+                aviso.categoria === categoria.id && aviso.esCategoria !== true
+            );
+            
+            // Crear wrapper con clase especial
+            const wrapper = document.createElement('div');
+            wrapper.className = "col aviso-col-wrapper";
+            wrapper.setAttribute('data-categoria-id', categoria.id);
+            
+            if (categoria.url && categoria.url !== '' && categoria.url !== 'null') {
+                wrapper.innerHTML = `
+                    <div class="aviso-card aviso-card-${color} fade-in" style="animation-delay: ${index * 0.1}s">
+                        <div class="aviso-icon">
+                            <i class="fa-solid ${icono}"></i>
+                        </div>
+                        <div class="flex-grow-1 d-flex flex-column">
+                            <h6 class="aviso-title">${categoria.titulo || 'Sin título'}</h6>
+                            ${categoria.fecha ? `
+                                <div class="aviso-date">
+                                    <i class="fa-solid fa-calendar-days"></i>
+                                    ${categoria.fecha}
+                                </div>
+                            ` : ''}
+                            <p class="aviso-description">${categoria.descripcion || 'Sin descripción'}</p>
+                            <a href="${categoria.url}" target="_blank" class="aviso-link">
+                                <i class="fa-solid fa-external-link-alt"></i>
+                                Ver documento
+                            </a>
+                        </div>
+                    </div>
+                `;
+            } else {
+                const cantidadDocs = subcategorias.length;
+                
+                const submenuHTML = subcategorias.length > 0 ? 
+                  subcategorias.map(sub => `
+                      <div class="submenu-item" onclick="abrirDocumento('${sub.url}', event)">
+                          <div class="submenu-item-icon">
+                              <i class="fa-solid fa-file-pdf"></i>
+                          </div>
+                          <div class="submenu-item-content">
+                              <div class="submenu-item-title">${sub.titulo}</div>
+                              <div class="submenu-item-footer">
+                                  ${sub.descripcion ? `<span class="submenu-item-desc">${sub.descripcion}</span>` : ''}
+                                  ${sub.fecha ? `
+                                      <span class="submenu-item-fecha">
+                                          <i class="fa-solid fa-calendar-days"></i>
+                                          ${sub.fecha}
+                                      </span>
+                                  ` : ''}
+                              </div>
+                          </div>
+                      </div>
+                  `).join('') 
+                    : '<div class="submenu-item"><div class="submenu-item-content"><div class="submenu-item-title">No hay documentos disponibles</div></div></div>';
+                
+                wrapper.innerHTML = `
+                    <div class="aviso-card aviso-card-${color} fade-in aviso-card-categoria" 
+                         style="animation-delay: ${index * 0.1}s"
+                         data-categoria-id="${categoria.id}">
+                        <div class="aviso-icon">
+                            <i class="fa-solid ${icono}"></i>
+                        </div>
+                        <div class="flex-grow-1 d-flex flex-column">
+                            <h6 class="aviso-title">${categoria.titulo || 'Sin título'}</h6>
+                            ${categoria.fecha ? `
+                                <div class="aviso-date">
+                                    <i class="fa-solid fa-calendar-days"></i>
+                                    ${categoria.fecha}
+                                </div>
+                            ` : ''}
+                            <p class="aviso-description">${categoria.descripcion || cantidadDocs + ' documentos'}</p>
+                            <div class="aviso-link" onclick="toggleSubmenu(${categoria.id}, event)">
+                                <i class="fa-solid fa-chevron-down"></i>
+                                Ver documentos (${cantidadDocs})
+                            </div>
+                        </div>
+                        
+                        <div class="submenu-avisos" id="submenu-${categoria.id}">
+                            ${submenuHTML}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            contenedor.appendChild(wrapper);
+        });
+    }
+
+    function mostrarAvisosNormales(data, contenedor) {
+        const colores = ['blue', 'green', 'purple', 'pink', 'teal', 'orange'];
+        const iconos = ['fa-bullhorn', 'fa-bell', 'fa-exclamation-circle', 'fa-info-circle', 'fa-warning', 'fa-star'];
+
+        data.forEach((aviso, index) => {
+            const color = colores[index % colores.length];
+            const icono = iconos[index % iconos.length];
+            
+            const wrapper = document.createElement('div');
+            wrapper.className = "col aviso-col-wrapper";
+            wrapper.innerHTML = `
+                <div class="aviso-card aviso-card-${color} fade-in" style="animation-delay: ${index * 0.1}s">
+                    <div class="aviso-icon">
+                        <i class="fa-solid ${icono}"></i>
+                    </div>
+                    <div class="flex-grow-1 d-flex flex-column">
+                        <h6 class="aviso-title">${aviso.titulo || 'Sin título'}</h6>
+                        ${aviso.fecha ? `
+                            <div class="aviso-date">
+                                <i class="fa-solid fa-calendar-days"></i>
+                                ${aviso.fecha}
+                            </div>
+                        ` : ''}
+                        <p class="aviso-description">${aviso.descripcion || 'Sin descripción'}</p>
+                        ${aviso.url ? `
+                            <a href="${aviso.url}" target="_blank" class="aviso-link">
+                                <i class="fa-solid fa-external-link-alt"></i>
+                                Ver documento
+                            </a>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            contenedor.appendChild(wrapper);
+        });
+    }
+
+    function toggleSubmenu(categoriaId, event) {
+        event.stopPropagation();
+        
+        const wrapper = document.querySelector(`.aviso-col-wrapper[data-categoria-id="${categoriaId}"]`);
+        const submenu = document.getElementById(`submenu-${categoriaId}`);
+        const todosWrappers = document.querySelectorAll('.aviso-col-wrapper');
+        const todosSubmenus = document.querySelectorAll('.submenu-avisos');
+        
+        // Cerrar todos los otros submenús y remover z-index
+        todosWrappers.forEach(w => w.classList.remove('submenu-activo'));
+        todosSubmenus.forEach(s => {
+            if (s.id !== `submenu-${categoriaId}`) {
+                s.classList.remove('activo');
+            }
+        });
+        
+        // Toggle del submenú actual
+        submenu.classList.toggle('activo');
+        
+        // Agregar z-index alto al wrapper si el submenú está activo
+        if (submenu.classList.contains('activo')) {
+            wrapper.classList.add('submenu-activo');
+        }
+    }
+
+    function abrirDocumento(url, event) {
+        event.stopPropagation();
+        if (url && url !== 'null' && url !== '' && url !== 'undefined') {
+            window.open(url, '_blank');
+        }
+    }
+
+    // Cerrar submenús al hacer clic fuera
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.aviso-card-categoria')) {
+            document.querySelectorAll('.submenu-avisos').forEach(s => {
+                s.classList.remove('activo');
+            });
+            document.querySelectorAll('.aviso-col-wrapper').forEach(w => {
+                w.classList.remove('submenu-activo');
+            });
+        }
+    });
+
+    function cargarDesdeCache() {
+        if (datosCache) {
+            mostrarAvisos(datosCache);
+            return true;
+        }
+        return false;
+    }
+
+    function cargarDesdeServidor() {
+        google.script.run
+            .withSuccessHandler(function(data) {
+                datosCache = data;
+                mostrarAvisos(data);
+            })
+            .withFailureHandler(function(err) {
+                console.error("Error:", err);
+                document.getElementById('avisosContainer').innerHTML = `
+                    <div class="col-12">
+                        <div class="error-state fade-in">
+                            <i class="fa-solid fa-exclamation-triangle fs-1 text-danger mb-3"></i>
+                            <h5 class="text-danger">Error al cargar avisos</h5>
+                            <p class="text-muted small">Por favor, intenta actualizar nuevamente.</p>
+                        </div>
+                    </div>
+                `;
+            })
+            .obtenerAvisosERP();
+    }
+
+    function refrescarAvisos() {
+        if (!cargarDesdeCache()) {
+            document.getElementById('avisosContainer').innerHTML = `
+                <div class="col-12">
+                    <div class="loading-state">
+                        <div class="loading-spinner"></div>
+                        <h5 class="text-muted">Cargando avisos...</h5>
+                    </div>
+                </div>
+            `;
+        }
+        cargarDesdeServidor();
+    }
+
+    function actualizarAvisos() {
+        datosCache = null;
+        document.getElementById('avisosContainer').innerHTML = `
+            <div class="col-12">
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <h5 class="text-muted">Actualizando...</h5>
+                </div>
+            </div>
+        `;
+        cargarDesdeServidor();
+    }
+
+    // Nueva función para el marcador de asistencia
+function abrirMarcadorAsistencia() {
+    // 1. Crear el overlay (fondo oscuro)
+    const modalOverlay = document.createElement('div');
+    modalOverlay.id = 'modalAsistenciaOverlay';
+    modalOverlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px);
+        z-index: 10000; display: flex; justify-content: center; align-items: center;
+        opacity: 0; transition: opacity 0.3s ease; padding: 20px;
+    `;
+
+    // 2. Crear el contenedor del marcador
+    const modalContainer = document.createElement('div');
+    modalContainer.style.cssText = `
+        position: relative; width: 100%; max-width: 500px; height: 90vh;
+        background: white; border-radius: 15px; overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); transform: scale(0.9);
+        transition: transform 0.3s ease;
+    `;
+
+    // 3. Botón para cerrar
+    const btnCerrar = document.createElement('button');
+    btnCerrar.innerHTML = '✕';
+    btnCerrar.style.cssText = `
+        position: absolute; top: 15px; right: 15px; width: 40px; height: 40px;
+        border: none; background: white; color: #333; border-radius: 50%;
+        cursor: pointer; z-index: 10001; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    `;
+    
+    btnCerrar.onclick = () => cerrarModalAsistencia();
+
+    // 4. El Iframe con permisos de Ubicación
+    const iframe = document.createElement('iframe');
+    iframe.src = "https://script.google.com/macros/s/AKfycbzj1mqLr2Cjf3e101TQlvqSJAVSVjDPgS29zfZoQajwvB9CY_mNSNV9Frl3EVAIxKZS/exec"; 
+    iframe.style.cssText = "width: 100%; height: 100%; border: none;";
+    iframe.setAttribute("allow", "geolocation; camera"); 
+
+    // Ensamblar todo
+    modalContainer.appendChild(btnCerrar);
+    modalContainer.appendChild(iframe);
+    modalOverlay.appendChild(modalContainer);
+    document.body.appendChild(modalOverlay);
+
+    // Animación de entrada
+    setTimeout(() => {
+        modalOverlay.style.opacity = '1';
+        modalContainer.style.transform = 'scale(1)';
+    }, 10);
+
+    // ✅ ESCUCHAR MENSAJES DEL IFRAME HIJO
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.action === 'cerrarAsistencia') {
+            cerrarModalAsistencia();
+        }
+    });
+
+    // ✅ FUNCIÓN PARA CERRAR EL MODAL
+    function cerrarModalAsistencia() {
+        const modal = document.getElementById('modalAsistenciaOverlay');
+        if (modal) {
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                if (document.body.contains(modal)) {
+                    document.body.removeChild(modal);
+                }
+            }, 300);
+        }
+    }
+}
+
+    // Cargar al inicio
+    refrescarAvisos();
+    
+</script>
+
+</body>
+</html>

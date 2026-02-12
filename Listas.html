@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+
+<style>
+#miVista table {
+  border-collapse: collapse;
+}
+  #miVista input {
+  width: calc(100% - 28px); /* deja espacio al botón ❌ */
+  box-sizing: border-box;
+  border: none;
+  background: transparent;
+  padding-right: 4px; /* menos relleno interno para no chocar con el botón */
+}
+
+
+#miVista .delete-btn {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #d00;
+  font-size: 14px;
+  visibility: hidden;
+  z-index: 3;
+}
+
+
+  #miVista input:focus {
+    outline: none;
+  }
+
+  #miVista #searchInput {
+    padding: 5px;
+    width: 200px;
+    margin-bottom: 10px;
+  }
+
+  #miVista td:has(input:focus) .delete-btn {
+  visibility: visible;
+}
+
+</style>
+
+  </head>
+  <body>
+<div class="d-flex align-items-center mt-3">
+  <div class="bg-purple rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: #6f42c1;">
+    <i class="fas fa-list text-white"></i>
+  </div>
+  <div>
+    <h5 class="mb-0" style="color: #6f42c1;">Lista general</h5>
+    <small class="text-muted">Listas para los sistemas</small>
+  </div>
+</div>
+
+  <div id="miVista" class="container-fluid my-1 px-0">
+ 
+  <!-- ✅ Botones y buscador en una sola fila -->
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+
+  <!-- 🔹 Grupo izquierdo: Botones -->
+  <div class="d-flex align-items-center gap-1">
+    <button onclick="addRowList()" class="btn btn-dark btn-sm">
+      <i class="fa-solid fa-plus"></i> Agregar Fila
+    </button>
+
+    <button id="saveBtnList" onclick="saveTableList()" class="btn btn-secondary btn-sm">
+      <i class="fa-solid fa-floppy-disk"></i> Guardar
+    </button>
+
+    <button class="btn btn-warning btn-sm" id="btnCheckPrint" onclick="window.print()" style="font-size:15px;">
+      <i class="fa-solid fa-print"></i>
+    </button>
+  </div>
+
+  <!-- 🔹 Grupo derecho: Buscador -->
+  <div>
+    <input type="text" id="searchInput" class="form-control" placeholder="Buscar..." oninput="filterTableList()" style="max-width: 250px; border: 1px solid black;">
+  </div>
+
+</div>
+
+
+<div id="loadingListasGeneral" class="text-center my-4" style="display: none;">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Cargando...</span>
+  </div>
+  <p class="mt-2">Cargando listas...</p>
+</div>
+    <div class="table-container table-responsive print-container">
+    <table id="dataTableList" ></table>
+  </div>
+ </div>
+
+
+    <script>
+     // let headersLista = ["Num", "Área responsable", "Inspector", "Ubicación", "Lugar", "Empresa", "Estado Gestión", "Tipo de desvío", "Potencial", "Clasificación", "Estándar"];
+      let allData = [];
+
+      function loadTableList() {
+        document.getElementById("loadingListasGeneral").style.display = "block";
+        google.script.run.withSuccessHandler(function(result) {
+          headersLista = result.headersLista;
+          allData = result.data;
+          drawTable(allData);
+          document.getElementById("loadingListasGeneral").style.display = "none";
+        }).getRecordsList();
+      }
+
+
+      function drawTable(data) {
+  // Autonumera la columna 0 (Num)
+      data.forEach((row, idx) => row[0] = idx + 1);
+
+      let table = document.getElementById('dataTableList');
+      let html = '<thead><tr>';
+      headersLista.forEach(h => html += `<th>${h}</th>`);
+      html += '</tr></thead><tbody>';
+      
+      data.forEach((row, rIdx) => {
+        html += '<tr>';
+        row.forEach((cell, cIdx) => {
+          // Si es la columna "Num" (col 0), hacerla solo de lectura
+          const readOnly = cIdx === 0 ? 'readonly' : '';
+          html += `<td style="position:relative;">
+          <input value="${cell}" onfocus="expandColumnOnFocus(this)" onblur="resetColumnWidth(this)" oninput="updateCell(${rIdx}, ${cIdx}, this.value)" ${readOnly}>
+          ${cIdx !== 0 ? `<button class="delete-btn" onmousedown="deleteCell(${cIdx}, ${rIdx})">❌</button>` : ''}
+        </td>`;
+
+        });
+        html += '</tr>';
+      });
+      
+      html += '</tbody>';
+      table.innerHTML = html;
+    }
+
+
+      function updateCell(row, col, value) {
+        allData[row][col] = value;
+      }
+
+      function addRowList() {
+        let newRow = new Array(headersLista.length).fill('');
+        allData.push(newRow);
+        drawTable(allData);
+      }
+
+    function saveTableList() {
+      const btn = document.getElementById('saveBtnList');
+      btn.disabled = true;
+      Swal.fire({
+        title: 'Guardando...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      google.script.run.withSuccessHandler(function(msg) {
+        Swal.fire("Guardado correctamente", "", "success");
+        loadTableList();
+        btn.disabled = false;
+      }).saveRecordsList(allData);
+    }
+
+      function filterTableList() {
+        let search = document.getElementById('searchInput').value.toLowerCase();
+        let filtered = allData.filter(row => row.join(' ').toLowerCase().includes(search));
+        drawTable(filtered);
+      }
+
+
+    function addRowList() {
+      let newRow = new Array(headersLista.length).fill('');
+      newRow[0] = allData.length + 1;  // Autonumera nuevo registro
+      allData.push(newRow);
+      drawTable(allData);
+    }
+
+    // function deleteCell(colIndex, rowIndex) {
+    //   for (let r = rowIndex; r < allData.length - 1; r++) {
+    //     allData[r][colIndex] = allData[r + 1][colIndex]; // Baja la celda siguiente
+    //   }
+    //   allData[allData.length - 1][colIndex] = ''; // La última celda se queda vacía
+    //   drawTable(allData);
+    // }
+    
+    function deleteCell(colIndex, rowIndex) {
+  // Obtén el número de fila (o Num) si lo tienes en allData[rowIndex][0]
+  const num = allData[rowIndex][0];
+
+  Swal.fire({
+    title: "¿Eliminar contenido?",
+    text: `¿Deseas eliminar el contenido de la celda en el registro N° ${num}?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar"
+  }).then(res => {
+    if (!res.isConfirmed) return;
+
+    // Lógica de “bajar” valores en la columna
+    for (let r = rowIndex; r < allData.length - 1; r++) {
+      allData[r][colIndex] = allData[r + 1][colIndex];
+    }
+    allData[allData.length - 1][colIndex] = '';
+
+    // Redibuja la tabla
+    drawTable(allData);
+  });
+}
+
+
+function expandColumnOnFocus(cell) {
+  const td = cell.closest('td');
+  const index = td.cellIndex;
+  const table = td.closest('table');
+  const th = table.querySelectorAll('thead th')[index];
+  th.style.minWidth = '200px';
+  td.style.minWidth = '200px';
+}
+
+function resetColumnWidth(cell) {
+  const td = cell.closest('td');
+  const index = td.cellIndex;
+  const table = td.closest('table');
+  const th = table.querySelectorAll('thead th')[index];
+  th.style.minWidth = '';
+  td.style.minWidth = '';
+}
+
+      // Carga inicial
+      loadTableList();
+    </script>
+  </body>
+</html>

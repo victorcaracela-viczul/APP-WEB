@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+</head>
+<body>
+<script>
+function aplicarFiltrosInspecciones() {
+  const filtros = {
+    empresa: $('#filtroEmpresa').val(),
+    nombre: $('#filtroResponsable').val(),
+    lugar: $('#filtroLugar').val(),
+    clasificacion: $('#filtroTipo').val(),
+    blanco: $('#filtroBlanco').val(),
+    responsable: $('#filtroResponsable2').val(),
+    filtroestadoinpse: $('#filtroestadoinpse').val(),
+    fechaInicial: $('#fechaInicial').val(),
+    fechaFinal: $('#fechaFinal').val()
+    // Puedes agregar más campos aquí...
+  };
+  Swal.fire({
+    title: 'Buscando...',
+    text: 'Filtrando inspecciones',
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading()
+  });
+
+    google.script.run.withSuccessHandler(data => {
+    Swal.close(); // cerrar alerta
+    dibujarTabla(data); // dibuja tabla con los datos filtrados
+  }).getFilteredData(filtros);
+}
+
+const TITULOS = [
+  "#", "Descripción", "Blanco", "Lugar", "Proceso", "Tipo",
+  "Img Inicial", "Img Cierre", "Potencial", "Responsable", "Estado",
+  "Fecha", "P. Acción", "Fecha Límite"
+];
+
+function dibujarTabla(data) {
+  if (!data || data.length === 0) {
+    return;
+  }
+
+  let html = '<table><thead><tr>';
+  TITULOS.forEach(t => html += `<th>${t}</th>`);
+  html += '</tr></thead><tbody>';
+
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    html += '<tr>';
+
+    // Columna # (enumeración)
+    html += `<td>${i + 1}</td>`;
+
+    for (let j = 0; j < row.length; j++) {
+      const header = TITULOS[j + 1]; // desplazado por "#"
+      const cell = row[j];
+      let cellHTML = '';
+
+            if ((header === 'Img Inicial' || header === 'Img Cierre') && typeof cell === 'string' && cell.startsWith('http')) {
+        cellHTML = `<img src="${cell}" style="max-width: 100%; height: auto; cursor: pointer;" onclick="showImageDesvios('${cell}')">`;
+      }
+ else if (header === 'Potencial') {
+        let bg = '';
+        const valor = cell.toLowerCase();
+        if (valor === 'bajo') bg = 'background-color: #c6f6c6;';
+        else if (valor === 'medio') bg = 'background-color: #ffe3b3;';
+        else if (valor === 'alto') bg = 'background-color: #ffb3b3;';
+        cellHTML = `<td style="${bg}">${cell}</td>`;
+        html += cellHTML;
+        continue;
+      } else {
+        cellHTML = cell;
+      }
+
+      html += `<td>${cellHTML}</td>`;
+    }
+
+    // Columna "Fecha Límite"
+    const fechaLimite = calcularFechaLimite(row[10], row[7]); // Fecha = index 10, Potencial = index 8
+    html += `<td>${fechaLimite}</td>`;
+
+    html += '</tr>';
+  }
+
+  html += '</tbody></table>';
+  document.getElementById("tablaDatosInpsecciones").innerHTML = html;
+}
+
+
+// Función para calcular fecha límite
+function calcularFechaLimite(fechaOriginal, potencial) {
+  if (!fechaOriginal || !potencial) return "";
+
+  let dias = 0;
+  const tipo = potencial.toLowerCase();
+  if (tipo === 'bajo') dias = 7;
+  else if (tipo === 'medio') dias = 3;
+  else if (tipo === 'alto') dias = 1;
+
+  const fecha = new Date(fechaOriginal);
+  fecha.setDate(fecha.getDate() + dias);
+
+  return fecha.toISOString().split('T')[0]; // formato YYYY-MM-DD
+}
+
+</script>
+
+</body>
+</html>

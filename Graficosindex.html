@@ -1,0 +1,2207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Optimizado</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .controls label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .controls input, .controls select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            max-width:300px;
+            margin-bottom: 0px;
+        }
+
+        .controls input:focus, .controls select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 10px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: relative;
+            min-height: 300px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .chart-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .chart-wrapper {
+            /* unión de ambas definiciones */
+            position: relative;
+            width: 100%;
+            height: auto;
+            max-height: 100%;
+            overflow: hidden;
+            flex: 1;           /* viene de la segunda regla */
+          }
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            padding: 20px;
+            font-weight: 500;
+        }
+
+        .success-indicator {
+            position: fixed;
+            top: 50px;
+            right: 1px;
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            transform: translateX(100%);
+            transition: transform 0.3s;
+            z-index: 1000;
+        }
+
+        .success-indicator.show {
+            transform: translateX(0);
+        }
+
+        //ANALISIS
+       .piramide-container {
+  grid-column: 1 / -1;
+  min-height: 450px;
+}
+
+
+.piramide-content {
+    display: flex;
+    gap: 20px;
+    height: 450px;
+}
+
+.chart-wrapper {
+    flex: 1;
+    position: relative;
+}
+
+.piramide-text {
+    flex: 1 1 300px;
+  min-width: 250px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 12px;
+    padding: 20px;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-y: auto;
+    border-left: 4px solid #667eea;
+    position: relative;
+}
+
+.piramide-text h3 {
+    color: #667eea;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.piramide-text .nivel {
+    margin-bottom: 12px;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background-color 0.3s;
+}
+
+.piramide-text .nivel:hover {
+    background-color: rgba(102, 126, 234, 0.1);
+}
+
+.piramide-text .nivel strong {
+    color: #333;
+}
+
+.piramide-text .bueno {
+    color: #27ae60;
+}
+
+.piramide-text .alerta {
+    color: #f39c12;
+}
+
+.piramide-text .malo {
+    color: #e74c3c;
+}
+
+@media (max-width: 768px) {
+  .piramide-content {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .piramide-text {
+    height: auto;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .chart-wrapper {
+    height: auto;
+  }
+}
+
+/* Ampliacion */
+.chart-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.chart-modal canvas {
+    max-width: 95vw !important;
+    max-height: 95vh !important;
+    border: 2px solid white;
+    border-radius: 12px;
+    background: white;
+    padding: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.chart-modal-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10000;
+}
+    </style>
+    
+<style>
+        /* CSS encapsulado - solo aplica dentro de .pronostico-ia-container */
+        .pronostico-ia-container .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 
+                0 20px 40px rgba(0,0,0,0.1),
+                0 0 0 1px rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pronostico-ia-container .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+        }
+
+        .pronostico-ia-container .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 30px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #e8f5e8, #f0f9ff);
+            border-radius: 16px;
+            border-left: 4px solid #10b981;
+        }
+
+        .pronostico-ia-container .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pronostico-pulse 2s infinite;
+        }
+
+        @keyframes pronostico-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .pronostico-ia-container .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .pronostico-ia-container .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: pronostico-spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes pronostico-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .pronostico-ia-container .result-content {
+            line-height: 1.8;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 16px;
+            border-left: 4px solid #667eea;
+        }
+
+        .pronostico-ia-container .actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .pronostico-ia-container .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 10px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pronostico-ia-container .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .pronostico-ia-container .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .pronostico-ia-container .btn-secondary {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
+        }
+
+        .pronostico-ia-container .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(72, 187, 120, 0.6);
+        }
+
+        .pronostico-ia-container .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .pronostico-ia-container .typewriter {
+            border-right: 2px solid #667eea;
+            animation: pronostico-blink 1s infinite;
+        }
+
+        @keyframes pronostico-blink {
+            0%, 50% { border-color: transparent; }
+            51%, 100% { border-color: #667eea; }
+        }
+
+        .pronostico-ia-container .error-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #e53e3e;
+            background: linear-gradient(135deg, #fed7d7, #fbb6ce);
+            border-radius: 16px;
+            border-left: 4px solid #e53e3e;
+        }
+
+        .pronostico-ia-container .cache-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-top: 10px;
+            padding: 2px 6px;
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+
+        .pronostico-ia-container .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .pronostico-ia-container .header p {
+            font-size: 1.2rem;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .pronostico-ia-container .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+    </style>
+</head>
+<body>
+  
+    <div class="pronostico-ia-container">
+        <div class="container">
+            <div class="header">
+                <br><h3><b><i class="fa-solid fa-robot"></i></b>Sistema Inteligente de Predicción de Riesgos</h3>
+            </div>
+
+            <!-- Elementos ocultos para uso futuro -->
+            <button onclick="generarPronostico()" hidden>🔍 Generar pronóstico de riesgo</button>
+            <input type="date" id="fechaInicioIAOculto" hidden>
+            <input type="date" id="fechaFinIAOculto" hidden>
+
+            <div class="card">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span><strong>Sistema Activo</strong> - Análisis automatizado cada 7 días</span>
+                </div>
+
+                <div id="content">
+                    <div class="loading-state">
+                        <div class="loading-spinner"></div>
+                        <h3>🧠 Analizando datos con IA...</h3>
+                        <p>Procesando patrones de seguridad</p>
+                    </div>
+                </div>
+                <br>
+            <div onclick="abrirMatriz()" style="cursor: pointer;">
+                <div class="status-indicator">
+                    <span>
+                    <p class="text-muted mt-3" id="textoResumen" style="cursor: pointer;" onclick="abrirMatriz()">
+  <strong>⚡ Importante:</strong> Cargando resumen de capacitaciones...
+</p>
+
+<div class="progress mt-2" style="height: 14px; border-radius: 10px; cursor: pointer;" onclick="abrirMatriz()">
+  <div id="barraProgreso" class="progress-bar" role="progressbar"
+       style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+  </div>
+</div>
+</span>
+                </div>
+            </div>
+                <div class="cache-info">
+                    <span>⚡</span>
+                    <span>Actualización inteligente</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="controls" hidden>
+        <label>Fecha Inicio:</label>
+        <input type="date" id="fechaInicioGraficos">
+        
+        <label>Fecha Fin:</label>
+        <input type="date" id="fechaFinGraficos">
+        
+        <label>Empresa:</label>
+        <select id="empresa">
+            <option value="">-- Cargando empresas --</option>
+        </select>
+        
+        <button class="btn btn-dark" onclick="actualizarDashboard()" id="actualizarBtn">
+            <span class="btn-text">Actualizar</span>
+            <span class="btn-loading" style="display: none;">Cargando...</span>
+        </button>
+    </div>
+
+    <div class="success-indicator" id="successIndicator" hidden>
+        ✓ Dashboard actualizado correctamente
+    </div>
+
+    <div class="dashboard-grid" hidden>
+        <!-- Pirámide inicio-->
+        
+<div class="chart-container piramide-container">
+    <div class="chart-title">Pirámide de Riesgos: ¡Cuidémonos en el Trabajo!</div>
+    <div class="piramide-content">
+        <div class="chart-wrapper">
+            <canvas id="piramideChart"></canvas>
+            <div class="loading" id="loading-piramide">
+          <img src="https://lh5.googleusercontent.com/d/1XQIciRcLnw0UXFn9WGHmdJJkJGp4hxOv" alt="Cargando pirámide..." style="width: 150%; height: 100%;">
+          <div style="margin-top: 10px; font-weight: 600; color: #555;">Trazo óptimo...</div>
+      </div>
+
+        </div>
+        <div class="piramide-text" id="piramideText">
+            <div class="loading" id="loading-texto">
+                <div class="loading-spinner"></div>
+                <div>Generando análisis...</div>
+            </div>
+        </div>
+    </div>
+</div>
+      <!-- Pirámide fin -->  
+
+        <!-- Trabajadores -->
+        <div class="chart-container">
+            <div class="chart-title">Trabajadores por Mes</div>
+            <div class="chart-wrapper">
+                <canvas id="trabajadoresChart"></canvas>
+                <div class="loading" id="loading-trabajadores">
+                    <div class="loading-spinner"></div>
+                    <div>Cargando trabajadores...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- IC -->
+        <div class="chart-container">
+            <div class="chart-title">Índice de Capacitación</div>
+            <div class="chart-wrapper">
+                <canvas id="icChart"></canvas>
+                <div class="loading" id="loading-ic">
+                    <div class="loading-spinner"></div>
+                    <div>Cargando IC...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Desvíos -->
+        <div class="chart-container">
+            <div class="chart-title">Desvíos Mensuales</div>
+            <div class="chart-wrapper">
+                <canvas id="desviosChart"></canvas>
+                <div class="loading" id="loading-desvios">
+                    <div class="loading-spinner"></div>
+                    <div>Cargando desvíos...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Accidentes -->
+        <div class="chart-container">
+            <div class="chart-title">Accidentes por Tipo</div>
+            <div class="chart-wrapper">
+                <canvas id="accidentesChart"></canvas>
+                <div class="loading" id="loading-accidentes">
+                    <div class="loading-spinner"></div>
+                    <div>Cargando accidentes...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Días Perdidos -->
+        <div class="chart-container">
+            <div class="chart-title">Días Perdidos</div>
+            <div class="chart-wrapper">
+                <canvas id="diasPerdidosChart"></canvas>
+                <div class="loading" id="loading-diasPerdidos">
+                    <div class="loading-spinner"></div>
+                    <div>Cargando días perdidos...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- HHT -->
+        <div class="chart-container">
+            <div class="chart-title">Horas Hombre Trabajadas</div>
+            <div class="chart-wrapper">
+                <canvas id="hhtChart"></canvas>
+                <div class="loading" id="loading-hht">
+                    <div class="loading-spinner"></div>
+                    <div>Cargando HHT...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- IF -->
+        <div class="chart-container">
+            <div class="chart-title">Índice de Frecuencia</div>
+            <div class="chart-wrapper">
+                <canvas id="ifChart"></canvas>
+                <div class="loading" id="loading-if">
+                    <div class="loading-spinner"></div>
+                    <div>Cargando IF...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- IG -->
+        <div class="chart-container">
+            <div class="chart-title">Índice de Gravedad</div>
+            <div class="chart-wrapper">
+                <canvas id="igChart"></canvas>
+                <div class="loading" id="loading-ig">
+                    <div class="loading-spinner"></div>
+                    <div>Cargando IG...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- IA -->
+        <div class="chart-container">
+            <div class="chart-title">Índice de Accidentabilidad</div>
+            <div class="chart-wrapper">
+                <canvas id="iaChart"></canvas>
+                <div class="loading" id="loading-ia">
+                    <div class="loading-spinner"></div>
+                    <div>Cargando IA...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Desvíos por Estado/Potencial -->
+        <div class="chart-container">
+            <div class="chart-title">Desvíos por Estado y Potencial</div>
+            <div class="chart-wrapper">
+                <canvas id="desviosEstadoPotencialChart"></canvas>
+                <div class="loading" id="loading-desviosEstado">
+                    <div class="loading-spinner"></div>
+                    <div>Cargando análisis de desvíos...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reportantes -->
+        <div class="chart-container">
+            <div class="chart-title">Cantidad de Reportantes desvios</div>
+            <div class="chart-wrapper">
+                <canvas id="reportantesChart"></canvas>
+                <div class="loading" id="loading-reportantes">
+                    <div class="loading-spinner"></div>
+                    <div>Cargando reportantes...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tipo de Desvío -->
+        <div class="chart-container">
+            <div class="chart-title">Tipo de Desvío (RAC)</div>
+            <div class="chart-wrapper">
+                <canvas id="tipoDesvioChart"></canvas>
+                <div class="loading" id="loading-tipoDesvio">
+                    <div class="loading-spinner"></div>
+                    <div>Cargando tipos de desvío...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Estado Observaciones -->
+        <div class="chart-container">
+            <div class="chart-title">Estado de Check List</div>
+            <div class="chart-wrapper">
+                <canvas id="estadoObservacionesChart"></canvas>
+                <div class="loading" id="loading-estadoObs">
+                    <div class="loading-spinner"></div>
+                    <div>Cargando observaciones...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+google.script.run.withSuccessHandler(res => {
+  const r = res.totales;
+
+  // 🧮 Calcular porcentaje en base a CAPACITACIONES
+  const porcentaje = r.programados > 0
+    ? Math.round((r.aprobados / r.programados) * 100)
+    : 0;
+
+  // 🧾 Texto resumen completo
+  const texto = `
+    <strong>⚡ Importante:</strong> 
+    En lo que va del año hemos desarrollado <strong>${r.cursosRealizados || 0}</strong> cursos 
+    de un total de <strong>${r.cursosProgramados || 0}</strong> programados, 
+    dirigidos a <strong>${r.trabajadores || 0}</strong> trabajadores. 
+    En conjunto, se programarón <strong>${r.programados || 0}</strong> capacitaciones por trabajador sobre diversos temas, 
+    de las cuales <strong>${r.aprobados || 0}</strong> fueron aprobadas satisfactoriamente, 
+    alcanzando un total de <strong>${r.horas || 0}</strong> horas de capacitación efectiva.
+  `;
+  document.getElementById("textoResumen").innerHTML = texto;
+
+  // 🟩 Barra de progreso
+  const barra = document.getElementById("barraProgreso");
+  barra.style.width = porcentaje + "%";
+  barra.textContent = porcentaje + "% de cumplimiento";
+  barra.setAttribute("aria-valuenow", porcentaje);
+
+  // 🎨 Colores tipo semáforo
+  if (porcentaje < 50) {
+    barra.className = "progress-bar bg-danger";
+  } else if (porcentaje < 80) {
+    barra.className = "progress-bar bg-warning text-dark";
+  } else {
+    barra.className = "progress-bar bg-success";
+  }
+
+}).obtenerMatrizPermisos();
+
+// 🔹 Fallback (para cuando aún carga)
+setTimeout(() => {
+  const cursosRealizados = 12;
+  const cursosProgramados = 20;
+  const trabajadores = 87;
+  const programados = 214;
+  const aprobados = 163;
+  const horas = 31.3;
+
+  const porcentaje = Math.round((aprobados / programados) * 100);
+
+  document.getElementById("textoResumen").innerHTML = `
+    <strong>⚡ Importante:</strong> 
+    En lo que va del año hemos desarrollado <strong>${cursosRealizados}</strong> cursos 
+    de un total de <strong>${cursosProgramados}</strong> programados, 
+    dirigidos a <strong>${trabajadores}</strong> trabajadores. 
+    En conjunto, se realizaron <strong>${programados}</strong> capacitaciones sobre diversos temas, 
+    de las cuales <strong>${aprobados}</strong> fueron aprobadas satisfactoriamente, 
+    alcanzando un total de <strong>${horas}</strong> horas de capacitación efectiva.
+  `;
+
+  const barra = document.getElementById("barraProgreso");
+  barra.style.width = porcentaje + "%";
+  barra.textContent = porcentaje + "% de cumplimiento";
+  barra.className =
+    porcentaje < 50 ? "progress-bar bg-danger" :
+    porcentaje < 80 ? "progress-bar bg-warning text-dark" :
+    "progress-bar bg-success";
+}, 3000);
+
+// 🔹 Función para abrir la pestaña “Matriz”
+function abrirMatriz() {
+  const tabMatriz = document.getElementById('v-pills-matriz-tab');
+  if (tabMatriz) {
+    tabMatriz.click();
+  } else {
+    const tab = new bootstrap.Tab(document.querySelector('#v-pills-matriz-tab'));
+    tab.show();
+  }
+}
+</script>
+
+    <script>
+    // Variables globales optimizadas
+    let charts = {};
+    let imagenFondo = null;
+    let cacheImagenPiramide = new Map();
+    let isUpdating = false;
+
+    // Pool de colores predefinidos
+    const COLORS = {
+        primary: '#667eea',
+        secondary: '#764ba2',
+        success: '#27ae60',
+        warning: '#f39c12',
+        danger: '#e74c3c',
+        info: '#3498db',
+        purple: '#9b59b6',
+        teal: '#1abc9c',
+        orange: '#e67e22',
+        pink: '#e91e63'
+    };
+
+    // Configuración base para gráficos (reutilizable)
+    const baseChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+            duration: 600,
+            easing: 'easeInOutQuart'
+        },
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                    usePointStyle: true,
+                    padding: 15,
+                    font: { size: 12, weight: '500' }
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                borderWidth: 1,
+                cornerRadius: 8,
+                displayColors: true
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(0,0,0,0.1)' },
+                ticks: { color: '#666', font: { size: 11 } }
+            },
+            x: {
+                grid: { display: false },
+                ticks: { color: '#666', font: { size: 11 } }
+            }
+        }
+    };
+
+    // Funciones de utilidad optimizadas
+    function showLoading(chartId) {
+        const loading = document.getElementById(`loading-${chartId}`);
+        if (loading) loading.style.display = 'flex';
+        
+        const canvas = document.getElementById(`${chartId}Chart`);
+        if (canvas) canvas.style.display = 'none';
+    }
+
+    function hideLoading(chartId) {
+        const loading = document.getElementById(`loading-${chartId}`);
+        if (loading) loading.style.display = 'none';
+        
+        const canvas = document.getElementById(`${chartId}Chart`);
+        if (canvas) canvas.style.display = 'block';
+    }
+
+    function showSuccess() {
+        const indicator = document.getElementById('successIndicator');
+        indicator.classList.add('show');
+        setTimeout(() => indicator.classList.remove('show'), 3000);
+    }
+
+    function updateButtonState(isLoading) {
+        const btn = document.getElementById('actualizarBtn');
+        const text = btn.querySelector('.btn-text');
+        const loading = btn.querySelector('.btn-loading');
+        
+        btn.disabled = isLoading;
+        text.style.display = isLoading ? 'none' : 'inline';
+        loading.style.display = isLoading ? 'inline' : 'none';
+    }
+
+    // Funciones para obtener datos (optimizadas con promesas)
+function obtenerDatos(fechaInicioGraficos, fechaFinGraficos, empresa) {
+    return new Promise((resolve, reject) => {
+        // Validar parámetros
+        if (!fechaInicioGraficos || !fechaFinGraficos) {
+            reject(new Error('Fechas requeridas'));
+            return;
+        }
+        
+        google.script.run
+            .withSuccessHandler(data => {
+                if (!data) {
+                    reject(new Error('No se recibieron datos'));
+                    return;
+                }
+                resolve(data);
+            })
+            .withFailureHandler(error => {
+                console.error('Error en obtenerDatos:', error);
+                reject(new Error(`Error al obtener datos: ${error.message || error}`));
+            })
+            .obtenerDatosNiveles(fechaInicioGraficos, fechaFinGraficos, empresa || '');
+    });
+}
+
+function obtenerDatosMensuales(fechaFinGraficos, empresa) {
+    return new Promise((resolve, reject) => {
+        if (!fechaFinGraficos) {
+            reject(new Error('Fecha fin requerida'));
+            return;
+        }
+        
+        google.script.run
+            .withSuccessHandler(data => {
+                if (!data) {
+                    reject(new Error('No se recibieron datos mensuales'));
+                    return;
+                }
+                resolve(data);
+            })
+            .withFailureHandler(error => {
+                console.error('Error en obtenerDatosMensuales:', error);
+                reject(new Error(`Error al obtener datos mensuales: ${error.message || error}`));
+            })
+            .obtenerDatosMensuales(fechaFinGraficos, empresa || '');
+    });
+}
+
+function obtenerResumenDesviosPorMes(fechaInicioGraficos, fechaFinGraficos, empresa) {
+    return new Promise((resolve, reject) => {
+        if (!fechaInicioGraficos || !fechaFinGraficos) {
+            reject(new Error('Fechas requeridas para desvíos'));
+            return;
+        }
+        
+        google.script.run
+            .withSuccessHandler(data => {
+                // Los desvíos pueden estar vacíos, eso es válido
+                resolve(data || []);
+            })
+            .withFailureHandler(error => {
+                console.error('Error en obtenerResumenDesviosPorMes:', error);
+                reject(new Error(`Error al obtener desvíos: ${error.message || error}`));
+            })
+            .obtenerResumenDesviosPorMes(fechaInicioGraficos, fechaFinGraficos, empresa || '');
+    });
+}
+
+    function obtenerResumenEstadosPorMes(fechaInicioGraficos, fechaFinGraficos, empresa) {
+        return new Promise((resolve, reject) => {
+            google.script.run
+                .withSuccessHandler(resolve)
+                .withFailureHandler(reject)
+                .obtenerResumenEstadosPorMes(fechaInicioGraficos, fechaFinGraficos, empresa);
+        });
+    }
+
+    // Funciones de cálculo (movidas al cliente para optimizar)
+    function calcularEscalaY(Y1, promedioMetaIC) {
+        return [
+            Y1.toFixed(1),
+            promedioMetaIC.toFixed(1),
+            Y1.toFixed(1),
+            (Y1 / 20).toFixed(1),
+            (Y1 / 20 / 3).toFixed(1),
+            (Y1 / 20 / 3 / 10).toFixed(1),
+            (Y1 / 20 / 3 / 10 / 2).toFixed(1)
+        ].reverse();
+    }
+
+    function generarSvgMarkup(etiquetas) {
+        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1532 1290" width="100%" height="auto">
+            <polygon fill="#CB3438" points="616.73,199.11 914.67,199.12 765.63,0"/>
+            <text x="765" y="120" text-anchor="middle" fill="#fff" font-size="36">${etiquetas[0] || 'Fatal'}</text>
+            <polygon fill="#EC4E55" points="463.67,401.64 1064.33,402.15 916.24,203 614.35,203"/>
+            <text x="765" y="310" text-anchor="middle" fill="#fff" font-size="36">${etiquetas[1] || 'Grave'}</text>
+            <polygon fill="#DB6672" points="310.24,605.6 1217.85,605.63 1068.34,406.53 460.08,406.51"/>
+            <text x="765" y="510" text-anchor="middle" fill="#fff" font-size="36">${etiquetas[2] || 'Leve'}</text>
+            <polygon fill="#FFB300" points="157.14,809.11 1369.93,809.16 1221.23,610.05 306.96,610.08"/>
+            <text x="765" y="710" text-anchor="middle" fill="#fff" font-size="36">${etiquetas[3] || 'Incidentes'}</text>
+            <polygon fill="#2CA4AC" points="4.72,1012.08 1521.21,1011.72 1372.82,813.02 154.29,812.91"/>
+            <text x="765" y="910" text-anchor="middle" fill="#fff" font-size="36">${etiquetas[4] || 'Desvíos'}</text>
+            <polygon fill="#0A8899" points="0.01,1226.05 1525.16,1225.65 1525.12,1016.89 0.01,1015.52"/>
+            <text x="765" y="1120" text-anchor="middle" fill="#fff" font-size="36">${etiquetas[5] || 'Conducta'}</text>
+            <rect x="0.71" y="1231.78" width="1523.84" height="57.44" fill="#8969FF"/>
+            <text x="765" y="1268" text-anchor="middle" fill="#fff" font-size="28">${etiquetas[6] || 'Trabajadores'}</text>
+        </svg>`;
+    }
+
+    // Plugins para la pirámide (optimizados)
+    const fondoPlugin = {
+        id: 'fondoImagen',
+        beforeDatasetsDraw: (chart) => {
+            if (!imagenFondo || !imagenFondo.complete) return;
+            const ctx = chart.ctx;
+            const { chartArea } = chart;
+            ctx.save();
+            ctx.globalAlpha = 0.95;
+            ctx.drawImage(imagenFondo, chartArea.left, chartArea.top, 
+                         chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
+            ctx.restore();
+        }
+    };
+
+    const valoresPlugin = {
+        id: 'valoresPlugin',
+        afterDatasetsDraw(chart) {
+            const { ctx, chartArea, data, scales } = chart;
+            const { left, right } = chartArea;
+            const yScale = scales.y;
+
+            ctx.save();
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#000';
+
+            const mujeres = data.datasets[1].data;
+            const valoresVisibles = chart.config.options.originalLabels || [];
+
+            mujeres.forEach((val, i) => {
+                const y = yScale.getPixelForTick(i);
+                const x = (left + right) / 2;
+                const texto = valoresVisibles[i] !== undefined ? 
+                             valoresVisibles[i].toFixed(1) : Math.abs(val).toFixed(1);
+                ctx.fillText(texto, x, y);
+            });
+
+            ctx.restore();
+        }
+    };
+
+    // Función optimizada para crear/actualizar gráficos
+function crearOActualizarGrafico(canvasId, config, updateData = null) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    
+    if (charts[canvasId] && updateData) {
+        const chart = charts[canvasId];
+        Object.assign(chart.data, updateData);
+        chart.update('active');
+        return chart;
+    }
+    
+    if (charts[canvasId]) {
+        charts[canvasId].destroy();
+    }
+    
+    charts[canvasId] = new Chart(ctx, config);
+    
+    // Añadir listener de click automáticamente
+    setTimeout(() => {
+        const wrapper = ctx.canvas.closest('.chart-wrapper');
+        if (wrapper) {
+            wrapper.onclick = () => showChartModal(canvasId);
+        }
+    }, 100);
+    
+    return charts[canvasId];
+}
+    // Función optimizada para crear la pirámide
+    async function crearPiramide(fechaInicioGraficos, fechaFinGraficos, empresa) {
+    console.log('crearPiramide iniciada independientemente...');
+    
+    try {
+        showLoading('piramide');
+        const loadingTexto = document.getElementById('loading-texto');
+        if (loadingTexto) {
+            loadingTexto.style.display = 'flex';
+        }
+        
+        // Cargar datos de pirámide y desvíos en paralelo
+        const [resultado, resumenDesvios] = await Promise.all([
+            obtenerDatos(fechaInicioGraficos, fechaFinGraficos, empresa),
+            obtenerResumenDesviosPorMes(fechaInicioGraficos, fechaFinGraficos, empresa).catch(() => []) // Si falla, array vacío
+        ]);
+        
+        console.log('Datos de pirámide recibidos:', resultado);
+        
+        if (!resultado || !resultado.datos || !resultado.etiquetas) {
+            throw new Error('Datos de pirámide inválidos o incompletos');
+        }
+        
+        const datos = resultado.datos;
+        const Y1 = datos[0];
+        const promedioMetaIC = resultado.promedioMetaIC || 0;
+        
+        const etiquetas = calcularEscalaY(Y1, promedioMetaIC);
+        const datosIzq = [...datos].reverse().map(x => -x);
+        const datosDer = [...datos].reverse();
+
+        const etiquetasSvg = [...resultado.etiquetas].reverse();
+        const cacheKey = etiquetasSvg.join('-');
+        
+        // Usar caché para la imagen de fondo
+        if (!cacheImagenPiramide.has(cacheKey)) {
+            const svgMarkup = generarSvgMarkup(etiquetasSvg);
+            const svgBlob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+            
+            imagenFondo = new Image();
+            await new Promise((resolve, reject) => {
+                imagenFondo.onload = resolve;
+                imagenFondo.onerror = () => reject(new Error('Error al cargar imagen de fondo'));
+                imagenFondo.src = url;
+            });
+            
+            cacheImagenPiramide.set(cacheKey, imagenFondo);
+            URL.revokeObjectURL(url);
+        } else {
+            imagenFondo = cacheImagenPiramide.get(cacheKey);
+        }
+
+        const config = {
+            type: 'line',
+            data: {
+                labels: etiquetas,
+                datasets: [
+                    {
+                        label: 'Hombres',
+                        data: datosIzq,
+                        borderColor: '#fbff00',
+                        borderWidth: 2,
+                        fill: false,
+                        pointRadius: 0,
+                        tension: 0,
+                    },
+                    {
+                        label: 'Mujeres',
+                        data: datosDer,
+                        borderColor: '#fbff00',
+                        borderWidth: 2,
+                        fill: false,
+                        pointRadius: 0,
+                        tension: 0,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                originalLabels: [...resultado.valoresOriginales].reverse(),
+                animation: { duration: 600 },
+                scales: {
+                    x: {
+                        ticks: {
+                            callback: value => Math.abs(value),
+                            color: '#777'
+                        },
+                        grid: { color: '#f0f0f0' }
+                    },
+                    y: {
+                        ticks: { color: '#777' },
+                        grid: { color: '#f0f0f0' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${ctx.dataset.label}: ${Math.abs(ctx.parsed.x)}`
+                        }
+                    }
+                }
+            },
+            plugins: [fondoPlugin, valoresPlugin]
+        };
+
+        crearOActualizarGrafico('piramideChart', config);
+
+        // Generar análisis dinámico
+        const textoAnalisis = generarTextoAnalisis(resultado, resumenDesvios || []);
+        const piramideTextElement = document.getElementById('piramideText');
+        if (piramideTextElement) {
+            piramideTextElement.innerHTML = textoAnalisis;
+        }
+        
+        hideLoading('piramide');
+        if (loadingTexto) {
+            loadingTexto.style.display = 'none';
+        }
+        
+        console.log('Pirámide creada exitosamente');
+
+    } catch (error) {
+        console.error('Error al crear la pirámide:', error);
+        hideLoading('piramide');
+        const loadingTexto = document.getElementById('loading-texto');
+        if (loadingTexto) {
+            loadingTexto.style.display = 'none';
+        }
+        
+        const piramideTextElement = document.getElementById('piramideText');
+        if (piramideTextElement) {
+            piramideTextElement.innerHTML = `
+                <div class="error-message">
+                    <h3>❌ Error al generar análisis</h3>
+                    <p>No se pudo cargar el análisis de la pirámide.</p>
+                    <p><small>Error: ${error.message}</small></p>
+                    <button onclick="crearPiramide('${fechaInicioGraficos}', '${fechaFinGraficos}', '${empresa}')" 
+                            style="margin-top: 10px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        🔄 Reintentar
+                    </button>
+                </div>
+            `;
+        }
+    }
+}
+
+    // Funciones optimizadas para gráficos
+    function crearGraficoBarras(canvasId, titulo, labels, data, color) {
+        const config = {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: titulo,
+                    data: data,
+                    backgroundColor: color + '80',
+                    borderColor: color,
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                ...baseChartOptions,
+                plugins: {
+                    ...baseChartOptions.plugins,
+                    legend: { display: false }
+                }
+            }
+        };
+
+        return crearOActualizarGrafico(canvasId, config);
+    }
+
+    function crearGraficoMixto(canvasId, titulo, labels, datasets1, datasets2) {
+        const datasets = [
+            ...datasets1.map(ds => ({
+                ...ds,
+                backgroundColor: ds.backgroundColor + '80',
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false,
+            })),
+            ...datasets2.map(ds => ({
+                ...ds,
+                type: 'line',
+                fill: false,
+                borderWidth: 3,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                tension: 0.4
+            }))
+        ];
+
+        const config = {
+            type: 'bar',
+            data: { labels, datasets },
+            options: baseChartOptions
+        };
+
+        return crearOActualizarGrafico(canvasId, config);
+    }
+
+    function crearGraficoAccidentes(canvasId, labels, incidentes, aLeve, aGrave, aFatal, enfermedadesOcup) {
+        const config = {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Incidentes',
+                        data: incidentes,
+                        backgroundColor: COLORS.info + '80',
+                        borderColor: COLORS.info,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                    },
+                    {
+                        label: 'A. Leve',
+                        data: aLeve,
+                        backgroundColor: COLORS.warning + '80',
+                        borderColor: COLORS.warning,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                    },
+                    {
+                        label: 'A. Grave',
+                        data: aGrave,
+                        backgroundColor: COLORS.orange + '80',
+                        borderColor: COLORS.orange,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                    },
+                    {
+                        label: 'A. Fatal',
+                        data: aFatal,
+                        backgroundColor: COLORS.danger + '80',
+                        borderColor: COLORS.danger,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                    },
+                    {
+                        label: 'Enf. Ocupacionales',
+                        data: enfermedadesOcup,
+                        backgroundColor: COLORS.purple + '80',
+                        borderColor: COLORS.purple,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                    }
+                ]
+            },
+            options: {
+                ...baseChartOptions,
+                scales: {
+                    ...baseChartOptions.scales,
+                    y: {
+                        ...baseChartOptions.scales.y,
+                        ticks: {
+                            ...baseChartOptions.scales.y.ticks,
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        };
+
+        return crearOActualizarGrafico(canvasId, config);
+    }
+
+    // Función principal optimizada
+    async function actualizarDashboard() {
+    if (isUpdating) return;
+    
+    isUpdating = true;
+    updateButtonState(true);
+
+    const fechaInicioGraficos = document.getElementById("fechaInicioGraficos").value;
+    const fechaFinGraficos = document.getElementById("fechaFinGraficos").value;
+    const empresa = document.getElementById("empresa").value;
+
+    // Validar fechas
+    if (!fechaInicioGraficos || !fechaFinGraficos) {
+        alert('Por favor seleccione las fechas de inicio y fin');
+        isUpdating = false;
+        updateButtonState(false);
+        return;
+    }
+
+    if (new Date(fechaInicioGraficos) > new Date(fechaFinGraficos)) {
+        alert('La fecha de inicio debe ser anterior a la fecha de fin');
+        isUpdating = false;
+        updateButtonState(false);
+        return;
+    }
+
+    console.log('Actualizando dashboard con:', { fechaInicioGraficos, fechaFinGraficos, empresa });
+
+    try {
+        // Mostrar todos los indicadores de carga
+        const chartIds = ['piramide', 'trabajadores', 'ic', 'desvios', 'accidentes', 
+                        'diasPerdidos', 'hht', 'if', 'ig', 'ia', 'desviosEstado', 
+                        'reportantes', 'tipoDesvio', 'estadoObs'];
+        
+        chartIds.forEach(id => showLoading(id));
+
+        // *** CARGA INDEPENDIENTE: Cada grupo de datos se carga por separado ***
+        
+        // 1. Cargar datos mensuales e iniciar gráficos básicos inmediatamente
+        obtenerDatosMensuales(fechaFinGraficos, empresa)
+            .then(datosMensuales => {
+                console.log('Datos mensuales cargados, creando gráficos básicos...');
+                
+                // Crear gráficos básicos en paralelo (independientes)
+                Promise.all([
+                    // Trabajadores
+                    Promise.resolve().then(() => {
+                        try {
+                            crearGraficoBarras('trabajadoresChart', 'Trabajadores', 
+                                             datosMensuales.meses, datosMensuales.trabajadores, COLORS.primary);
+                            hideLoading('trabajadores');
+                        } catch (error) {
+                            console.error('Error en gráfico trabajadores:', error);
+                            hideLoading('trabajadores');
+                        }
+                    }),
+                    
+                    // IC
+                    Promise.resolve().then(() => {
+                        try {
+                            crearGraficoMixto('icChart', 'Índice Capacitación', datosMensuales.meses, 
+                                [{ label: 'IC', data: datosMensuales.ic, type: 'bar', backgroundColor: COLORS.success }],
+                                [{ label: 'Meta IC', data: datosMensuales.metaIC, borderColor: COLORS.danger }]
+                            );
+                            hideLoading('ic');
+                        } catch (error) {
+                            console.error('Error en gráfico IC:', error);
+                            hideLoading('ic');
+                        }
+                    }),
+                    
+                    // Desvíos
+                    Promise.resolve().then(() => {
+                        try {
+                            crearGraficoBarras('desviosChart', 'Desvíos', 
+                                             datosMensuales.meses, datosMensuales.desvios, COLORS.warning);
+                            hideLoading('desvios');
+                        } catch (error) {
+                            console.error('Error en gráfico desvíos:', error);
+                            hideLoading('desvios');
+                        }
+                    }),
+                    
+                    // Accidentes
+                    Promise.resolve().then(() => {
+                        try {
+                            crearGraficoAccidentes('accidentesChart', datosMensuales.meses, 
+                                                 datosMensuales.incidentes, datosMensuales.aLeve, 
+                                                 datosMensuales.aGrave, datosMensuales.aFatal, 
+                                                 datosMensuales.enfermedadesOcupacionales);
+                            hideLoading('accidentes');
+                        } catch (error) {
+                            console.error('Error en gráfico accidentes:', error);
+                            hideLoading('accidentes');
+                        }
+                    }),
+                    
+                    // Días Perdidos
+                    Promise.resolve().then(() => {
+                        try {
+                            crearGraficoBarras('diasPerdidosChart', 'Días Perdidos', 
+                                             datosMensuales.meses, datosMensuales.diasPerdidos, COLORS.purple);
+                            hideLoading('diasPerdidos');
+                        } catch (error) {
+                            console.error('Error en gráfico días perdidos:', error);
+                            hideLoading('diasPerdidos');
+                        }
+                    }),
+                    
+                    // HHT
+                    Promise.resolve().then(() => {
+                        try {
+                            crearGraficoBarras('hhtChart', 'HHT', 
+                                             datosMensuales.meses, datosMensuales.hht, '#607d8b');
+                            hideLoading('hht');
+                        } catch (error) {
+                            console.error('Error en gráfico HHT:', error);
+                            hideLoading('hht');
+                        }
+                    }),
+                    
+                    // IF
+                    Promise.resolve().then(() => {
+                        try {
+                            crearGraficoMixto('ifChart', 'Índice de Frecuencia', datosMensuales.meses,
+                                [{ label: 'IF', data: datosMensuales.if, type: 'bar', backgroundColor: COLORS.info }],
+                                [
+                                    { label: 'Meta IF', data: datosMensuales.metaIF, borderColor: COLORS.danger },
+                                    { label: 'IF Calculado', data: datosMensuales.ifCalculado, borderColor: COLORS.orange }
+                                ]
+                            );
+                            hideLoading('if');
+                        } catch (error) {
+                            console.error('Error en gráfico IF:', error);
+                            hideLoading('if');
+                        }
+                    }),
+                    
+                    // IG
+                    Promise.resolve().then(() => {
+                        try {
+                            crearGraficoMixto('igChart', 'Índice de Gravedad', datosMensuales.meses,
+                                [{ label: 'IG', data: datosMensuales.ig, type: 'bar', backgroundColor: COLORS.success }],
+                                [
+                                    { label: 'Meta IG', data: datosMensuales.metaIG, borderColor: COLORS.pink },
+                                    { label: 'IG Calculado', data: datosMensuales.igCalculado, borderColor: COLORS.warning }
+                                ]
+                            );
+                            hideLoading('ig');
+                        } catch (error) {
+                            console.error('Error en gráfico IG:', error);
+                            hideLoading('ig');
+                        }
+                    }),
+                    
+                    // IA
+                    Promise.resolve().then(() => {
+                        try {
+                            crearGraficoMixto('iaChart', 'Índice de Accidentabilidad', datosMensuales.meses,
+                                [{ label: 'IA', data: datosMensuales.ia, type: 'bar', backgroundColor: COLORS.purple }],
+                                [
+                                    { label: 'Meta IA', data: datosMensuales.metaIA, borderColor: '#3f51b5' },
+                                    { label: 'IA Calculado', data: datosMensuales.iaCalculado, borderColor: COLORS.teal }
+                                ]
+                            );
+                            hideLoading('ia');
+                        } catch (error) {
+                            console.error('Error en gráfico IA:', error);
+                            hideLoading('ia');
+                        }
+                    })
+                ]).then(() => {
+                    console.log('Gráficos básicos completados');
+                });
+            })
+            .catch(error => {
+                console.error('Error al cargar datos mensuales:', error);
+                // Ocultar loadings de gráficos básicos
+                ['trabajadores', 'ic', 'desvios', 'accidentes', 'diasPerdidos', 'hht', 'if', 'ig', 'ia']
+                    .forEach(id => hideLoading(id));
+            });
+
+        // 2. Cargar pirámide independientemente (puede demorar más)
+        crearPiramide(fechaInicioGraficos, fechaFinGraficos, empresa)
+            .catch(error => {
+                console.error('Error al crear pirámide:', error);
+                hideLoading('piramide');
+            });
+
+        // 3. Cargar datos de desvíos independientemente
+        obtenerResumenDesviosPorMes(fechaInicioGraficos, fechaFinGraficos, empresa)
+            .then(resumenDesvios => {
+                console.log('Datos de desvíos cargados, creando gráficos de desvíos...');
+                
+                // Crear gráficos de desvíos en paralelo
+                Promise.all([
+                    Promise.resolve().then(() => {
+                        try {
+                            crearGraficoDesviosEstadoPotencial(resumenDesvios);
+                            hideLoading('desviosEstado');
+                        } catch (error) {
+                            console.error('Error en gráfico desvíos estado:', error);
+                            hideLoading('desviosEstado');
+                        }
+                    }),
+                    
+                    Promise.resolve().then(() => {
+                        try {
+                            crearGraficoReportantes(resumenDesvios);
+                            hideLoading('reportantes');
+                        } catch (error) {
+                            console.error('Error en gráfico reportantes:', error);
+                            hideLoading('reportantes');
+                        }
+                    }),
+                    
+                    Promise.resolve().then(() => {
+                        try {
+                            crearGraficoTipoDesvio(resumenDesvios);
+                            hideLoading('tipoDesvio');
+                        } catch (error) {
+                            console.error('Error en gráfico tipo desvío:', error);
+                            hideLoading('tipoDesvio');
+                        }
+                    })
+                ]).then(() => {
+                    console.log('Gráficos de desvíos completados');
+                });
+            })
+            .catch(error => {
+                console.error('Error al cargar datos de desvíos:', error);
+                ['desviosEstado', 'reportantes', 'tipoDesvio'].forEach(id => hideLoading(id));
+            });
+
+        // 4. Cargar datos de observaciones independientemente
+        obtenerResumenEstadosPorMes(fechaInicioGraficos, fechaFinGraficos, empresa)
+            .then(resumenObservaciones => {
+                console.log('Datos de observaciones cargados...');
+                try {
+                    crearGraficoEstadosObservaciones(resumenObservaciones);
+                    hideLoading('estadoObs');
+                } catch (error) {
+                    console.error('Error en gráfico observaciones:', error);
+                    hideLoading('estadoObs');
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar datos de observaciones:', error);
+                hideLoading('estadoObs');
+            });
+        
+        // Mostrar éxito cuando termine la primera carga
+        setTimeout(() => showSuccess(), 1000);
+
+    } catch (error) {
+        console.error('Error al actualizar dashboard:', error);
+        alert(`Error al cargar los datos: ${error.message || 'Error desconocido'}. Por favor, intente nuevamente.`);
+        
+        // Ocultar indicadores de carga en caso de error
+        const chartIds = ['piramide', 'trabajadores', 'ic', 'desvios', 'accidentes', 
+                        'diasPerdidos', 'hht', 'if', 'ig', 'ia', 'desviosEstado', 
+                        'reportantes', 'tipoDesvio', 'estadoObs'];
+        chartIds.forEach(id => hideLoading(id));
+    } finally {
+        isUpdating = false;
+        updateButtonState(false);
+    }
+}
+
+    // Funciones para gráficos adicionales (optimizadas)
+    function crearGraficoDesviosEstadoPotencial(data) {
+        const meses = data.map(d => {
+            const mes = new Date(d.mes + "-01").toLocaleDateString('es-PE', { month: 'short', year: 'numeric' });
+            return mes.charAt(0).toUpperCase() + mes.slice(1);
+        });
+
+        const config = {
+            type: 'bar',
+            data: {
+                labels: meses,
+                datasets: [
+                    {
+                        label: 'Alto (Abierto)',
+                        backgroundColor: '#e53935',
+                        stack: 'abierto',
+                        data: data.map(d => d.abiertos.Alto || 0)
+                    },
+                    {
+                        label: 'Medio (Abierto)',
+                        backgroundColor: '#fb8c00',
+                        stack: 'abierto',
+                        data: data.map(d => d.abiertos.Medio || 0)
+                    },
+                    {
+                        label: 'Bajo (Abierto)',
+                        backgroundColor: '#fdd835',
+                        stack: 'abierto',
+                        data: data.map(d => d.abiertos.Bajo || 0)
+                    },
+                    {
+                        label: 'Alto (Cerrado)',
+                        backgroundColor: '#5DE39D',
+                        stack: 'cerrado',
+                        data: data.map(d => d.cerrados.Alto || 0)
+                    },
+                    {
+                        label: 'Medio (Cerrado)',
+                        backgroundColor: '#41C480',
+                        stack: 'cerrado',
+                        data: data.map(d => d.cerrados.Medio || 0)
+                    },
+                    {
+                        label: 'Bajo (Cerrado)',
+                        backgroundColor: '#136E3F',
+                        stack: 'cerrado',
+                        data: data.map(d => d.cerrados.Bajo || 0)
+                    }
+                ]
+            },
+            options: {
+                ...baseChartOptions,
+                scales: {
+                    x: {
+                        stacked: true,
+                        title: { display: true, text: 'Mes' }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        title: { display: true, text: 'Cantidad de Desvíos' }
+                    }
+                }
+            }
+        };
+
+        return crearOActualizarGrafico('desviosEstadoPotencialChart', config);
+    }
+
+    function crearGraficoReportantes(data) {
+        const config = {
+            type: 'bar',
+            data: {
+                labels: data.map(d => d.mes),
+                datasets: [{
+                    label: 'Reportantes únicos',
+                    data: data.map(d => d.reportantesUnicos),
+                    backgroundColor: COLORS.teal + '80',
+                    borderColor: COLORS.teal,
+                    borderWidth: 2,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                ...baseChartOptions,
+                plugins: {
+                    ...baseChartOptions.plugins,
+                    legend: { display: false }
+                }
+            }
+        };
+
+        return crearOActualizarGrafico('reportantesChart', config);
+    }
+
+    function crearGraficoTipoDesvio(data) {
+        const config = {
+            type: 'bar',
+            data: {
+                labels: data.map(d => d.mes),
+                datasets: [
+                    {
+                        label: 'Acto',
+                        data: data.map(d => d.tipo.Acto),
+                        backgroundColor: COLORS.success + '80',
+                        borderColor: COLORS.success,
+                        borderWidth: 2,
+                        type: 'bar'
+                    },
+                    {
+                        label: 'Condición',
+                        data: data.map(d => d.tipo.Condicion),
+                        backgroundColor: COLORS.warning + '80',
+                        borderColor: COLORS.warning,
+                        borderWidth: 2,
+                        type: 'bar'
+                    },
+                    {
+                        label: 'Reportantes únicos',
+                        data: data.map(d => d.reportantesUnicos),
+                        borderColor: COLORS.info,
+                        backgroundColor: COLORS.info + '50',
+                        borderWidth: 3,
+                        type: 'line',
+                        tension: 0.3,
+                        pointRadius: 5,
+                        pointBackgroundColor: COLORS.info
+                    }
+                ]
+            },
+            options: {
+                ...baseChartOptions,
+                scales: {
+                    ...baseChartOptions.scales,
+                    y: {
+                        ...baseChartOptions.scales.y,
+                        title: { display: true, text: 'Cantidad' }
+                    }
+                }
+            }
+        };
+
+        return crearOActualizarGrafico('tipoDesvioChart', config);
+    }
+
+    function crearGraficoEstadosObservaciones(data) {
+        const config = {
+            type: 'bar',
+            data: {
+                labels: data.map(d => d.mes),
+                datasets: [
+                    {
+                        label: 'Conforme',
+                        data: data.map(d => d.Conforme),
+                        backgroundColor: COLORS.success + '80',
+                        borderColor: COLORS.success,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Abierto',
+                        data: data.map(d => d.Abierto),
+                        backgroundColor: COLORS.warning + '80',
+                        borderColor: COLORS.warning,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Cerrado',
+                        data: data.map(d => d.Cerrado),
+                        backgroundColor: COLORS.danger + '80',
+                        borderColor: COLORS.danger,
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                ...baseChartOptions,
+                scales: {
+                    x: { stacked: true },
+                    y: { stacked: true, beginAtZero: true }
+                }
+            }
+        };
+
+        return crearOActualizarGrafico('estadoObservacionesChart', config);
+    }
+
+    // Función para cargar empresas (optimizada)
+    function cargarEmpresas() {
+        google.script.run
+            .withSuccessHandler(empresas => {
+                const select = document.getElementById("empresa");
+                select.innerHTML = '<option value="">-- Todas las empresas --</option>';
+                
+                const fragment = document.createDocumentFragment();
+                empresas.forEach(emp => {
+                    const option = document.createElement("option");
+                    option.value = emp;
+                    option.textContent = emp;
+                    fragment.appendChild(option);
+                });
+                select.appendChild(fragment);
+            })
+            .withFailureHandler(error => {
+                console.error('Error al cargar empresas:', error);
+                const select = document.getElementById("empresa");
+                select.innerHTML = '<option value="">-- Error al cargar empresas --</option>';
+            })
+            .obtenerEmpresasUnicas();
+    }
+
+    // Debounce para evitar múltiples actualizaciones
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Inicialización optimizada
+    window.addEventListener('DOMContentLoaded', () => {
+        const hoy = new Date();
+        const fechaInicioGraficos = new Date(hoy);
+        fechaInicioGraficos.setDate(hoy.getDate() - 31);
+
+        const formatearFecha = fecha => fecha.toISOString().split('T')[0];
+        document.getElementById("fechaInicioGraficos").value = formatearFecha(fechaInicioGraficos);
+        document.getElementById("fechaFinGraficos").value = formatearFecha(hoy);
+
+        // Cargar empresas inmediatamente
+        cargarEmpresas();
+        
+        // Auto-actualización optimizada con debounce
+        const debouncedUpdate = debounce(actualizarDashboard, 500);
+        
+        document.getElementById("fechaInicioGraficos").addEventListener('change', debouncedUpdate);
+        document.getElementById("fechaFinGraficos").addEventListener('change', debouncedUpdate);
+        document.getElementById("empresa").addEventListener('change', debouncedUpdate);
+
+        // Carga inicial después de un breve delay para que se carguen las empresas
+        setTimeout(() => {
+            actualizarDashboard();
+        }, 1000);
+    });
+
+    // Funciones de utilidad adicionales
+    function limpiarTodosLosGraficos() {
+        Object.values(charts).forEach(chart => {
+            if (chart && typeof chart.destroy === 'function') {
+                chart.destroy();
+            }
+        });
+        charts = {};
+    }
+
+    // Manejo de errores globales
+    window.addEventListener('error', (e) => {
+        console.error('Error global:', e.error);
+        updateButtonState(false);
+        isUpdating = false;
+    });
+
+    // Alias para mantener compatibilidad
+    window.graficarPiramide = actualizarDashboard;
+    window.limpiarCache = limpiarTodosLosGraficos;
+
+
+function generarTextoAnalisis(resultado, resumenDesvios) {
+    const datos = resultado.datos;
+    const valoresOriginales = resultado.valoresOriginales;
+    const promedioMetaIC = resultado.promedioMetaIC || 0;
+    
+    // Extraer valores (los valores originales ya están en el orden correcto)
+    const trabajadores = Math.round(datos[0] || 0);
+    const ic = valoresOriginales[0] || 0;
+    const desvios = valoresOriginales[1] || 0;
+    const incidentes = valoresOriginales[2] || 0;
+    const aLeve = valoresOriginales[3] || 0;
+    const aGrave = valoresOriginales[4] || 0;
+    const aFatal = valoresOriginales[5] || 0;
+    
+    // Calcular tipos de desvíos si hay datos
+    let totalActos = 0;
+    let totalCondiciones = 0;
+    if (resumenDesvios && Array.isArray(resumenDesvios) && resumenDesvios.length > 0) {
+        totalActos = resumenDesvios.reduce((sum, mes) => sum + (mes.tipo?.Acto || 0), 0);
+        totalCondiciones = resumenDesvios.reduce((sum, mes) => sum + (mes.tipo?.Condicion || 0), 0);
+    }
+    
+    // Determinar estado general
+    const icBueno = promedioMetaIC > 0 ? ic >= promedioMetaIC : true;
+    const sinAccidentesGraves = aGrave === 0 && aFatal === 0;
+    const pocoAccidentesLeves = aLeve <= 2;
+    
+    let estadoGeneral = 'bueno';
+    if (aFatal > 0 || aGrave > 2 || (promedioMetaIC > 0 && ic < promedioMetaIC * 0.6)) {
+        estadoGeneral = 'malo';
+    } else if (aGrave > 0 || aLeve > 5 || (promedioMetaIC > 0 && ic < promedioMetaIC * 0.8)) {
+        estadoGeneral = 'alerta';
+    }
+    
+    // Generar título dinámico
+    const titulos = {
+        bueno: "🎉 ¡Excelente trabajo en seguridad!",
+        alerta: "⚠️ Buen camino, pero podemos mejorar",
+        malo: "🚨 Necesitamos actuar urgente"
+    };
+    
+    const introducciones = {
+        bueno: "Imagina una pirámide que nos muestra cómo mantenernos seguros. ¡Mientras más ancha sea la base (línea amarilla), más protegidos estaremos!",
+        alerta: "Esta pirámide nos muestra dónde tenemos fortalezas y dónde podemos mejorar para estar más seguros.",
+        malo: "Esta pirámide nos muestra las áreas críticas donde debemos enfocar nuestros esfuerzos urgentemente."
+    };
+    
+    // Generar análisis por nivel
+    const niveles = [
+        {
+            titulo: "👥 Trabajadores",
+            valor: trabajadores,
+            analisis: `Somos ${trabajadores}. Todo lo que hacemos ${estadoGeneral === 'malo' ? 'afecta directamente' : 'cuenta para'} nuestra seguridad colectiva.`
+        },
+        {
+            titulo: "📚 Capacitación",
+            valor: promedioMetaIC > 0 ? `IC = ${ic.toFixed(1)}, Meta = ${promedioMetaIC.toFixed(1)}` : `IC = ${ic.toFixed(1)}`,
+            analisis: promedioMetaIC > 0 
+                ? (icBueno 
+                    ? `¡Excelente! Nos entrenamos ${ic > promedioMetaIC * 1.2 ? 'mucho más de lo necesario' : 'según lo planeado'}. Esto nos ayuda a prevenir riesgos.`
+                    : `Nos falta entrenamiento. Con IC de ${ic.toFixed(1)} vs meta ${promedioMetaIC.toFixed(1)}, necesitamos mejorar para evitar riesgos.`)
+                : `Índice de capacitación: ${ic.toFixed(1)}. ${ic > 2 ? 'Buen nivel de entrenamiento.' : 'Podemos mejorar el entrenamiento.'}`,
+            clase: icBueno ? 'bueno' : 'malo'
+        },
+        {
+            titulo: "🔍 Desvíos",
+            valor: desvios,
+            analisis: desvios === 0 
+                ? "Muy extraño! No detectamos desvíos en este período."
+                : `Identificamos ${desvios} situación${desvios > 1 ? 'es' : ''} riesgosa${desvios > 1 ? 's' : ''}: ${totalActos} acto${totalActos !== 1 ? 's' : ''} y ${totalCondiciones} condición${totalCondiciones !== 1 ? 'es' : ''}. Las corregimos oportunamente.`,
+            clase: desvios === 0 ? 'bueno' : desvios > 100 ? 'alerta' : 'bueno'
+        },
+        {
+            titulo: "⚡ Incidentes",
+            valor: incidentes,
+            analisis: incidentes === 0 
+                ? "¡Perfecto! Sin incidentes reportados. Excelente prevención."
+                : `Se reportaron ${incidentes} incidente${incidentes > 1 ? 's' : ''}. Son señales importantes para seguir mejorando nuestros controles.`,
+            clase: incidentes === 0 ? 'bueno' : incidentes <= 2 ? 'alerta' : 'malo'
+        },
+        {
+            titulo: "🩹 Accidentes Leves",
+            valor: aLeve,
+            analisis: aLeve === 0 
+                ? "¡Fantástico! Sin lesiones menores. El equipo está trabajando de forma segura."
+                : `Tuvimos ${aLeve} lesión${aLeve > 1 ? 'es' : ''} o daño${aLeve > 1 ? 's' : ''} menor${aLeve > 1 ? 'es' : ''}. Podemos prevenirlos con más atención.`,
+            clase: aLeve === 0 ? 'bueno' : aLeve <= 2 ? 'alerta' : 'malo'
+        },
+        {
+            titulo: "🏥 Accidentes Graves",
+            valor: aGrave,
+            analisis: aGrave === 0 
+                ? "¡Excelente! Sin lesiones serias. Seguimos por el camino correcto."
+                : `Atención: Hubo ${aGrave} lesión${aGrave > 1 ? 'es' : ''} seria${aGrave > 1 ? 's' : ''}. Esto requiere análisis profundo y acciones inmediatas.`,
+            clase: aGrave === 0 ? 'bueno' : 'malo'
+        },
+        {
+            titulo: "💔 Accidentes Fatales",
+            valor: aFatal,
+            analisis: aFatal === 0 
+                ? "¡Sin tragedias! Así queremos mantenernos siempre. Cada día que terminamos todos sanos es una victoria."
+                : `CRÍTICO: Tuvimos ${aFatal} pérdida${aFatal > 1 ? 's' : ''} humana${aFatal > 1 ? 's' : ''}. Honramos su memoria trabajando para que no vuelva a ocurrir.`,
+            clase: aFatal === 0 ? 'bueno' : 'malo'
+        }
+    ];
+    
+    // Construir HTML
+    let html = `
+        <h3>${titulos[estadoGeneral]}</h3>
+        <!--- <p><strong>🔺 Pirámide de Riesgos: ¡Cuidémonos en el Trabajo!</strong></p> -->
+        <p style="margin-bottom: 10px; font-style: italic;">${introducciones[estadoGeneral]}</p>
+    `;
+    
+    niveles.forEach((nivel, index) => {
+        const clase = nivel.clase || (estadoGeneral === 'bueno' ? 'bueno' : '');
+        html += `
+            <div class="nivel ${clase}">
+                <strong>${index + 1}. ${nivel.titulo} (${nivel.valor}):</strong><br>
+                <span style="margin-left: 15px;">${nivel.analisis}</span>
+            </div>
+        `;
+    });
+    
+    // Añadir mensaje final motivacional
+    const mensajesFinal = {
+        bueno: "🌟 ¡Sigamos así! Nuestro compromiso con la seguridad es ejemplar y nos mantiene unidos como equipo.",
+        alerta: "💪 Estamos en el camino correcto. Con algunos ajustes estratégicos, alcanzaremos la excelencia en seguridad.",
+        malo: "🤝 La seguridad es responsabilidad de todos. ¡Trabajemos juntos para transformar estos números y protegernos mutuamente!"
+    };
+    
+    // Añadir estadísticas adicionales
+    const porcentajeIC = promedioMetaIC > 0 ? ((ic / promedioMetaIC) * 100).toFixed(1) : 'N/A';
+    const totalEventos = incidentes + aLeve + aGrave + aFatal;
+    const ratioDesviosIncidentes = incidentes > 0 ? (desvios/incidentes).toFixed(1) : 'N/A';
+    
+    const estadisticas = `
+        <div style="margin-top: 15px; padding: 12px; background: rgba(102, 126, 234, 0.1); border-radius: 8px; border-left: 4px solid #667eea;">
+            <strong>📊 Resumen Ejecutivo:</strong><br>
+            • Nivel de capacitación: ${porcentajeIC}% de la meta<br>
+            • Total de eventos: ${totalEventos}<br>
+            • Razón desvíos/incidentes: ${ratioDesviosIncidentes}<br>
+            • Estado general: <span class="${estadoGeneral}">${estadoGeneral === 'bueno' ? 'ÓPTIMO' : estadoGeneral === 'alerta' ? 'EN PROGRESO' : 'REQUIERE ATENCIÓN'}</span>
+        </div>
+    `;
+    
+    html += estadisticas;
+    html += `<div style="margin-top: 15px; padding: 12px; background: rgba(102, 126, 234, 0.15); border-radius: 8px; font-weight: 500; text-align: center;">${mensajesFinal[estadoGeneral]}</div>`;
+    
+    return html;
+}
+
+// Función para mostrar gráfico ampliado
+function showChartModal(canvasId) {
+    const originalCanvas = document.getElementById(canvasId);
+    if (!originalCanvas || !charts[canvasId]) return;
+    
+    // Crear modal
+    const modal = document.createElement('div');
+    modal.className = 'chart-modal';
+    
+    // Botón de cerrar
+    const closeBtn = document.createElement('span');
+    closeBtn.className = 'chart-modal-close';
+    closeBtn.innerHTML = '×';
+    closeBtn.onclick = (e) => {
+        e.stopPropagation();
+        modal.remove();
+    };
+    
+    // Crear canvas ampliado
+    const modalCanvas = document.createElement('canvas');
+    modalCanvas.width = originalCanvas.width;
+    modalCanvas.height = originalCanvas.height;
+    
+    // Copiar el gráfico al canvas modal
+    const ctx = modalCanvas.getContext('2d');
+    ctx.drawImage(originalCanvas, 0, 0);
+    
+    modal.appendChild(closeBtn);
+    modal.appendChild(modalCanvas);
+    
+    // Cerrar al hacer clic fuera del gráfico
+    modal.onclick = function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    };
+    
+    document.body.appendChild(modal);
+}
+
+// Añadir event listeners a todos los chart-wrappers
+function addChartClickListeners() {
+    const chartContainers = document.querySelectorAll('.chart-wrapper');
+    chartContainers.forEach(container => {
+        const canvas = container.querySelector('canvas');
+        if (canvas) {
+            container.onclick = function() {
+                showChartModal(canvas.id);
+            };
+        }
+    });
+}
+
+// Ejecutar después de crear los gráficos
+window.addEventListener('DOMContentLoaded', () => {
+    // ... tu código existente ...
+    
+    // Añadir listeners después de un delay para asegurar que los gráficos estén creados
+    setTimeout(addChartClickListeners, 2000);
+});
+    </script>
+    
+    <script>
+        class PronosticoUI {
+            constructor() {
+                this.contentElement = document.getElementById('content');
+                this.isGenerating = false;
+                this.isPlaying = false;
+                this.init();
+            }
+
+            init() {
+                this.generateForecast();
+            }
+
+            async generateForecast() {
+                if (this.isGenerating) return;
+                this.isGenerating = true;
+
+                const dates = this.calculateDateRange();
+                
+                try {
+                    const result = await this.callBackend(dates.start, dates.end);
+                    this.displayResult(result);
+                } catch (error) {
+                    this.displayError(error.message);
+                } finally {
+                    this.isGenerating = false;
+                }
+            }
+
+            calculateDateRange() {
+                const today = new Date();
+                const startDate = new Date(today.getTime() - (14 * 24 * 60 * 60 * 1000));
+                
+                return {
+                    start: startDate.toISOString().split('T')[0],
+                    end: today.toISOString().split('T')[0]
+                };
+            }
+
+            callBackend(startDate, endDate) {
+                return new Promise((resolve, reject) => {
+                    google.script.run
+                        .withSuccessHandler(resolve)
+                        .withFailureHandler(reject)
+                        .generarPronosticoConGemini(startDate, endDate);
+                });
+            }
+
+            displayResult(text) {
+                this.contentElement.innerHTML = 
+                    '<div class="result-content" id="result-text"></div>' +
+                    '<div class="actions">' +
+                        '<button class="btn btn-secondary" onclick="ui.toggleAudio()" id="speak-btn">' +
+                            '🔊 Escuchar Pronóstico' +
+                        '</button>' +
+                    '</div>';
+
+                this.typewriterEffect(text, 'result-text');
+            }
+
+            displayError(message) {
+                this.contentElement.innerHTML = 
+                    '<div class="error-state">' +
+                        '<h3>⚠️ Error en el Sistema</h3>' +
+                        '<p>' + message + '</p>' +
+                    '</div>';
+            }
+
+            typewriterEffect(text, elementId, speed = 30) {
+                const element = document.getElementById(elementId);
+                element.innerHTML = '';
+                element.classList.add('typewriter');
+                
+                let i = 0;
+                const timer = setInterval(() => {
+                    if (i < text.length) {
+                        element.innerHTML += text.charAt(i);
+                        i++;
+                    } else {
+                        element.classList.remove('typewriter');
+                        clearInterval(timer);
+                    }
+                }, speed);
+            }
+
+            toggleAudio() {
+                if (this.isPlaying) {
+                    window.speechSynthesis.cancel();
+                    this.updateButton('🔊 Escuchar Pronóstico', false);
+                    this.isPlaying = false;
+                } else {
+                    this.speakResult();
+                }
+            }
+
+            speakResult() {
+                const text = document.getElementById('result-text')?.innerText;
+                if (!text || text.includes('Error')) return;
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'es-PE';
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                
+                this.updateButton('⏸️ Pausar Audio', false);
+                this.isPlaying = true;
+
+                utterance.onend = () => {
+                    this.updateButton('🔊 Escuchar Pronóstico', false);
+                    this.isPlaying = false;
+                };
+
+                window.speechSynthesis.speak(utterance);
+            }
+
+            updateButton(text, disabled) {
+                const btn = document.getElementById('speak-btn');
+                if (btn) {
+                    btn.innerHTML = text;
+                    btn.disabled = disabled;
+                }
+            }
+
+            refresh() {
+                this.contentElement.innerHTML = 
+                    '<div class="loading-state">' +
+                        '<div class="loading-spinner"></div>' +
+                        '<h3>🔄 Actualizando análisis...</h3>' +
+                        '<p>Obteniendo datos más recientes</p>' +
+                    '</div>';
+                
+                setTimeout(() => this.generateForecast(), 500);
+            }
+        }
+
+        // Inicializar la aplicación
+        const ui = new PronosticoUI();
+        
+        // Prevenir errores globales
+        window.onerror = function(msg, url, line) {
+            console.error('Error:', msg, 'at', url, ':', line);
+            return false;
+        };
+    </script>
+
+</body>
+</html>
