@@ -351,6 +351,27 @@ function _invalidateStockCache_(){
     console.warn('No se pudo invalidar cachés:', e);
   }
 }
+/** ============ Mapa email→nombre para resolver registros antiguos ============ **/
+function _buildEmailToNameMap(){
+  const map = {};
+  try {
+    const hoja = getSpreadsheetPersonal().getSheetByName('PERSONAL');
+    const lastRow = hoja.getLastRow();
+    if (lastRow >= 2) {
+      const data = hoja.getRange(2, 1, lastRow - 1, 13).getValues();
+      for (let i = 0; i < data.length; i++) {
+        const em = (data[i][12] || '').toString().trim().toLowerCase();
+        if (em) map[em] = data[i][2] || em;
+      }
+    }
+  } catch(e) {}
+  return map;
+}
+function _emailToName(usuario, map){
+  if (!usuario || usuario.indexOf('@') === -1) return usuario;
+  return map[usuario.toLowerCase()] || usuario;
+}
+
 /** ============ Cache ligero del REGISTRO como objetos ============ **/
 function _readRegistroCache_(){
   const cache = CacheService.getDocumentCache();
@@ -358,6 +379,7 @@ function _readRegistroCache_(){
   const hit = cache.get(key);
   if (hit) return JSON.parse(hit);
 
+  const emailMap = _buildEmailToNameMap();
   const rows = _readRows(SHEPP.REGISTRO); // sin cabecera
   const list = rows.map(r=>({
     ID       : _str(r[IDX.REG.ID_REG-1]),
@@ -374,7 +396,7 @@ function _readRegistroCache_(){
     COSTO_UNITARIO: _num(r[IDX.REG.COSTO_UNITARIO-1]),
     MONEDA   : _str(r[IDX.REG.MONEDA-1]),
     IMPORTE  : _num(r[IDX.REG.IMPORTE-1]),
-    USUARIO  : _str(r[IDX.REG.USUARIO-1]),
+    USUARIO  : _emailToName(_str(r[IDX.REG.USUARIO-1]), emailMap),
     OBS      : _str(r[IDX.REG.OBS-1]),
     FIRMA_URL: _str(r[IDX.REG.FIRMA_URL-1]),
     REF_ID   : _str(r[IDX.REG.REF_ID-1]),
@@ -392,6 +414,7 @@ function _readMovCache_(){
   const hit = cache.get(key);
   if (hit) return JSON.parse(hit);
 
+  const emailMap = _buildEmailToNameMap();
   const rows = _readRows(SHEPP.MOV);
   const list = rows.map(r=>({
     ID       : _str(r[IDX.MOV.ID_MOV-1]),
@@ -406,7 +429,7 @@ function _readMovCache_(){
     COSTO_UNITARIO: _num(r[IDX.MOV.COSTO_UNITARIO-1]),
     MONEDA   : _str(r[IDX.MOV.MONEDA-1]),
     IMPORTE  : _num(r[IDX.MOV.IMPORTE-1]),
-    USUARIO  : _str(r[IDX.MOV.USUARIO-1]),
+    USUARIO  : _emailToName(_str(r[IDX.MOV.USUARIO-1]), emailMap),
     OBS      : _str(r[IDX.MOV.OBS-1]),
     DNI      : typeof IDX.MOV.DNI==='number' ? _str(r[IDX.MOV.DNI-1]) : '',
     CARGO    : typeof IDX.MOV.CARGO==='number' ? _str(r[IDX.MOV.CARGO-1]) : '',
@@ -1184,12 +1207,34 @@ function obtenerEntregasPendientes(dni){
     if(!dni) return [];
     const sh = _sh(SHEPP.REGISTRO);
     const data = sh.getDataRange().getValues();
+
+    // Mapa email→nombre para resolver registros antiguos que guardaron email
+    const emailToName = {};
+    try {
+      const hoja = getSpreadsheetPersonal().getSheetByName('PERSONAL');
+      const lastRow = hoja.getLastRow();
+      if (lastRow >= 2) {
+        const personal = hoja.getRange(2, 1, lastRow - 1, 13).getValues();
+        for (let j = 0; j < personal.length; j++) {
+          const em = (personal[j][12] || '').toString().trim().toLowerCase();
+          if (em) emailToName[em] = personal[j][2] || em;
+        }
+      }
+    } catch(e2) {}
+
     const pendientes = [];
     for(let i=1; i<data.length; i++){
       const r = data[i];
       if(_str(r[IDX.REG.DNI-1]) !== _str(dni)) continue;
       if(_str(r[IDX.REG.OPERACION-1]) !== 'Entrega') continue;
       if(_str(r[IDX.REG.ESTADO-1]) !== 'Pendiente') continue;
+
+      // Resolver: si USUARIO es un email, convertir a nombre
+      let usuarioDisplay = _str(r[IDX.REG.USUARIO-1]);
+      if (usuarioDisplay.indexOf('@') !== -1) {
+        usuarioDisplay = emailToName[usuarioDisplay.toLowerCase()] || usuarioDisplay;
+      }
+
       pendientes.push({
         ID_REG: _str(r[IDX.REG.ID_REG-1]),
         FECHA: _fmtDateOut(r[IDX.REG.FECHA-1]),
@@ -1197,7 +1242,7 @@ function obtenerEntregasPendientes(dni){
         PRODUCTO: _str(r[IDX.REG.PRODUCTO-1]),
         VARIANTE: _str(r[IDX.REG.VARIANTE-1]),
         CANTIDAD: _num(r[IDX.REG.CANTIDAD-1]),
-        USUARIO: _str(r[IDX.REG.USUARIO-1]),
+        USUARIO: usuarioDisplay,
         OBS: _str(r[IDX.REG.OBS-1]),
         DEVOLVIBLE: _str(r[IDX.REG.DEVOLVIBLE-1]),
         ESTADO: 'Pendiente'
