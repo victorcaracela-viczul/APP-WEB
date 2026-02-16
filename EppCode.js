@@ -7,6 +7,31 @@ function getSpreadsheetEPP() {
   return cachedEPP;
 }
  const FOLDER_IDEPP = '1rzdA2M0abUuT83i9YFF7-W8eLHWrs84s'; //CARPETA EPP - FIRMA
+/**
+ * Resuelve el nombre del usuario logueado a partir de su email.
+ * Busca en la hoja PERSONAL por email (col M, index 12) y devuelve el nombre (col C, index 2).
+ * Si no encuentra coincidencia, devuelve el email como fallback.
+ */
+function _resolveUsuarioNombre() {
+  try {
+    const email = Session.getActiveUser().getEmail();
+    if (!email) return 'Sin usuario';
+    const hoja = getSpreadsheetPersonal().getSheetByName('PERSONAL');
+    const lastRow = hoja.getLastRow();
+    if (lastRow < 2) return email;
+    const data = hoja.getRange(2, 1, lastRow - 1, 13).getValues(); // Cols A-M
+    for (let i = 0; i < data.length; i++) {
+      const emailFila = (data[i][12] || '').toString().trim().toLowerCase();
+      if (emailFila === email.toLowerCase()) {
+        return data[i][2] || email; // Col C = Nombre
+      }
+    }
+    return email;
+  } catch (e) {
+    return Session.getActiveUser().getEmail() || 'Sin usuario';
+  }
+}
+
 /** ================== CONFIG / SHEETS ================== **/
 const SHEPP = {
   STOCK:     'STOCK',
@@ -688,7 +713,7 @@ function registrarEntrega(payload){
     row[IDX.REG.COSTO_UNITARIO-1]=precioUnit;
     row[IDX.REG.MONEDA-1]=moneda;
     row[IDX.REG.IMPORTE-1]=precioUnit*cant;
-    row[IDX.REG.USUARIO-1]=Session.getActiveUser().getEmail();
+    row[IDX.REG.USUARIO-1]=_resolveUsuarioNombre();
     row[IDX.REG.OBS-1]=obsAuto; // ← 🆕 Observación con detección de retraso
     row[IDX.REG.DEVOLVIBLE-1]=reglas.DEVOLVIBLE;
     row[IDX.REG.VIDA_UTIL_DIAS-1]=reglas.VIDA_UTIL_DIAS;
@@ -716,7 +741,7 @@ function registrarEntrega(payload){
     m[IDX.MOV.COSTO_UNITARIO-1]=precioUnit;
     m[IDX.MOV.MONEDA-1]=moneda;
     m[IDX.MOV.IMPORTE-1]=precioUnit*cant;
-    m[IDX.MOV.USUARIO-1]=Session.getActiveUser().getEmail();
+    m[IDX.MOV.USUARIO-1]=_resolveUsuarioNombre();
     m[IDX.MOV.OBS-1]=obsAuto;
     m[IDX.MOV.DNI-1]=_str(payload.dni||'');
     m[IDX.MOV.CARGO-1]=_str(payload.cargo||'');
@@ -842,7 +867,7 @@ function registrarDevolucion(payload){
     row[IDX.REG.COSTO_UNITARIO-1]=precioUnit;
     row[IDX.REG.MONEDA-1]=moneda;
     row[IDX.REG.IMPORTE-1]=precioUnit*cant;
-    row[IDX.REG.USUARIO-1]=Session.getActiveUser().getEmail();
+    row[IDX.REG.USUARIO-1]=_resolveUsuarioNombre();
     row[IDX.REG.OBS-1]=_str(payload.obs||'');
     row[IDX.REG.FIRMA_URL-1]=_str(payload.firmaUrl||'');
     row[IDX.REG.REF_ID-1]=_str(payload.refId||'');
@@ -859,7 +884,7 @@ function registrarDevolucion(payload){
     m[IDX.MOV.CANTIDAD-1]=cant;
     m[IDX.MOV.ID_PROV-1]=''; m[IDX.MOV.MARCA-1]='';
     m[IDX.MOV.COSTO_UNITARIO-1]=precioUnit; m[IDX.MOV.MONEDA-1]=moneda; m[IDX.MOV.IMPORTE-1]=precioUnit*cant;
-    m[IDX.MOV.USUARIO-1]=Session.getActiveUser().getEmail();
+    m[IDX.MOV.USUARIO-1]=_resolveUsuarioNombre();
     m[IDX.MOV.OBS-1]=_str(payload.obs||'');
     m[IDX.MOV.DNI-1]=_str(payload.dni||'');
     m[IDX.MOV.CARGO-1]=_str(payload.cargo||'');
@@ -894,7 +919,7 @@ function registrarMovimiento(payload){
     const moneda=_str(payload.moneda||'PEN');
     const obs=_str(payload.obs||'');
     const hoy=_today();
-    const usuario=Session.getActiveUser().getEmail();
+    const usuario=_resolveUsuarioNombre();
 
     // 💡 NUEVO: resolver categoría (opcionalmente payload.categoria puede forzarla)
     const categoria = _resolveCategoria(almacen, producto, variante, _str(payload.categoria||''));
@@ -1417,7 +1442,7 @@ function crearProductoConOpcionalIngreso(p){
       m[IDX.MOV.COSTO_UNITARIO-1]  = unit;
       m[IDX.MOV.MONEDA-1]          = _str(p.moneda||'PEN');
       m[IDX.MOV.IMPORTE-1]         = unit*cant;
-      m[IDX.MOV.USUARIO-1]         = Session.getActiveUser().getEmail();
+      m[IDX.MOV.USUARIO-1]         = _resolveUsuarioNombre();
       m[IDX.MOV.OBS-1]             = _str(p.obs||'Ingreso inicial (nuevo producto)');
       _appendArray(SHEPP.MOV, m);
     }

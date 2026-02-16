@@ -458,7 +458,23 @@ function getAdditionalInfoByValue_v2(value) {
 
 // 12. Obtener Nombre Usuario
 function getUserNameFromServer_v2() {
-  return Session.getActiveUser().getEmail(); 
+  try {
+    const email = Session.getActiveUser().getEmail();
+    if (!email) return 'Sin usuario';
+    const hoja = getSpreadsheetPersonal().getSheetByName('PERSONAL');
+    const lastRow = hoja.getLastRow();
+    if (lastRow < 2) return email;
+    const data = hoja.getRange(2, 1, lastRow - 1, 13).getValues();
+    for (let i = 0; i < data.length; i++) {
+      const emailFila = (data[i][12] || '').toString().trim().toLowerCase();
+      if (emailFila === email.toLowerCase()) {
+        return data[i][2] || email;
+      }
+    }
+    return email;
+  } catch (e) {
+    return Session.getActiveUser().getEmail() || 'Sin usuario';
+  }
 }
 
 // 13. Obtener PDF URL
