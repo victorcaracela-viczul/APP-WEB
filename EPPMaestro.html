@@ -57,25 +57,25 @@
 
 <div class="container-fluid px-0">
 
-  <!-- TABS -->
-  <ul class="nav nav-tabs mb-3" role="tablist">
+  <!-- TABS (custom, no usa tab-pane para evitar conflicto con index.html) -->
+  <ul class="nav nav-tabs mb-3">
     <li class="nav-item">
-      <a class="nav-link active" data-bs-toggle="tab" href="#vistaGeneral">
+      <a class="nav-link active" href="#" id="maestroTabGeneral" onclick="switchMaestroTab('general');return false;">
         <i class="fas fa-th"></i> Vista General
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" data-bs-toggle="tab" href="#vistaCompras" id="tabComprasLink">
+      <a class="nav-link" href="#" id="maestroTabCompras" onclick="switchMaestroTab('compras');return false;">
         <i class="fas fa-shopping-cart"></i> Lista de Compras
         <span id="badgeCompras" class="badge bg-danger ms-1" style="display:none">0</span>
       </a>
     </li>
   </ul>
 
-  <div class="tab-content">
+  <!-- PANELES (sin tab-pane para evitar conflicto global) -->
 
-    <!-- ==================== TAB: VISTA GENERAL ==================== -->
-    <div id="vistaGeneral" class="tab-pane fade show active" style="min-height:300px">
+    <!-- ==================== PANEL: VISTA GENERAL ==================== -->
+    <div id="maestroPanelGeneral" style="min-height:300px">
 
       <!-- TOOLBAR -->
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
@@ -121,8 +121,8 @@
 
     </div>
 
-    <!-- ==================== TAB: LISTA DE COMPRAS ==================== -->
-    <div id="vistaCompras" class="tab-pane fade" style="min-height:300px">
+    <!-- ==================== PANEL: LISTA DE COMPRAS ==================== -->
+    <div id="maestroPanelCompras" style="min-height:300px;display:none">
 
       <!-- Filtro de días -->
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
@@ -186,7 +186,6 @@
       </div>
 
     </div>
-  </div>
 </div>
 
 <!-- TOOLTIP -->
@@ -207,7 +206,7 @@
    ================================================================ */
 var cargarDatosMaestro, filtrarTablaHorizontal, mostrarTooltip, ocultarTooltip,
     abrirModalImagen, cerrarModalImagen, renderizarListaCompras,
-    imprimirProveedor, imprimirRegistro;
+    imprimirProveedor, imprimirRegistro, switchMaestroTab;
 
 (function(){
 'use strict';
@@ -218,6 +217,16 @@ let eppsUnicos = [];
 const productMeta = new Map();
 const categoriasEPP = {};
 const PLACEHOLDER = 'https://lh5.googleusercontent.com/d/1n38-t1dDdj56TqOjv8c4SAAcUQcA0U72';
+
+// ========== switch tabs custom ==========
+function _switchMaestroTab(tab){
+  const isGeneral = (tab === 'general');
+  document.getElementById('maestroPanelGeneral').style.display = isGeneral ? '' : 'none';
+  document.getElementById('maestroPanelCompras').style.display = isGeneral ? 'none' : '';
+  document.getElementById('maestroTabGeneral').classList.toggle('active', isGeneral);
+  document.getElementById('maestroTabCompras').classList.toggle('active', !isGeneral);
+  if(!isGeneral && datosCompletos.length) _renderizarListaCompras();
+}
 
 // ========== helpers ==========
 function esc(t){ return String(t||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
@@ -413,8 +422,11 @@ function _renderizarListaCompras(){
     g.detalle.push({trabajador:r.trabajador, dias:r.diasRestantes, estado:r.estado});
   });
 
-  // Ordenar: vencidos primero, luego por días
-  listaComprasData = Array.from(mapa.values()).sort((a,b) => a.diasMin - b.diasMin);
+  // Ordenar alfabéticamente por producto, luego por variante
+  listaComprasData = Array.from(mapa.values()).sort((a,b) => {
+    const cmp = (a.producto||'').localeCompare(b.producto||'');
+    return cmp !== 0 ? cmp : (a.variante||'').localeCompare(b.variante||'');
+  });
 
   // Resumen
   const totalItems = listaComprasData.reduce((s,i) => s + i.cantidad, 0);
@@ -469,7 +481,7 @@ function _renderizarListaCompras(){
     listaComprasData.forEach(item => {
       const key = esc(item.producto) + (item.variante ? ' - ' + esc(item.variante) : '');
       dh += '<tr class="table-secondary"><td colspan="4"><b>'+key+'</b> ('+item.cantidad+' uds)</td></tr>';
-      item.detalle.sort((a,b)=>a.dias-b.dias).forEach(d => {
+      item.detalle.sort((a,b)=>(a.trabajador||'').localeCompare(b.trabajador||'')).forEach(d => {
         const esV = d.dias < 0;
         const estTxt = esV ? '<span class="badge bg-danger">Vencido '+Math.abs(d.dias)+' días</span>' : '<span class="badge bg-warning text-dark">Vence en '+d.dias+' días</span>';
         dh += '<tr><td></td><td>'+esc(d.trabajador)+'</td><td>'+estTxt+'</td><td class="text-center">1</td></tr>';
@@ -553,7 +565,7 @@ function _imprimirRegistro(){
   items.forEach(item=>{
     const key=esc(item.producto)+(item.variante?' - '+esc(item.variante):'');
     html+='<tr class="group"><td></td><td colspan="3">'+key.toUpperCase()+'</td><td style="text-align:center">'+item.cantidad+'</td></tr>';
-    item.detalle.sort((a,b)=>a.dias-b.dias).forEach(d=>{
+    item.detalle.sort((a,b)=>(a.trabajador||'').localeCompare(b.trabajador||'')).forEach(d=>{
       n++;
       const esV=d.dias<0;
       const cls=esV?'vencido':'porvencer';
@@ -580,6 +592,7 @@ cerrarModalImagen=_cerrarModalImagen;
 renderizarListaCompras=_renderizarListaCompras;
 imprimirProveedor=_imprimirProveedor;
 imprimirRegistro=_imprimirRegistro;
+switchMaestroTab=_switchMaestroTab;
 
 window.cargarDatosMaestro=_cargarDatosMaestro;
 window.filtrarTablaHorizontal=_filtrarTablaHorizontal;
@@ -590,6 +603,7 @@ window.cerrarModalImagen=_cerrarModalImagen;
 window.renderizarListaCompras=_renderizarListaCompras;
 window.imprimirProveedor=_imprimirProveedor;
 window.imprimirRegistro=_imprimirRegistro;
+window.switchMaestroTab=_switchMaestroTab;
 
 })();
 </script>
