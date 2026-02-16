@@ -209,6 +209,7 @@
       <button class="btn btn-sm btn-outline-secondary" id="btnToggleHistEPP">Historial</button>
       <button class="btn btn-sm btn-outline-primary" id="btnExportHistEPP"><i class="fa-solid fa-file-excel"></i> Exportar historial</button>
       <span class="small text-muted">Almacén actual: <b id="cartAlmEPP">—</b></span>
+      <span id="badgeEstadosAdmin" class="ms-auto"></span>
     </div>
     <div id="historialBoxEPP" class="mt-2 d-none"><div id="historialListEPP" class="table-responsive"></div></div>
   </div>
@@ -317,24 +318,13 @@
 
     <div id="cartList"></div>
     <hr/>
- <div class="mb-2">
-  <label class="form-label">Firma del trabajador</label>
-  <!-- Contenedor con borde y sombra -->
-  <div class="border border-2 rounded-3 shadow-sm p-2 bg-white">
-    <canvas id="sigPad" class="w-100" height="150"></canvas>
-  </div>
-  <div class="d-flex gap-2 mt-2">
-    <button class="btn btn-sm btn-outline-secondary" id="btnSigClear" type="button">Limpiar</button>
-  </div>
-  <div class="small text-muted mt-1">
-    La firma se imprime en el PDF y queda registrada en la entrega.
-  </div>
-</div>
-
 
     <div class="d-flex justify-content-between">
       <div class="small text-muted">Total carrito:</div>
       <div><strong id="cartTotal">0</strong></div>
+    </div>
+    <div class="small text-muted mt-2" style="background:#fff3cd;padding:8px;border-radius:8px;">
+      <i class="fa-solid fa-circle-info"></i> La entrega quedará en estado <b>Pendiente</b> hasta que el trabajador confirme y firme desde su app.
     </div>
   </div>
 
@@ -525,8 +515,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('btnExportHistEPP').addEventListener('click', exportHistorialXlsx);
   document.getElementById('productSearch').addEventListener('input', (e)=>{ stateEPP.searchTerm=(e.target.value||'').toLowerCase(); renderCards(); });
   document.getElementById('btnClearSearch').addEventListener('click', ()=>{ document.getElementById('productSearch').value=''; stateEPP.searchTerm=''; renderCards(); });
-
-  initSignaturePad();
 
   // 🚫 Sin overlay: refreshInit inicia SSR (loadPage(true)) y verás skeletons
   await refreshInit(localStorage.getItem('ALMACEN_ACTUAL')||'');
@@ -745,7 +733,6 @@ function quitarPersona(){
   document.getElementById('personaBoxEPP').classList.add('d-none');
   document.getElementById('historialBoxEPP').classList.add('d-none');
   ['cartWorker','cartCargo','cartDni'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent='—'; });
-  const c=document.getElementById('sigPad'); if(c){ const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); }
   renderCart(); renderCards();
   toast('Trabajador quitado');
 }
@@ -855,10 +842,14 @@ function renderHistorial(list){
           const dev = String(x.DEVOLVIBLE||'').trim().toLowerCase().startsWith('s');
           const devHtml = `<span class="badge ${dev?'bg-danger':'bg-success'}">${dev?'Sí':'No'}</span>`;
 
-          // 🔹 ESTADO: Solo para devoluciones (NO para entregas)
+          // 🔹 ESTADO: Badge de flujo Pendiente/Confirmado/Rechazado + vencimiento
+          const estadoEpp = String(x.ESTADO || '').trim();
           let statusHtml = '';
+          if (estadoEpp === 'Pendiente') statusHtml = '<span class="badge bg-warning text-dark">Pendiente</span>';
+          else if (estadoEpp === 'Confirmado') statusHtml = '<span class="badge bg-success">Confirmado</span>';
+          else if (estadoEpp === 'Rechazado') statusHtml = '<span class="badge bg-danger">Rechazado</span>';
           let vencHtml = '—';
-          
+
           if (x.OPERACION === 'Entrega') {
             const key = `${x.PRODUCTO}||${x.VARIANTE||''}`;
             const entregas = entregasPorProducto[key] || [];
@@ -907,7 +898,6 @@ function renderHistorial(list){
               }
             }
           } else if (x.OPERACION === 'Devolución') {
-            // 🔹 ESTADO: Solo para devoluciones
             if (x.STATUS) {
               statusHtml = `<span class="badge ${x.STATUS.startsWith('Devuelto parcial')?'bg-warning':'bg-success'}">${x.STATUS}</span>`;
             }
@@ -1664,7 +1654,7 @@ function stockMetaOf(producto, variante){
 }
 
 /* =================== Ejecutar carrito =================== */
-async function cartExec(){ 
+async function cartExec(){
   if (!stateEPP.persona){ Swal.fire('Trabajador requerido','Busca un DNI','info'); return; }
   if (!stateEPP.cart?.length){ Swal.fire('Carrito vacío','','info'); return; }
 
@@ -1673,28 +1663,55 @@ async function cartExec(){
   const empresa = stateEPP.persona.EMPRESA;
   const cargo   = stateEPP.persona.CARGO;
   const alm     = stateEPP.almacenActual;
-  const itemsForDoc = [...stateEPP.cart]; // conservar para PDF/WhatsApp
+  const itemsForDoc = [...stateEPP.cart];
 
-  // Firma
-  const sigData = (typeof getSignatureDataUrl === 'function') ? getSignatureDataUrl() : null;
-  const getFirmaUrl = ()=> new Promise((resolve)=>{
-    if(!sigData) return resolve(null);
-    google.script.run
-      .withSuccessHandler(res=> resolve(res && res.ok ? res.url : null))
-      .withFailureHandler(()=> resolve(null))
-      .saveSignature(sigData);
+  // Modal de confirmación antes de registrar
+  const itemsHtml = itemsForDoc.map(it => {
+    const unit = estimateUnit(it);
+    const imp = unit * (it.cantidad||0);
+    return `<tr>
+      <td>${it.tipo}</td>
+      <td>${it.producto}${it.variante ? ' <small class="text-muted">(' + it.variante + ')</small>' : ''}</td>
+      <td class="text-center">${it.cantidad}</td>
+      <td class="text-end">${imp ? imp.toFixed(2) : '-'}</td>
+    </tr>`;
+  }).join('');
+
+  const confirmResult = await Swal.fire({
+    title: 'Confirmar Entrega',
+    html: `
+      <div class="text-start">
+        <div class="border rounded p-2 mb-3 bg-light">
+          <div class="small"><b>Trabajador:</b> ${nombres}</div>
+          <div class="small"><b>DNI:</b> ${dni} &nbsp;|&nbsp; <b>Cargo:</b> ${cargo}</div>
+          <div class="small"><b>Empresa:</b> ${empresa} &nbsp;|&nbsp; <b>Almacén:</b> ${alm}</div>
+        </div>
+        <table class="table table-sm table-bordered mb-2">
+          <thead class="table-light"><tr><th>Tipo</th><th>Producto</th><th class="text-center">Cant</th><th class="text-end">Importe</th></tr></thead>
+          <tbody>${itemsHtml}</tbody>
+        </table>
+        <div class="alert alert-warning py-2 small mb-0">
+          <i class="fa-solid fa-clock"></i> La entrega quedará en estado <b>Pendiente</b> hasta que el trabajador confirme y firme desde su app.
+        </div>
+      </div>
+    `,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Confirmar Entrega',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#0d6efd',
+    width: '600px'
   });
 
-  Swal.fire({title:'Procesando entrega...', allowOutsideClick:false, allowEscapeKey:false, didOpen:()=>Swal.showLoading()});
+  if (!confirmResult.isConfirmed) return;
+
+  Swal.fire({title:'Registrando entrega...', allowOutsideClick:false, allowEscapeKey:false, didOpen:()=>Swal.showLoading()});
 
   try{
-    const firmaUrl = await getFirmaUrl();
-
-    // 🔧 Payload completo
     const payload = {
       dni, nombres, empresa, cargo,
       almacen: alm,
-      firmaUrl: firmaUrl || null,
+      firmaUrl: '',
       items: stateEPP.cart.map(it => ({
         tipo: it.tipo,
         producto: it.producto,
@@ -1709,7 +1726,6 @@ async function cartExec(){
       }))
     };
 
-    // 🧩 Paso 1: ejecutar entrega
     await new Promise((resolve, reject)=>{
       google.script.run
         .withSuccessHandler(res=> res && res.ok ? resolve(res) : reject(res?.message || 'Error en servidor'))
@@ -1717,99 +1733,20 @@ async function cartExec(){
         .execCart(payload);
     });
 
-    // 💥 Mostrar éxito INMEDIATAMENTE
     Swal.fire({
       icon:'success',
-      title:'Entrega procesada',
+      title:'Entrega registrada',
       html: `
-        <p>Los datos se están actualizando en segundo plano.</p>
-        <div class="d-grid gap-2">
-          <button id="btnViewPdf" class="btn btn-primary" disabled>Generando PDF...</button>
-          <a id="btnWhats" class="btn btn-success disabled" style="pointer-events:none;opacity:0.6;" target="_blank">WhatsApp</a>
-        </div>
+        <p class="mb-2">Los EPPs fueron asignados a <b>${nombres}</b> con estado <span class="badge bg-warning text-dark">Pendiente</span>.</p>
+        <p class="small text-muted">El trabajador debe confirmar y firmar la recepción desde su módulo de Asignaciones.</p>
       `,
-      showConfirmButton:false,
-      didOpen: ()=>{ Swal.stopTimer(); }
+      confirmButtonText: 'Entendido'
     });
 
-    // 🔁 Ejecutar tareas pesadas en paralelo (sin bloquear Swal)
-    (async()=>{
-      // PDF servidor
-      let pdfPublicUrl = null;
-      try{
-        const r = await gasCall('generarFichaPDF', {
-          dni, nombres, empresa, cargo,
-          almacen: alm, items: itemsForDoc, firmaUrl: firmaUrl || null
-        });
-        if (r && r.ok && r.url) pdfPublicUrl = r.url;
-      }catch(_){}
-
-      // PDF cliente
-      const personaForPdf = { NOMBRES:nombres, DNI:dni, EMPRESA:empresa, CARGO:cargo };
-      const clientPdfUrl = (typeof generarPDFCliente === 'function')
-        ? generarPDFCliente(personaForPdf, alm, itemsForDoc, sigData, { open:false })
-        : null;
-
-      // 🧩 Enriquecer items con datos adicionales (file, frec, reqCap)
-      for (const it of itemsForDoc){
-        const prod = it.producto || '';
-        const vari = it.variante || '';
-        const meta = typeof stockMetaOf === 'function' ? stockMetaOf(prod, vari) : {};
-        const reglas = typeof getReglas === 'function' ? getReglas(prod, cargo) : {};
-        it.file  = meta?.file || '';
-        it.frec  = reglas?.FREC_INSP || '';
-        it.reqCap = reglas?.REQ_CAP_TEMA || '';
-      }
-
-      // WhatsApp message
-      const pad = n=>String(n).padStart(2,'0');
-      const now = new Date();
-      const fecha = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-      const lines = [
-        '*Ficha de Entrega de EPP*',
-        `Trabajador: ${nombres} (${dni})`,
-        `Empresa: ${empresa}  |  Cargo: ${cargo}`,
-        `Almacén: ${alm}  |  Fecha: ${fecha}`,
-        '',
-        '*Detalle:*'
-      ];
-      for(const it of itemsForDoc){
-        const unit = (it.precioUnit!=null && it.precioUnit!=='') ? Number(it.precioUnit) : (estimateUnit(it)||0);
-        const imp  = unit * (Number(it.cantidad)||0);
-        lines.push(`- ${it.tipo}: ${it.producto}${it.variante?` (${it.variante})`:''} x ${it.cantidad} • ${imp.toFixed(2)} PEN`);
-        if (it.frec)  lines.push(`   • Frec. inspección: ${it.frec}`);
-        if (it.reqCap) lines.push(`   • Req. capacitación: ${it.reqCap}`);
-        if (it.file)  lines.push(`   • Especificación: ${it.file}`);
-      }
-      if (pdfPublicUrl){ lines.push('', `Ficha PDF: ${pdfPublicUrl}`); }
-
-      const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(lines.join('\n'))}`;
-
-      // Refrescar historial y meta (sin bloquear Swal)
-      refreshAfterMutation({ refetchInit:false });
-      ensureProductMeta(itemsForDoc.map(it=>it.producto));
-
-      // Vaciar carrito y limpiar firma
-      cartClear();
-      const c=document.getElementById('sigPad'); 
-      if(c){ const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); }
-
-      // Actualizar Swal cuando todo termine
-      const btnPdf = document.getElementById('btnViewPdf');
-      const btnWa  = document.getElementById('btnWhats');
-      if(btnPdf && clientPdfUrl){ 
-        btnPdf.textContent = 'Ver / Imprimir PDF';
-        btnPdf.disabled = false;
-        btnPdf.onclick = ()=> window.open(clientPdfUrl, '_blank');
-      }
-      if(btnWa && waUrl){ 
-        btnWa.classList.remove('disabled');
-        btnWa.style.opacity = 1;
-        btnWa.style.pointerEvents = 'auto';
-        btnWa.href = waUrl;
-        btnWa.target = '_blank'; // ✅ aseguro nueva pestaña
-      }
-    })();
+    // Refrescar y vaciar carrito
+    refreshAfterMutation({ refetchInit:false });
+    ensureProductMeta(itemsForDoc.map(it=>it.producto));
+    cartClear();
 
   }catch(err){
     console.error(err);
@@ -2250,6 +2187,21 @@ async function refreshAfterMutation({refetchInit=false} = {}){
   }
 }
 
+/* =================== Badge de estados admin =================== */
+function cargarBadgesEstadoAdmin(){
+  const el = document.getElementById('badgeEstadosAdmin');
+  if(!el) return;
+  gasCall('obtenerResumenEstados', stateEPP.almacenActual || '')
+    .then(res => {
+      let html = '';
+      if(res.pendientes > 0) html += `<span class="badge bg-warning text-dark me-1"><i class="fa-solid fa-clock"></i> ${res.pendientes} pendiente${res.pendientes>1?'s':''}</span>`;
+      if(res.rechazados > 0) html += `<span class="badge bg-danger"><i class="fa-solid fa-xmark"></i> ${res.rechazados} rechazado${res.rechazados>1?'s':''}</span>`;
+      el.innerHTML = html;
+    })
+    .catch(() => {});
+}
+// Cargar badges al inicio (después de refreshInit)
+setTimeout(cargarBadgesEstadoAdmin, 3000);
 
 //ACTUALIZAR
 document.getElementById('btnActualizarEPP').addEventListener('click', async ()=>{
