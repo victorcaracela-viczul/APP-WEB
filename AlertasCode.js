@@ -1,5 +1,7 @@
 /**
  * Obtiene alertas de vencimiento estructuradas para mostrar en una tabla.
+ * Solo muestra la ÚLTIMA entrega de cada combinación DNI + Producto + Variante.
+ * Si el trabajador ya recibió una entrega nueva, las alertas anteriores se cierran.
  * @param {string} dniLogin - El DNI del usuario logueado.
  */
 function obtenerAlertasVencimientos(dniLogin) {
@@ -7,30 +9,50 @@ function obtenerAlertasVencimientos(dniLogin) {
     const ss = getSpreadsheetEPP();
     const shReg = ss.getSheetByName(SHEPP.REGISTRO);
     const correoActual = Session.getActiveUser().getEmail();
-    
-    // 1. DEFINIR SI ES ADMIN (Cambia el correo por el tuyo)
-    const ADMIN_EMAIL = "tu_correo_admin@gmail.com"; 
+
+    const ADMIN_EMAIL = "tu_correo_admin@gmail.com";
     const esAdmin = (correoActual === ADMIN_EMAIL || !dniLogin);
 
     const data = shReg.getDataRange().getValues();
     const hoy = new Date();
-    const alertas = [];
 
-    // Índices basados en tu objeto IDX.REG
-    const COL_DNI = IDX.REG.DNI - 1;               
-    const COL_PRODUCTO = IDX.REG.PRODUCTO - 1;     
+    const COL_DNI = IDX.REG.DNI - 1;
+    const COL_PRODUCTO = IDX.REG.PRODUCTO - 1;
+    const COL_VARIANTE = IDX.REG.VARIANTE - 1;
     const COL_VENC = IDX.REG.FECHA_VENCIMIENTO - 1;
-    const COL_OP = IDX.REG.OPERACION - 1;          
-    const COL_NOMBRES = IDX.REG.NOMBRES - 1;       
+    const COL_OP = IDX.REG.OPERACION - 1;
+    const COL_NOMBRES = IDX.REG.NOMBRES - 1;
+    const COL_FECHA = IDX.REG.FECHA - 1;
+
+    // PASO 1: Agrupar entregas y quedarse solo con la MÁS RECIENTE
+    // por cada combinación DNI + Producto + Variante
+    const ultimasPorItem = {};
 
     for (let i = 1; i < data.length; i++) {
       const fila = data[i];
 
-      // Filtro de seguridad: Si no es admin, solo ve su DNI
       if (!esAdmin && _str(fila[COL_DNI]) !== _str(dniLogin)) continue;
-
-      // Solo procesar registros de "Entrega"
       if (_str(fila[COL_OP]) !== 'Entrega') continue;
+
+      const dni = _str(fila[COL_DNI]);
+      const producto = _str(fila[COL_PRODUCTO]);
+      const variante = _str(fila[COL_VARIANTE] || '');
+      const clave = dni + '|' + producto + '|' + variante;
+
+      const fechaEntrega = new Date(fila[COL_FECHA]);
+      if (isNaN(fechaEntrega.getTime())) continue;
+
+      // Solo guardar la más reciente por cada clave
+      if (!ultimasPorItem[clave] || fechaEntrega > ultimasPorItem[clave].fechaEntrega) {
+        ultimasPorItem[clave] = { fila, fechaEntrega };
+      }
+    }
+
+    // PASO 2: Generar alertas solo de las últimas entregas
+    const alertas = [];
+
+    for (const clave in ultimasPorItem) {
+      const { fila } = ultimasPorItem[clave];
 
       const fechaVencRaw = fila[COL_VENC];
       if (!fechaVencRaw) continue;
@@ -38,24 +60,19 @@ function obtenerAlertasVencimientos(dniLogin) {
       const fechaVenc = new Date(fechaVencRaw);
       if (isNaN(fechaVenc.getTime())) continue;
 
-      // Cálculo de días restantes
       const diffDias = Math.ceil((fechaVenc - hoy) / (1000 * 60 * 60 * 24));
-
-      // Formatear fecha para mostrar en la tabla (dd/mm/yyyy)
       const fechaFormateada = Utilities.formatDate(fechaVenc, "GMT-5", "dd/MM/yyyy");
 
-      // CASO 1: YA VENCIDO (Rojo)
       if (diffDias <= 0) {
         alertas.push({
           producto: _str(fila[COL_PRODUCTO]),
-          trabajador: _str(fila[COL_NOMBRES]), // Útil para la vista de Admin
+          trabajador: _str(fila[COL_NOMBRES]),
           fecha: fechaFormateada,
           estado: "VENCIDO",
-          clase: "fila-vencida", // Clase CSS para la fila
-          badge: "bg-rojo"       // Clase CSS para el circulito/etiqueta
+          clase: "fila-vencida",
+          badge: "bg-rojo"
         });
-      } 
-      // CASO 2: POR VENCER (Naranja - 15 días de anticipación)
+      }
       else if (diffDias <= 15) {
         alertas.push({
           producto: _str(fila[COL_PRODUCTO]),
@@ -68,7 +85,6 @@ function obtenerAlertasVencimientos(dniLogin) {
       }
     }
 
-    // Ordenar: Primero los vencidos (Rojo) y luego los próximos (Naranja)
     return alertas.sort((a, b) => (a.badge === 'bg-rojo' ? -1 : 1)).slice(0, 15);
 
   } catch (e) {
