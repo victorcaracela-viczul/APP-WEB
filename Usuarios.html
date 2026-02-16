@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      #formulario3 input, select { width: 100%; margin-bottom: 10px; padding: 5px; }
+      .email-cell {
+        max-width: 110px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="d-flex align-items-center mt-3">
+  <div class="bg-purple rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: #6610f2;">
+    <i class="fas fa-users text-white" ></i>
+  </div>
+  <div>
+    <h5 class="mb-0" style="color: #6f42c1;">Usuarios</h5>
+    <small class="text-muted">Listas de usuarios</small>
+  </div>
+</div>
+
+    <div class="container-fluid my-1 px-0">
+<!-- ✅ Encabezado de acciones y buscador -->
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+
+  <!-- 🔹 Grupo izquierdo: Acciones -->
+  <div class="d-flex align-items-center gap-1">
+    <button onclick="abrirFormulario3()" class="btn btn-secondary btn-sm">
+      <i class="fa-solid fa-user-plus"></i> Nuevo usuario
+    </button>
+
+    <button class="btn btn-warning btn-sm" id="btn4" onclick="window.print()" style="font-size:15px;">
+      <i class="fa-solid fa-print"></i>
+    </button>
+
+    <input type="color" id="colorBorde" class="form-control form-control-color form-control-sm" value="#808080" title="Elige un color" style="width: 60px;">
+
+    <button id="guardarColor" class="btn btn-secondary btn-sm">
+      <i class="fa-solid fa-floppy-disk"></i>
+    </button>
+  </div>
+
+  <!-- 🔹 Grupo derecho: Buscador -->
+  <div class="d-flex align-items-center gap-2">
+    <input type="text" id="buscador3" class="form-control" placeholder="Buscar..." style="max-width: 250px; height:30px;">
+    <button id="btnBuscarUsuarios" class="btn btn-info btn-sm">
+      </i> Buscar
+    </button>
+  </div>
+
+</div>
+
+
+  <div id="loadingUsuarios" class="text-center my-4" style="display: none;">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Cargando...</span>
+  </div>
+  <p class="mt-2">Preparando información...</p>
+</div>
+
+  <div class="table-responsive print-container mt-2">
+    <table class="table table-bordered table-hover">
+      <thead><tr id="encabezados3"></tr></thead>
+      <tbody id="cuerpo3"></tbody>
+    </table>
+  </div>
+  <div class="text-start my-3">
+  <button id="btnVerMasUsuarios" class="btn btn-outline-secondary shadow-sm" onclick="verMasUsuarios()" style="display: none;"><i class="fa-solid fa-arrow-down"></i>Ver más</button>
+</div>
+</div>
+
+   <dialog id="modal3" class="border-0 rounded-3 shadow p-2" style="width: 90%; max-width: 500px;">
+  <div class="modal-content border-0">
+    <div class="modal-header py-2">
+      <h5 class="modal-title w-100 text-center" id="modal-titulo3">Editar Usuario</h5>
+      <button type="button" class="btn-close" aria-label="Cerrar" onclick="cerrarModal3()"></button>
+    </div>
+    <div class="modal-body">
+      <form id="formulario3" method="dialog">
+        <!-- Inputs generados dinámicamente -->
+      </form>
+      <div id="mensaje-error3" class="text-danger mt-2" style="display:none;"></div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-guardar3" type="button" onclick="guardarCambios3()" class="btn btn-primary">Guardar</button>
+      <button type="button" onclick="cerrarModal3()" class="btn btn-secondary">Cancelar</button>
+    </div>
+  </div>
+</dialog>
+
+    <script>
+      let listas = { cargos: [], empresas: [], accesos: [] }; //SE PUEDE ELIMINAR
+
+      let headers3 = [], datos = [], totalUsuarios = 0;
+      let offsetUsuarios = 0;
+      const limitUsuarios = 40;
+      let filtroActivoUsuarios = "";
+
+      document.getElementById("btnBuscarUsuarios").addEventListener("click", () => {
+        offsetUsuarios = 0;
+        filtroActivoUsuarios = document.getElementById("buscador3").value.toLowerCase();
+        datos = []; // Reiniciar datos acumulados
+        cargarDatos3();
+      });
+
+      function verMasUsuarios() {
+        offsetUsuarios += limitUsuarios;
+        cargarDatos3();
+      }
+
+document.addEventListener("DOMContentLoaded", () => {
+  cargarDatos3();
+
+  google.script.run.withSuccessHandler(function (res) {
+    listas = res;
+  }).getTodasLasListas();
+
+  document.getElementById("buscador3").addEventListener("input", function () {
+    const txt = this.value.toLowerCase();
+    const filtrado = datos.filter(fila =>
+      fila.some(celda => String(celda).toLowerCase().includes(txt))
+    );
+    mostrarFilas3(filtrado);
+  });
+
+  google.script.run.withSuccessHandler(function (color) {
+    if (color) {
+      document.getElementById('img').style.borderColor = color;
+      document.getElementById('colorBorde').value = color;
+      document.getElementById('guardarColor').style.backgroundColor = color;
+      document.getElementById('guardarColor').style.borderColor = color;
+      document.getElementById('fotoPerfil').style.borderColor = color;
+      document.getElementById('iconoEmpresa').style.color = color;
+    }
+  }).getColor();
+});
+
+
+function cargarDatos3() {
+  document.getElementById("loadingUsuarios").style.display = "block";
+  const btnVerMasUsuarios = document.getElementById("btnVerMasUsuarios");
+  btnVerMasUsuarios.disabled = true;
+  google.script.run.withSuccessHandler(function (res) {
+    if (offsetUsuarios === 0) {
+      headers3 = res.headers3;
+      datos = res.filas; // Primera carga
+      document.getElementById("encabezados3").innerHTML = headers3.map(h => `<th>${h}</th>`).join('') + "<th>Acción</th>";
+    } else {
+      datos = datos.concat(res.filas); // Concatenar con los anteriores
+    }
+
+    totalUsuarios = res.total;
+    mostrarFilas3(datos);
+    document.getElementById("loadingUsuarios").style.display = "none";
+    btnVerMasUsuarios.disabled = false;
+  }).obtenerUsuariosPaginado(offsetUsuarios, limitUsuarios, filtroActivoUsuarios); // <-- Aquí está la clave
+}
+
+
+function mostrarFilas3(data) {
+  const tbody = document.getElementById("cuerpo3");
+  tbody.innerHTML = "";
+
+  data.forEach((fila, i) => {
+    const tr = document.createElement("tr");
+    fila.forEach((celda, j) => {
+      const td = document.createElement("td");
+
+      // --- IMAGEN ---
+      if (headers3[j] === "IMAGEN" && celda) {
+        td.innerHTML = `<img src="${celda}" style="max-width:50px; max-height:50px;">`;
+
+      // --- EMAIL (formateado) ---
+      } else if (headers3[j] === "EMAIL") {
+        const email = celda || "";
+        let visible = email;
+
+        const atIndex = email.indexOf("@");
+        if (atIndex > 3) {
+          const inicio = email.substring(0, 3); // primeras 3 letras
+          const dominio = email.substring(atIndex); // @gmail.com
+          visible = `${inicio}...${dominio}`;
+        }
+
+        td.textContent = visible;
+        td.classList.add("email-cell");
+        td.title = email; // Tooltip
+
+      // --- AUTORIZADO? ---
+      } else if (headers3[j] === "AUTORIZADO?") {
+        td.textContent = celda;
+        td.style.fontWeight = "bold";
+        td.style.backgroundColor = celda === "SI" ? "#d4edda" : "#f8d7da";
+        td.style.color = celda === "SI" ? "#155724" : "#721c24";
+
+      // --- RESTO ---
+      } else {
+        td.textContent = celda;
+      }
+
+      tr.appendChild(td);
+    });
+
+    // --- ACCIONES ---
+    const tdAcc = document.createElement("td");
+    tdAcc.innerHTML = `
+      <button onclick="abrirFormulario3('${fila[1]}')" class="btn btn-info btn-sm">
+        <i class="fa-solid fa-pen"></i>
+      </button>
+      <button onclick="eliminarRegistro3('${fila[1]}', '${fila[2]}')" class="btn btn-danger btn-sm">
+        <i class="fa-solid fa-trash"></i>
+      </button>`;
+    tr.appendChild(tdAcc);
+
+    tbody.appendChild(tr);
+  });
+
+  // Mostrar/ocultar botón “Ver más”
+  const btn = document.getElementById("btnVerMasUsuarios");
+  if (datos.length < totalUsuarios) {
+    btn.style.display = "block";
+  } else {
+    btn.style.display = "none";
+  }
+}
+
+       function abrirFormulario3(nombreUsuario) {
+          const modal3 = document.getElementById("modal3");
+          const form = document.getElementById("formulario3");
+
+          // Buscar el índice real en `datos` por el nombre
+          const index = datos.findIndex(fila => fila[1] == nombreUsuario); // columna 2 = índice 1
+          const isNuevo = index === -1;
+          const valores = isNuevo ? Array(headers3.length).fill("") : datos[index];
+
+          form.innerHTML = "";
+
+          const linkIndex = headers3.indexOf("IMAGEN");
+          const linkVal = valores[linkIndex] || "";
+          form.innerHTML += `
+            <div class="text-center mb-3">
+              <img id="preview-img" src="${linkVal}" alt="Imagen" class="img-thumbnail" style="max-width:150px; max-height:150px; border-radius:10px;">
+            </div>
+          `;
+
+          document.getElementById("modal-titulo3").textContent = isNuevo ? "Nuevo Usuario" : "Editar Usuario";
+
+          let accesosHTML = "";
+
+          headers3.forEach((h, i) => {
+            let val = valores[i] || "";
+            let inputHTML = `<div class="mb-3"><label class="form-label">${h}</label>`;
+              // Si es campo ID (primera columna)
+          if (i === 0) {
+            if (!isNuevo) {
+              inputHTML += `<input type="text" name="${h}" class="form-control" value="${val}" readonly>`;
+            } else {
+              inputHTML += `<input type="text" name="${h}" class="form-control" value="" readonly placeholder="Se generará automáticamente">`;
+            }
+            inputHTML += `</div>`;
+            form.innerHTML += inputHTML;
+            return;
+          }
+
+            if (h === "CARGO") {
+              inputHTML += `<select name="${h}" class="form-select">` +
+                listas.cargos.map(op => `<option value="${op}" ${val === op ? "selected" : ""}>${op}</option>`).join('') +
+                `</select>`;
+            } else if (h === "EMPRESA") {
+              inputHTML += `<select name="${h}" class="form-select">` +
+                listas.empresas.map(op => `<option value="${op}" ${val === op ? "selected" : ""}>${op}</option>`).join('') +
+                `</select>`;
+            } else if (h === "AUTORIZADO?") {
+              inputHTML += `
+                <select name="${h}" class="form-select">
+                  <option value="SI" ${val === "SI" ? "selected" : ""}>SI</option>
+                  <option value="NO" ${val === "NO" ? "selected" : ""}>NO</option>
+                </select>
+              `;
+            } else if (h === "ACCESOS") {
+              accesosHTML = `
+                <div class="mb-3">
+                  <label class="form-label d-block">${h}</label>
+                  ${listas.accesos.map(op => {
+                    const checked = val.includes(op) ? "checked" : "";
+                    return `
+                      <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" style="max-width:40px;" name="Accesos" value="${op}" id="acceso-${op}" ${checked}>
+                        <label class="form-check-label ms-2" for="acceso-${op}">${op}</label>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              `;
+              return;
+            } else if (h === "IMAGEN") {
+              inputHTML += `
+                <input type="text" name="${h}" class="form-control" value="${val}" 
+                  oninput="document.getElementById('preview-img').src = this.value">
+              `;
+            } else {
+              if (i === 0 && isNuevo) {
+                inputHTML += `<input type="text" name="${h}" class="form-control" value="${val}" readonly>`;
+                inputHTML += `</div>`;
+                form.innerHTML += inputHTML;
+                return;
+              }
+
+              const oninput = (i === 1) ? `oninput="autocompletarDatosPorNumero(this.value)"` : "";
+              inputHTML += 
+                `<input type="text" name="${h}" class="form-control" value="${val}" ${i === 0 && !isNuevo ? "readonly" : ""} ${oninput}>`;
+            }
+
+            inputHTML += `</div>`;
+            form.innerHTML += inputHTML;
+          });
+
+          form.innerHTML += accesosHTML;
+          form.dataset.index = isNuevo ? "null" : index;
+          modal3.showModal();
+        }
+
+
+      function cerrarModal3() {
+        document.getElementById("modal3").close();
+      }
+
+      function guardarCambios3() {
+        const btnGuardar = document.getElementById("btn-guardar3");
+        const form = document.getElementById("formulario3");
+        const inputs = Array.from(form.elements);
+        const index = form.dataset.index;
+
+        // Limpiar mensaje de error al inicio
+        const mensajeError = document.getElementById("mensaje-error3");
+        mensajeError.style.display = "none";
+        mensajeError.textContent = "";
+
+        btnGuardar.textContent = "Guardando...";
+        btnGuardar.disabled = true;
+
+        const valores = headers3.map(h => {
+          if (h === "ACCESOS") {
+            return inputs
+              .filter(el => el.name === "Accesos" && el.checked)
+              .map(el => el.value)
+              .join(", ");
+          }
+          const campo = inputs.find(el => el.name === h);
+          return campo ? campo.value.trim() : "";
+        });
+
+        if (index === "null") {
+        valores[0] = "";
+      }
+        // Validar campos vacíos
+        if (valores.slice(1).some(v => !v)) {
+          mensajeError.textContent = "Todos los campos son obligatorios.";
+          mensajeError.style.display = "block";
+          btnGuardar.textContent = "Guardar";
+          btnGuardar.disabled = false;
+          return;
+        }
+
+        // Validar que no se repita el Usuario (columna B = índice 1)
+        if (index === "null") {
+          const usuarioNuevo = valores[1].toLowerCase().trim();
+
+          const yaExiste = datos.some(fila => String(fila[1]).toLowerCase().trim() === usuarioNuevo);
+
+          if (yaExiste) {
+            mensajeError.textContent = "Este usuario ya existe.";
+            mensajeError.style.display = "block";
+            btnGuardar.textContent = "Guardar";
+            btnGuardar.disabled = false;
+            return;
+          }
+        }
+
+  // Callback luego de guardar
+  const callback = () => {
+    cerrarModal3();
+    Swal.fire({
+      icon: 'success',
+      title: 'Registro guardado correctamente',
+      timer: 1500,
+      showConfirmButton: false
+    });
+    cargarDatos3();
+    btnGuardar.textContent = "Guardar";
+    btnGuardar.disabled = false;
+  };
+
+  // Guardar nuevo o actualizar
+  if (index === "null") {
+    google.script.run.withSuccessHandler(callback).agregarUsuario(valores);
+  } else {
+    google.script.run.withSuccessHandler(callback).actualizarUsuario(valores);
+  }
+}
+
+
+function eliminarRegistro3(usuario, nombre) {
+  if (!usuario) return;
+
+  Swal.fire({
+    title: '¿Eliminar?',
+    text: `¿Deseas eliminar a "${nombre}"?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      google.script.run.withSuccessHandler(() => {
+        cargarDatos3();
+        Swal.fire('Eliminado', 'El usuario fue eliminado.', 'success');
+      }).eliminarUsuarioPorUsuario(usuario); // Debes tener esta función en Apps Script
+    }
+  });
+}
+
+      function autocompletarDatosPorNumero(valor) {
+      if (!valor.trim()) return;
+
+      google.script.run.withSuccessHandler(function (res) {
+        if (!res) return;
+
+        const form = document.getElementById("formulario3");
+        const textoInput = form.querySelector('[name="NOMBRES"]');
+        const select1 = form.querySelector('[name="CARGO"]');
+        const select2 = form.querySelector('[name="EMPRESA"]');
+        const emailInput = form.querySelector('[name="EMAIL"]');
+
+        if (textoInput) textoInput.value = res.texto || '';
+        if (select1) select1.value = res.select1 || '';
+        if (select2) select2.value = res.select2 || '';
+        if (emailInput) emailInput.value = res.emailInput || ''; // Aquí va el valor de la columna Q
+
+      }).buscarDatosPorNumero(valor);
+    }
+
+    </script>
+    <script>
+
+      document.getElementById('colorBorde').addEventListener('input', function () {
+        const color = this.value;
+        document.getElementById('img').style.borderColor = color;
+        document.getElementById('guardarColor').style.backgroundColor = color;
+        document.getElementById('guardarColor').style.borderColor = color;
+        document.getElementById('fotoPerfil').style.borderColor = color; // NUEVO
+      });
+
+      document.getElementById('guardarColor').addEventListener('click', function () {
+        const color = document.getElementById('colorBorde').value;
+        google.script.run.saveColor(color);
+        Swal.fire({
+          icon: 'success',
+          title: 'Color actualizado correctamente',
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      });
+
+    </script>
+
+  </body>
+</html>

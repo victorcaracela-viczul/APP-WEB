@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HCCB</title>
+  <style>
+    .obs-card-sub {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      margin: 8px 0;
+      background: #fafafa;
+    }
+    .obs-card-sub.pendiente { border-left: 4px solid #ff9800; }
+    .obs-card-sub.subsanada { border-left: 4px solid #28a745; }
+    .obs-section-title {
+      background-color: #2c5aa0;
+      color: #fff;
+      font-weight: bold;
+      padding: 4px 10px;
+      border-radius: 4px 4px 0 0;
+      font-size: 0.85em;
+      margin: 0 -10px;
+      margin-top: -10px;
+      margin-bottom: 6px;
+    }
+    .obs-item-no {
+      font-size: 0.82em;
+      color: #dc3545;
+      padding: 1px 0;
+    }
+    .obs-comment-sub {
+      font-size: 0.82em;
+      color: #555;
+      margin: 4px 0;
+      padding: 3px 6px;
+      background: #fff8e1;
+      border-radius: 3px;
+    }
+    .obs-photos-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin: 6px 0;
+    }
+    .obs-photo-box {
+      width: 64px;
+      height: 64px;
+      background-size: cover;
+      background-position: center;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+    }
+    .obs-photo-label {
+      font-size: 0.72em;
+      color: #888;
+      margin-bottom: 2px;
+    }
+    .sub-cam-label {
+      cursor: pointer;
+      font-size: 0.85em;
+      color: #2c5aa0;
+    }
+    .sub-cam-label:hover { color: #ff9800; }
+    .sub-thumb-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+    .sub-thumb-wrapper > div {
+      width: 48px;
+      height: 48px;
+      background-size: cover;
+      background-position: center;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    .sub-thumb-remove {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #e53935;
+      color: white;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      font-size: 10px;
+      line-height: 16px;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+    }
+    .sub-thumb-label {
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      background: #28a745;
+      color: #fff;
+      border-radius: 50%;
+      width: 15px;
+      height: 15px;
+      font-size: 8px;
+      line-height: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+    .header-compact label {
+      font-size: 0.78em;
+      color: #888;
+      margin-bottom: 0;
+    }
+    .header-compact .form-control {
+      font-size: 0.88em;
+      padding: 3px 8px;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container text-center mt-5" id="ploading">
+    <div class="h3">Cargando...</div>
+  </div>
+
+  <div class="container print-container" id="pForm" style="background-color: #fcfcfc;">
+    <div>
+
+      <!-- ✅ ENCABEZADO -->
+      <div class="d-flex align-items-center mb-2 mt-2">
+        <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center me-2" style="width:34px; height:34px;">
+          <i class="fa-solid fa-screwdriver-wrench text-white" style="font-size:14px;"></i>
+        </div>
+        <div>
+          <h6 class="mb-0" style="color:#2c5aa0;">Subsanación de Observaciones</h6>
+        </div>
+      </div>
+
+      <!-- ✅ DATOS GENERALES (readonly compacto) -->
+      <div class="row header-compact">
+        <div class="col-6 mb-1">
+          <label class="form-label">Id CheckList</label>
+          <input type="text" class="form-control" id="numid" readonly>
+        </div>
+        <div class="col-6 mb-1">
+          <label class="form-label">Empresa</label>
+          <input type="text" class="form-control" id="empresacheck" readonly>
+        </div>
+        <div class="col-6 mb-1">
+          <label class="form-label">Equipo</label>
+          <input type="text" class="form-control" id="name" readonly>
+        </div>
+        <div class="col-6 mb-1">
+          <label class="form-label">ID/Código</label>
+          <input type="text" class="form-control" id="codigo" readonly>
+        </div>
+        <div class="col-6 mb-1">
+          <label class="form-label">Área</label>
+          <input type="text" class="form-control" id="inps" readonly>
+        </div>
+        <div class="col-6 mb-1">
+          <label class="form-label">Proceso</label>
+          <input type="text" class="form-control" id="procesoCheck" readonly>
+        </div>
+        <div class="col-6 mb-1">
+          <label class="form-label">Inspector</label>
+          <input type="text" class="form-control" id="no" readonly>
+        </div>
+        <div class="col-6 mb-1">
+          <label class="form-label">Lugar</label>
+          <input type="text" class="form-control" id="lugarCheck" readonly>
+        </div>
+        <div class="col-6 mb-1">
+          <label class="form-label">Fecha</label>
+          <input type="text" class="form-control" id="idline" readonly>
+        </div>
+        <div class="col-6 mb-1">
+          <label class="form-label">Frecuencia</label>
+          <input type="text" class="form-control" id="plazoCheck" readonly>
+        </div>
+      </div>
+
+      <!-- ✅ CUMPLIMIENTO (readonly) -->
+      <div class="mt-2 mb-1">
+        <label class="form-label" style="font-size:0.85em;"><b>Cumplimiento</b></label>
+        <input type="text" class="form-control visually-hidden" id="check" readonly>
+        <div>
+          <i class="fa-solid fa-check text-success" style="font-size: 22px;"></i> <span id="count-si">0</span>&nbsp; 
+          <i class="fa-solid fa-xmark text-danger" style="font-size: 22px;"></i> <span id="count-no">0</span> &nbsp;
+          <i class="fa-regular fa-circle text-primary" style="font-size: 18px;"></i> <span id="count-otros">0</span>
+        </div> 
+      </div>
+
+      <!-- ✅ ESTADO AUTOMÁTICO + CONTADOR -->
+      <div class="d-flex justify-content-between align-items-center mb-2 p-2" style="background:#f0f4f8; border-radius:6px;">
+        <div>
+          <span style="font-size:0.82em; color:#555;">Estado:</span>
+          <span id="estadoAutoCheck" style="font-weight:bold;"></span>
+        </div>
+        <div>
+          <span style="font-size:0.82em; color:#555;">Subsanadas:</span>
+          <span id="contadorSubsanacion" style="font-weight:bold;">0 de 0</span>
+        </div>
+      </div>
+
+      <!-- ✅ ITEMS OBSERVADOS (unificado: título + ítems No + comentario + fotos + subsanación) -->
+      <div class="mb-2">
+        <div class="d-flex align-items-center mb-1">
+          <i class="fa-solid fa-clipboard-list me-1" style="color:#ff9800;"></i>
+          <b style="font-size:0.9em; color:#333;">Items observados</b>
+        </div>
+        <div id="items-observados-container"></div>
+      </div>
+
+      <!-- ✅ PLAN DE ACCIÓN (readonly) -->
+      <div class="mb-1">
+        <label class="form-label" style="font-size:0.85em;"><b>Plan de acción</b></label>
+        <textarea class="form-control" id="accion" readonly style="font-size:0.88em; height:50px;"></textarea>
+      </div>
+
+      <!-- ✅ IMAGEN GENERAL (referencia) -->
+      <div class="mb-1">
+        <label class="form-label" style="font-size:0.85em;"><b>Imagen de referencia</b></label>
+        <input type="text" class="form-control visually-hidden" id="imagen" readonly>
+        <div class="text-center">
+          <img id="imagen-preview" src="" alt="Imagen" style="max-width: 100%; max-height: 120px; display: none; border-radius:6px; cursor:pointer;" onclick="showImageCheckList(this.src)">
+        </div>
+      </div>
+
+      <!-- ✅ BOTONES -->
+      <div class="text-center mt-3 mb-3">
+        <button type="button" class="btn btn-primary" id="btnGuardarSub" onclick="guardarSubsanacion()">
+          <i class="fa-solid fa-cloud-arrow-up me-1"></i>Guardar
+        </button>
+        <button class="btn btn-warning" id="imprimir" onclick="window.print()" style="font-size:15px;">🖨️</button>
+        <button class="btn btn-success" id="btnWhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
+        <button class="btn btn-danger" id="exportPdf" onclick="exportToPDF()">PDF</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+  // =============================================
+  // VARIABLES GLOBALES
+  // =============================================
+  var subsanacionPhotos = {};
+  let dataSet;
+  let itemsData = [];
+
+  // =============================================
+  // INIT
+  // =============================================
+  document.addEventListener('DOMContentLoaded', () => {
+    google.script.run.withSuccessHandler(data => {
+      dataSet = data;
+      document.getElementById('pForm').style.display = "block";
+      document.getElementById('ploading').style.display = "none";
+    }).getData2();
+    
+    google.script.run.withSuccessHandler(data => {
+      itemsData = data;
+    }).getItemsData();
+  });
+
+  // =============================================
+  // CUMPLIMIENTO (solo contadores, sin renderizar lista)
+  // =============================================
+  function updateComplianceCounts(equipo, compliance) {
+    const compList = compliance.split(',').map(c => c.trim());
+    const items = itemsData.filter(r => r[1] === equipo);
+
+    let siCount = 0, noCount = 0, otrosCount = 0;
+
+    compList.forEach((valor, i) => {
+      const item = items[i] ? items[i][2] : null;
+      if (!item) return;
+      const esTitulo = /^\d+\./.test(item.trim()) && valor === 'NA';
+      if (esTitulo) return;
+
+      if (valor === 'Si') siCount++;
+      else if (valor === 'No') noCount++;
+      else otrosCount++;
+    });
+
+    document.getElementById('count-si').innerText = siCount;
+    document.getElementById('count-no').innerText = noCount;
+    document.getElementById('count-otros').innerText = otrosCount;
+  }
+
+  // =============================================
+  // POBLAR ITEMS OBSERVADOS (unificado)
+  // Título azul → ítems "No" → comentario → fotos → upload
+  // =============================================
+  function populateSubsanacion(fila, equipo) {
+    const container = document.getElementById('items-observados-container');
+    if (!container) return;
+
+    const compList = fila[14].split(',').map(c => c.trim());
+    const items = itemsData.filter(r => r[1] === equipo);
+
+    // ── Paso 1: Agrupar ítems por sección ──
+    let sections = [];
+    let currentSection = null;
+    let itemCounter = 0;
+
+    compList.forEach((valor, i) => {
+      const itemText = items[i] ? String(items[i][2]).trim() : '';
+      const esTitulo = /^\d+\./.test(itemText) && valor === 'NA';
+
+      if (esTitulo) {
+        if (currentSection) sections.push({ ...currentSection });
+        currentSection = {
+          title: itemText,
+          index: sections.length,
+          noItems: []
+        };
+      } else {
+        itemCounter++;
+        if (valor === 'No' && currentSection) {
+          currentSection.noItems.push({ num: itemCounter, text: itemText });
+        }
+      }
+    });
+    if (currentSection) sections.push({ ...currentSection });
+
+    // ── Paso 2: Generar HTML solo para secciones con observación ──
+    let html = '';
+    let totalObs = 0;
+    let totalSubsanadas = 0;
+    subsanacionPhotos = {};
+
+    sections.forEach((sec, sIdx) => {
+      const fotoIdx = 68 + sIdx * 3;
+      const subIdx = 69 + sIdx * 3;
+      const comIdx = 70 + sIdx * 3;
+
+      const foto = (fila[fotoIdx] || '').trim();
+      const subsanacion = (fila[subIdx] || '').trim();
+      const comentario = (fila[comIdx] || '').trim();
+
+      // Solo mostrar secciones que tienen observación
+      if (!foto && !comentario) return;
+
+      totalObs++;
+      if (subsanacion) totalSubsanadas++;
+
+      const esSubsanada = subsanacion !== '';
+
+      html += `
+      <div class="obs-card-sub ${esSubsanada ? 'subsanada' : 'pendiente'}">
+        <div class="obs-section-title">
+          <i class="fa-solid fa-list-check me-1"></i>${sec.title}
+          ${esSubsanada 
+            ? '<span class="badge bg-success ms-2" style="font-size:0.7em;">✓ Subsanada</span>' 
+            : '<span class="badge bg-warning text-dark ms-2" style="font-size:0.7em;">Pendiente</span>'}
+        </div>`;
+
+      // ✅ Per-item: texto + cámara individual + thumbnails
+      if (sec.noItems.length > 0) {
+        sec.noItems.forEach(item => {
+          var shortText = item.text.length > 28 ? item.text.substring(0, 28) + '…' : item.text;
+          var key = sIdx + '-' + item.num;
+          html += `<div style="display:flex; align-items:center; gap:4px; margin:2px 0;">
+            <span style="font-size:0.78em; color:#dc3545; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">❌ <b>${item.num}.</b> ${shortText}</span>
+            <label for="sub-photo-${key}" class="sub-cam-label" style="flex-shrink:0;"><i class="fa-solid fa-camera"></i></label>
+            <input type="file" id="sub-photo-${key}" accept="image/*" capture="environment" style="display:none;" onchange="addSubsanacionPhoto(${sIdx},${item.num},event)">
+          </div>
+          <div id="sub-thumbs-${key}" style="display:flex; gap:4px; flex-wrap:wrap; margin:0 0 3px 0;"></div>`;
+        });
+      }
+
+      // Comentario
+      if (comentario) {
+        html += `<div class="obs-comment-sub"><i class="fa-regular fa-comment me-1"></i>${comentario}</div>`;
+      }
+
+      // Fotos: original + subsanación actual
+      html += `<div class="obs-photos-row">`;
+      if (foto) {
+        html += `
+        <div>
+          <div class="obs-photo-label">Foto original:</div>
+          <div class="obs-photo-box" onclick='showImageCheckList("${foto}")' 
+               style="background-image:url(${foto});" title="Tap para ampliar"></div>
+        </div>`;
+      }
+      if (subsanacion) {
+        html += `
+        <div>
+          <div class="obs-photo-label">Subsanación actual:</div>
+          <div class="obs-photo-box" onclick='showImageCheckList("${subsanacion}")' 
+               style="background-image:url(${subsanacion}); border:2px solid #28a745;" title="Tap para ampliar"></div>
+        </div>`;
+      }
+      html += `</div></div>`;
+    });
+
+    if (totalObs === 0) {
+      html = '<div class="text-muted text-center py-3"><i class="fa-solid fa-check-circle text-success me-2"></i>Sin observaciones registradas</div>';
+    }
+
+    container.innerHTML = html;
+
+    // ── Paso 3: Actualizar estado y contador ──
+    const estadoEl = document.getElementById('estadoAutoCheck');
+    const contadorEl = document.getElementById('contadorSubsanacion');
+
+    if (estadoEl) {
+      let estado = 'Conforme';
+      if (totalObs > 0 && totalSubsanadas === 0) estado = 'Abierto';
+      else if (totalObs > 0 && totalSubsanadas < totalObs) estado = 'En Proceso';
+      else if (totalObs > 0 && totalSubsanadas >= totalObs) estado = 'Cerrado';
+
+      const colores = { 'Conforme': '#ffc107', 'Abierto': '#dc3545', 'En Proceso': '#fd7e14', 'Cerrado': '#28a745' };
+      estadoEl.innerHTML = `<span style="color:${colores[estado]};">${estado}</span>`;
+    }
+
+    if (contadorEl) {
+      contadorEl.textContent = `${totalSubsanadas} de ${totalObs}`;
+    }
+  }
+
+  // =============================================
+  // FOTOS SUBSANACIÓN: Agregar con ITEM + timestamp
+  // =============================================
+  function addSubsanacionPhoto(sectionIdx, itemNum, event) {
+    var file = event.target.files[0];
+    if (!file) return;
+    var key = sectionIdx + '-' + itemNum;
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        var canvas = document.createElement('canvas');
+        var maxW = 800;
+        var scale = img.width > maxW ? maxW / img.width : 1;
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        var now = new Date();
+        var stamp = String(now.getDate()).padStart(2, '0') + '/' +
+                    String(now.getMonth() + 1).padStart(2, '0') + '/' +
+                    now.getFullYear() + '  ' +
+                    String(now.getHours()).padStart(2, '0') + ':' +
+                    String(now.getMinutes()).padStart(2, '0') + ':' +
+                    String(now.getSeconds()).padStart(2, '0');
+
+        var fontSize = Math.max(14, Math.floor(canvas.width * 0.035));
+        ctx.font = 'bold ' + fontSize + 'px Arial';
+
+        // ✅ ITEM label + ✓ esquina superior izquierda
+        var itemLabel = 'ITEM ' + itemNum + ' ✓';
+        var labelW = ctx.measureText(itemLabel).width;
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(4, 4, labelW + 14, fontSize + 10);
+        ctx.fillStyle = '#00FF7F';
+        ctx.fillText(itemLabel, 11, fontSize + 7);
+
+        // ✅ Fecha/hora esquina inferior derecha
+        var textW = ctx.measureText(stamp).width;
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(canvas.width - textW - 18, canvas.height - fontSize - 14, textW + 14, fontSize + 10);
+        ctx.fillStyle = '#FFD700';
+        ctx.fillText(stamp, canvas.width - textW - 11, canvas.height - 11);
+
+        var stampedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+
+        if (!subsanacionPhotos[key]) subsanacionPhotos[key] = [];
+        subsanacionPhotos[key].push(stampedBase64);
+        renderSubsanacionThumbs(sectionIdx, itemNum);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  }
+
+  // =============================================
+  // FOTOS SUBSANACIÓN: Eliminar
+  // =============================================
+  function removeSubsanacionPhoto(sectionIdx, itemNum, photoIdx) {
+    var key = sectionIdx + '-' + itemNum;
+    if (subsanacionPhotos[key]) {
+      subsanacionPhotos[key].splice(photoIdx, 1);
+      renderSubsanacionThumbs(sectionIdx, itemNum);
+    }
+  }
+
+  // =============================================
+  // FOTOS SUBSANACIÓN: Renderizar thumbnails por ítem
+  // =============================================
+  function renderSubsanacionThumbs(sectionIdx, itemNum) {
+    var key = sectionIdx + '-' + itemNum;
+    var container = document.getElementById('sub-thumbs-' + key);
+    if (!container) return;
+    container.innerHTML = '';
+    var photos = subsanacionPhotos[key] || [];
+    photos.forEach(function(b64, idx) {
+      var div = document.createElement('div');
+      div.className = 'sub-thumb-wrapper';
+      div.innerHTML = '<div style="background-image:url(' + b64 + ');"></div>' +
+        '<span class="sub-thumb-label">' + itemNum + '</span>' +
+        '<button class="sub-thumb-remove" onclick="removeSubsanacionPhoto(' + sectionIdx + ',' + itemNum + ',' + idx + ')">✕</button>';
+      container.appendChild(div);
+    });
+  }
+
+  // =============================================
+  // FOTOS SUBSANACIÓN: Collage canvas (array de b64)
+  // =============================================
+  function buildSubsanacionCollage(photosArray) {
+    return new Promise(function(resolve) {
+      if (photosArray.length === 0) { resolve(''); return; }
+      if (photosArray.length === 1) { resolve(photosArray[0]); return; }
+
+      var images = [];
+      var loaded = 0;
+      photosArray.forEach(function(b64, i) {
+        var img = new Image();
+        img.onload = function() {
+          images[i] = img;
+          loaded++;
+          if (loaded === photosArray.length) {
+            var cols = 2;
+            var rows = Math.ceil(photosArray.length / cols);
+            var cellW = 400, cellH = 300;
+            var canvas = document.createElement('canvas');
+            canvas.width = cellW * cols;
+            canvas.height = cellH * rows;
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            images.forEach(function(im, idx) {
+              var col = idx % cols;
+              var row = Math.floor(idx / cols);
+              var x = col * cellW, y = row * cellH;
+              var sc = Math.min(cellW / im.width, cellH / im.height);
+              var w = im.width * sc, h = im.height * sc;
+              ctx.drawImage(im, x + (cellW - w) / 2, y + (cellH - h) / 2, w, h);
+              ctx.strokeStyle = '#ddd';
+              ctx.lineWidth = 2;
+              ctx.strokeRect(x, y, cellW, cellH);
+            });
+            resolve(canvas.toDataURL('image/jpeg', 0.8));
+          }
+        };
+        img.src = b64;
+      });
+    });
+  }
+
+  // =============================================
+  // GUARDAR SUBSANACIÓN
+  // =============================================
+  async function guardarSubsanacion() {
+    const btn = document.getElementById('btnGuardarSub');
+    btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin me-1'></i>Guardando...";
+    btn.disabled = true;
+
+    const checkId = document.getElementById('numid').value;
+
+    if (!checkId) {
+      Swal.fire('Error', 'No se encontró el ID del check', 'error');
+      btn.innerHTML = "<i class='fa-solid fa-cloud-arrow-up me-1'></i>Guardar";
+      btn.disabled = false;
+      return;
+    }
+
+    // Verificar que haya al menos una foto nueva
+    let hayFotosNuevas = Object.keys(subsanacionPhotos).some(k => subsanacionPhotos[k].length > 0);
+
+    if (!hayFotosNuevas) {
+      Swal.fire('Aviso', 'Debes subir al menos una foto de subsanación', 'warning');
+      btn.innerHTML = "<i class='fa-solid fa-cloud-arrow-up me-1'></i>Guardar";
+      btn.disabled = false;
+      return;
+    }
+
+    Swal.fire({
+      title: 'Guardando subsanación...',
+      text: 'Procesando imágenes, por favor espera.',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    let objData = { checkId: checkId };
+
+    // Construir collages por sección (agrupar fotos de todos los ítems)
+    for (let s = 0; s < 10; s++) {
+      var allPhotos = [];
+      for (var key in subsanacionPhotos) {
+        if (key.startsWith(s + '-') && subsanacionPhotos[key].length > 0) {
+          allPhotos = allPhotos.concat(subsanacionPhotos[key]);
+        }
+      }
+      if (allPhotos.length > 0) {
+        var collage = await buildSubsanacionCollage(allPhotos);
+        objData['fotoLevantamiento-' + (s + 1)] = collage;
+      }
+    }
+
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (result.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Subsanación guardada',
+            html: 'Estado: <b>' + result.estado + '</b>',
+            timer: 2500,
+            showConfirmButton: true,
+            confirmButtonText: 'Cerrar'
+          }).then(() => {
+            var modal = document.querySelector('#staticBackdrop');
+            if (modal) {
+              var modalInstance = bootstrap.Modal.getInstance(modal);
+              if (modalInstance) modalInstance.hide();
+            }
+            if (typeof reiniciarTablaCheck === 'function') {
+              reiniciarTablaCheck();
+            }
+          });
+
+          // Actualizar totales
+          let totalCheck1 = document.getElementById('totalCheck1');
+          let totalCheck2 = document.getElementById('totalCheck2');
+          if (totalCheck1 && totalCheck2) {
+            google.script.run.withSuccessHandler(function(data) {
+              totalCheck1.innerHTML = data[0];
+              totalCheck2.innerHTML = data[1];
+            }).setStatusCheck();
+          }
+        } else {
+          Swal.fire('Error', result.error || 'Error al guardar', 'error');
+        }
+        btn.innerHTML = "<i class='fa-solid fa-cloud-arrow-up me-1'></i>Guardar";
+        btn.disabled = false;
+      })
+      .withFailureHandler(function(error) {
+        Swal.fire('Error', error.message || 'Error de conexión', 'error');
+        btn.innerHTML = "<i class='fa-solid fa-cloud-arrow-up me-1'></i>Guardar";
+        btn.disabled = false;
+      })
+      .saveDataCheckSeguimiento(objData);
+  }
+
+  // =============================================
+  // EXPORTAR PDF (sin cambios)
+  // =============================================
+  function exportToPDF() {
+    let numid = document.getElementById('numid').value;
+
+    if (numid === "") {
+      Swal.fire({
+        position: 'center',
+        icon: 'error',
+        title: 'Por favor, ingrese un ID en el campo correspondiente',
+        showConfirmButton: false,
+        timer: 2500
+      });
+      return;
+    }
+
+    Swal.fire({
+      title: 'Generando PDF',
+      text: 'Por favor, espere...',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    google.script.run.withSuccessHandler(function(response) {
+      Swal.close();
+
+      if (response.pdflink) {
+        Swal.fire({
+          position: 'center',
+          icon: 'success',
+          title: 'PDF generado exitosamente',
+          showConfirmButton: true,
+          confirmButtonText: 'Abrir PDF'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.open(response.pdflink, '_blank');
+          }
+        });
+      } else {
+        Swal.fire({
+          position: 'center',
+          icon: 'error',
+          title: 'Error al generar el PDF',
+          showConfirmButton: false,
+          timer: 2500
+        });
+      }
+    }).generarPDF(numid);
+  }
+
+  // =============================================
+  // RESET FORM
+  // =============================================
+  function resetForm() {
+    document.getElementById('numid').value = "";
+    document.getElementById('empresacheck').value = "";
+    document.getElementById('name').value = "";
+    document.getElementById('codigo').value = "";
+    document.getElementById('inps').value = "";
+    document.getElementById('no').value = "";
+    document.getElementById('procesoCheck').value = "";
+    document.getElementById('lugarCheck').value = "";
+    document.getElementById('idline').value = "";
+    document.getElementById('check').value = "";
+    document.getElementById('accion').value = "";
+    document.getElementById('imagen').value = "";
+    document.getElementById('imagen-preview').style.display = 'none';
+    document.getElementById('plazoCheck').value = "";
+    document.getElementById('count-si').innerText = "0";
+    document.getElementById('count-no').innerText = "0";
+    document.getElementById('count-otros').innerText = "0";
+    document.getElementById('items-observados-container').innerHTML = "";
+    document.getElementById('estadoAutoCheck').innerHTML = "";
+    document.getElementById('contadorSubsanacion').textContent = "0 de 0";
+    subsanacionPhotos = {};
+  }
+
+  // =============================================
+  // WHATSAPP (sin cambios)
+  // =============================================
+  function sendWhatsApp(message) {
+    Swal.fire({
+      title: 'Opciones de envío',
+      text: '¿Deseas ingresar un número o enviar a contactos?',
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: 'Ingresar número',
+      denyButtonText: 'Mis contactos'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: 'Número de teléfono',
+          input: 'text',
+          inputLabel: 'Ingrese el N° de teléfono a quien se enviará',
+          inputPlaceholder: 'e.g. 944222222',
+          showCancelButton: true,
+          inputValidator: (value) => {
+            if (!value) {
+              return '¡Debe ingresar un número de teléfono!';
+            }
+          },
+          inputAttributes: {
+            maxlength: 10,
+            autocapitalize: 'off',
+            autocorrect: 'off'
+          },
+          didOpen: () => {
+            const swalModal = document.querySelector('.swal2-modal');
+            if (swalModal) {
+              swalModal.style.zIndex = '1060';
+            }
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            var telefono = "51" + result.value;
+            var url = "https://wa.me/" + telefono + "?text=" + encodeURIComponent(message);
+            window.open(url, '_blank');
+          }
+        });
+      } else if (result.isDenied) {
+        var url = "https://wa.me/?text=" + encodeURIComponent(message);
+        window.open(url, '_blank');
+      }
+    });
+  }
+
+  document.getElementById('btnWhatsApp').addEventListener('click', function() {
+    const modalElement = document.getElementById('staticBackdrop');
+    if (modalElement) {
+      const modalInstance = bootstrap.Modal.getInstance(modalElement);
+      if (modalInstance) modalInstance.hide();
+    }
+
+    const numid = document.getElementById('numid').value;
+    const empresacheck = document.getElementById('empresacheck').value;
+    const name = document.getElementById('name').value;
+    const codigo = document.getElementById('codigo').value;
+    const inps = document.getElementById('inps').value;
+    const no = document.getElementById('no').value;
+    const procesoCheck = document.getElementById('procesoCheck').value;
+    const lugarCheck = document.getElementById('lugarCheck').value;
+    const idline = document.getElementById('idline').value;
+    const countSi = document.getElementById('count-si').innerText;
+    const countNo = document.getElementById('count-no').innerText;
+    const accion = document.getElementById('accion').value;
+    const imagen = document.getElementById('imagen').value;
+    const estado = document.getElementById('estadoAutoCheck').innerText;
+    const plazoCheck = document.getElementById('plazoCheck').value;
+
+    const message = `*---REPORTE DE CHECKLIST---*
+*ID:* ${numid}
+*Empresa:* ${empresacheck}
+*Equipo:* ${name}
+*ID/Código:* ${codigo}
+*Área:* ${inps}
+*Inspector:* ${no}
+*Proceso:* ${procesoCheck}
+*Lugar:* ${lugarCheck}
+*Fecha:* ${idline}
+*Cumplimiento - Sí:* ${countSi}
+*Cumplimiento - No:* ${countNo}
+*Plan de acción:* ${accion}
+*Imagen:* ${imagen}
+*Estado:* ${estado}
+*Frecuencia:* ${plazoCheck}`;
+
+    sendWhatsApp(message);
+  });
+
+  </script>
+</body>
+</html>

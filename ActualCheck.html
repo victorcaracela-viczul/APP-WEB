@@ -1,0 +1,138 @@
+<head>   
+    <base target="_top"> 
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+     
+</head>
+
+  <body id = "bodi">
+  <div class="input-group mb-3">
+  <input type="text" class="form-control" id="kolompencarian" placeholder="Buscar..." >
+  <button id = "btnexport" class="btn btn-success" ><i class="fa-solid fa-download"></i>EXCEL</button>
+    </div>
+ 
+  <div id = "divTabel">
+  <table class="table table-hover" id="Tab">
+  <thead>
+    <tr>
+      <th scope="col">Equipo</th>
+      <th scope="col">ID/Codigo</th>
+      <th scope="col">frecuencia</th>
+      <th scope="col">Faltas</th>
+      <th scope="col">Estado</th>
+          </tr>
+  </thead>
+  <tbody id = "bodiTabel">
+  </tbody >
+  </table>
+
+<template id ="sheetTemplate">
+<tr>
+      <th class="data" scope="row"></th>
+      <td class="nama"></td>
+      <td class="nis"></td>
+      <td class="gender"></td>
+      <td class="estado"></td>
+      
+</tr>
+</template>
+</div>
+     
+</body>
+
+<script>
+var mydata;
+   document.addEventListener("DOMContentLoaded", muatData);
+
+    function muatData(){             
+        google.script.run.withSuccessHandler(function(kembaliData){                
+        mydata = kembaliData.slice();
+        cari();
+        }).muatData();  
+    }
+
+   document.getElementById("kolompencarian").addEventListener("input",cari);
+    function cari(){
+     var kriteriacari = document.getElementById("kolompencarian").value.toString().toLowerCase().trim();         
+     var cariKata = kriteriacari.split(/\s+/);
+
+     var kolomcari = [0,1,2,3,4]; 
+     var cariArray = mydata.filter(function(r){
+
+          return cariKata.every(function(kata){
+          return kolomcari.some(function(colIndex){
+          return  r[colIndex].toString().toLowerCase().indexOf(kata) !== -1;
+          });
+          
+         });
+      });
+       
+     var hasilTabel = document.getElementById("bodiTabel");    
+     var areaTemplate = document.getElementById("sheetTemplate");       
+     var area = areaTemplate.content;           
+     hasilTabel.innerHTML = "";
+     
+      cariArray.forEach(function(r){
+        
+        var tr = area.cloneNode(true);
+        var kolomData = tr.querySelector(".data");
+        var kolomNama = tr.querySelector(".nama");
+        var kolomNis = tr.querySelector(".nis");
+        var kolomGender = tr.querySelector(".gender");
+        var kolomestado = tr.querySelector(".estado");
+                
+         kolomData.textContent = r[0];
+         kolomNama.textContent = r[1];
+         kolomNis.textContent = r[2];
+         kolomGender.textContent = r[3];
+         kolomestado.textContent = r[4];
+                
+         hasilTabel.appendChild(tr);
+
+      });     
+    }
+    
+ $(document).ready(function(){
+   
+   $("#btnexport").click(function(e){
+   e.preventDefault();
+   
+   var DivTabel = document.getElementById('divTabel');
+   var Data = new Blob(['\ufeff' + DivTabel.outerHTML], {type:'application/vnd.ms-excel'});
+   var url = window.URL.createObjectURL(Data);
+   var a = document.createElement('a');
+      
+   a.href = url;
+   a.download = 'Data Filter'
+   a.click();
+    });
+   });
+
+  //Actualización de días
+    document.getElementById("btnActual").addEventListener("click", function() {
+    Swal.fire({
+      title: 'Historial de cumplimiento',
+      input: 'number',
+      inputLabel: 'Ingrese la cantidad de días atras a analizar',
+      inputPlaceholder: 'Ingrese número de días',
+      showCancelButton: true,
+      confirmButtonText: 'Aceptar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const dias = result.value;
+        
+        if (dias !== null && dias !== "") {
+          google.script.run.withSuccessHandler(function() {
+            document.getElementById('ndias').innerText = dias;
+            $('#exampleModalCheck').modal('show');
+            muatData(); // Call the function to load data
+          }).updateCell(dias);
+        } else {
+          Swal.fire('Error', 'Debe ingresar un número de días válido', 'error');
+        }
+      }
+    });
+  });
+   </script>
+

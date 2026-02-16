@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      /* #filtroglobal table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+      #filtroglobal th, td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+        font-size: 14px;
+      }
+      #filtroglobal th {
+        background-color: #f2f2f2;
+      }
+      #filtroglobal tr:nth-child(even) {
+        background-color: #f9f9f9;
+      } */
+
+    /* #filtroglobal  @media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  #filtroglobal .print-container,
+  .print-container * {
+    visibility: visible !important;
+  }
+
+  #filtroglobal.print-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    background: white;
+  }
+
+  /* Ocultar filtros y botones 
+ #filtroglobal  #filtroTexto, #fechaDesde, #fechaHasta,
+  button, .btn, .form-label {
+    display: none !important;
+  }
+} */
+
+      /* input {
+        margin-right: 10px;
+        margin-bottom: 10px;
+        padding: 5px;
+        font-size: 14px;
+      } */
+    </style>
+  </head>
+  <body>
+    <div class="d-flex align-items-center mt-3">
+  <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+    <i class="fas fa-clipboard-check text-white"></i>
+  </div>
+  <div>
+    <h5 class="mb-0 text-success">Cumplimiento</h5>
+    <small class="text-muted">Cursos llevados por trabajador</small>
+  </div>
+</div>
+
+    <!-- Dentro del <body> -->
+     <div id="filtroglobal" class="container-fluid px-0 my-1">
+      <div class="row g-2 align-items-end" id="noimprimir2">
+        <div class="col-md-3">
+          <input type="text" class="form-control" id="filtroTexto" placeholder="Buscar...">
+        </div>
+        <div class="col-md-2">
+          <label for="fechaDesde" class="form-label mb-0">Desde</label>
+          <input type="date" class="form-control" id="fechaDesde">
+        </div>
+        <div class="col-md-2">
+          <label for="fechaHasta" class="form-label mb-0">Hasta</label>
+          <input type="date" class="form-control" id="fechaHasta">
+        </div>
+        <div class="col-md-2">
+          <button id="btnBuscarCapacitaciones" class="btn btn-info w-100" onclick="aplicarFiltrosCumplimineto()">Buscar</button>
+        </div>
+        <div class="col-md-2">
+          <div class="d-flex gap-2">
+            <button class="btn btn-secondary w-100" onclick="limpiarFiltrosCumplimineto()">Limpiar</button>
+            <button class="btn btn-warning" onclick="window.print()">
+              <i class="fa-solid fa-print"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+      <div class="table-responsive print-container">
+        <div id="tabla-container">Debe ingresar por lo menos un rango de fechas</div>
+        </div>
+    </div>
+    <!-- Modal para visualizar cumplimiento -->
+<div id="modalCumplimiento" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+  <div style="background-color:white; padding:20px; max-width:90%; max-height:90%; overflow:auto;">
+    <button onclick="cerrarModalCumplimiento()" class="btn btn-danger btn-sm mb-0">Cerrar</button>
+    <div id="contenidoModalCumplimiento"></div>
+  </div>
+</div>
+
+    <script>
+  let datosOriginalesCumpli = [];
+
+function renderizarTablaCumpli(datos) {
+  if (!datos || datos.length === 0) {
+    document.getElementById("tabla-container").innerHTML = "No hay datos.";
+    return;
+  }
+
+  let html = "<table><thead><tr>";
+  html += "<th>#</th>"; // Columna de numeración
+  datos[0].forEach(titulo => html += `<th>${titulo}</th>`);
+  html += "<th>Acciones</th>"; // Nueva columna para el botón Ver
+  html += "</tr></thead><tbody>";
+
+  for (let i = 1; i < datos.length; i++) {
+    html += `<tr><td>${i}</td>`;
+    for (let j = 0; j < datos[i].length; j++) {
+      const celda = datos[i][j] ?? '';
+      
+      // Suponiendo que la columna 'aprobados/previstos' es la número 8 (índice 7)
+      if (j === 13) {
+        html += `<td style="color:#2980b9;">${celda} <i class="fa-solid fa-chart-simple" style="margin-left:2px; font-size:20px;" title="Detalle cumplimiento"></i></td>`;
+      } else {
+        html += `<td>${celda}</td>`;
+      }
+    }
+
+    const valorColumnaA = datos[i][0]; // Valor de la columna A (índice 0)
+    html += `<td><button class="btn btn-info" onclick="verDetalle('${valorColumnaA}')"><i class="fa-solid fa-eye"></i></button></td>`;
+    html += "</tr>";
+  }
+
+  html += "</tbody></table>";
+  document.getElementById("tabla-container").innerHTML = html;
+}
+
+function verDetalle(valor) {
+  Swal.fire({
+    title: 'Abriendo...',
+    text: 'Cargando información de Cumplimiento',
+    showConfirmButton: false,
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
+
+  google.script.run
+    .withSuccessHandler(previsualizarCumplimiento)
+    .insertarYObtenerDatosCumplimiento(valor);
+}
+
+
+
+function previsualizarCumplimiento(datos) {
+  if (!datos || datos.length === 0 || !datos[0]) {
+    Swal.fire("Sin datos", "No se encontraron datos para mostrar.", "warning");
+    return;
+  }
+
+  let html = `
+    <style>
+      .tabla-cumplimiento table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 11px;
+      }
+      .tabla-cumplimiento th, .tabla-cumplimiento td {
+        border: 1px solid #ddd;
+        padding: 4px;
+        text-align: left;
+      }
+      .tabla-cumplimiento th:nth-child(2), 
+      .tabla-cumplimiento td:nth-child(2) {
+        width: 300%;
+      }
+      .tabla-cumplimiento tr:nth-child(1),
+      .tabla-cumplimiento tr:nth-child(2),
+      .tabla-cumplimiento tr:nth-child(3),
+      .tabla-cumplimiento tr:nth-child(4) {
+        border: none;
+      }
+      .tabla-cumplimiento tr:nth-child(1) td,
+      .tabla-cumplimiento tr:nth-child(2) td,
+      .tabla-cumplimiento tr:nth-child(3) td,
+      .tabla-cumplimiento tr:nth-child(4) td {
+        border: none;
+      }
+      .tabla-cumplimiento tbody tr:nth-child(5) {
+        background-color: #d6dbdf;
+        font-weight: bold;
+        font-size: 10px;
+      }
+    </style>
+    <div class="tabla-cumplimiento">
+      <table><thead>
+  `;
+
+  // Fila 1 personalizada: combinar B1:G1
+  html += "<tr>";
+  html += "<th></th>";
+  html += `<th colspan="6" style="text-align:center;">${datos[0].slice(1, 7).join(' ')}</th>`;
+  html += "<th></th>";
+  html += "</tr>";
+
+  // Fila de encabezados
+  if (datos.length > 1) {
+    html += "<tr>";
+    datos[1].forEach(titulo => html += `<th>${titulo}</th>`);
+    html += "</tr></thead><tbody>";
+  }
+
+  for (let i = 2; i < datos.length; i++) {
+    html += "<tr>";
+    datos[i].forEach(celda => html += `<td>${celda}</td>`);
+    html += "</tr>";
+  }
+
+  html += "</tbody></table></div>";
+   Swal.close();
+  abrirModalCumplimiento(html);
+}
+
+
+
+function abrirModalCumplimiento(html) {
+  document.getElementById("contenidoModalCumplimiento").innerHTML = html;
+  document.getElementById("modalCumplimiento").style.display = "flex";
+}
+
+function cerrarModalCumplimiento() {
+  document.getElementById("modalCumplimiento").style.display = "none";
+}
+
+
+function aplicarFiltrosCumplimineto(start = 0, length = 30) {
+  const btnbuscarCap = document.getElementById('btnBuscarCapacitaciones');
+  btnbuscarCap.innerHTML = "Buscando...";
+  btnbuscarCap.disabled = true;
+
+  const texto = document.getElementById("filtroTexto").value;
+  const desde = document.getElementById("fechaDesde").value;
+  const hasta = document.getElementById("fechaHasta").value;
+
+  Swal.fire({
+    title: 'Buscando...',
+    text: 'Aplicando filtros y buscando registros',
+    showConfirmButton: false,
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
+
+  google.script.run.withSuccessHandler(function(response) {
+    Swal.close();
+    btnbuscarCap.innerHTML = "Buscar";
+    btnbuscarCap.disabled = false;
+
+    // Guardamos datos por si se quiere paginar luego
+    datosOriginalesCumpli = [response.headers, ...response.data];
+
+    renderizarTablaCumpli(datosOriginalesCumpli);
+
+    // Aquí podrías agregar un renderizador de paginación con response.total
+    // renderizarPaginacion(response.total, start, length);
+
+  }).getDatosDesdeBDATOS(start, length, texto, desde, hasta);
+}
+
+
+
+
+function limpiarFiltrosCumplimineto() {
+  document.getElementById("filtroTexto").value = "";
+  document.getElementById("fechaDesde").value = "";
+  document.getElementById("fechaHasta").value = "";
+
+  const encabezado = datosOriginalesCumpli[0];
+  const registros = datosOriginalesCumpli.slice(1); // sin cabecera
+  const ultimos30 = registros.slice(-30); // los últimos 30
+
+  const datosConEncabezado = [encabezado, ...ultimos30]; // unimos cabecera + últimos 30
+  renderizarTablaCumpli(datosConEncabezado);
+}
+
+  
+</script>
+
+  </body>
+</html>

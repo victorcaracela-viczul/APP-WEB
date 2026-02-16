@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <body>
+    <div class="d-flex align-items-center mt-3">
+  <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+    <i class="fas fa-tasks text-white"></i>
+  </div>
+  <div>
+    <h5 class="mb-0 text-success">Verificaciones</h5>
+    <small class="text-muted">OPT, IPERC, Otros</small>
+  </div>
+</div>
+
+<div class="container-fluid my-1 px-0" id="page1_v2">
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3" role="toolbar" aria-label="Botones principales del checklist">
+  
+  <div class="d-flex align-items-center gap-1">
+    <button type="button" class="btn btn-dark position-relative shadow-sm btn-sm rounded-pill"
+            data-bs-toggle="modal" data-bs-target="#exampleModal2_v2" onclick="clearForm_v2()">
+      <i class="fa-solid fa-user-shield"></i> Reportar CheckList
+      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+        <i class="fa fa-bell"></i> <span id="totalCheck2_v2">0</span>/<span id="totalCheck1_v2">0</span>
+      </span>
+    </button>
+
+    <button type="button" class="btn btn-secondary shadow-sm btn-sm rounded-pill" id="btnActual_v2" hidden>
+      <i class="fa-solid fa-clock"></i> Cumplimiento
+    </button>
+  </div>
+
+  <button class="btn btn-outline-success btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosBusquedaCheck_v2" aria-expanded="false" aria-controls="filtrosBusquedaCheck_v2">
+    <i class="fa fa-filter me-1"></i> Filtros
+  </button>
+
+</div>
+
+<div class="collapse" id="filtrosBusquedaCheck_v2">
+  <div class="card shadow-sm border-0 mb-2 p-3">
+    <div class="row row-cols-1 row-cols-md-2 g-2">
+      <div class="col">
+        <input type="text" class="form-control" id="busquedaCheck1_v2" placeholder="Buscar 1...">
+      </div>
+      <div class="col">
+        <select class="form-select" id="columnaFiltroCheck1_v2">
+          <option value="todos">Todas las columnas</option>
+        </select>
+      </div>
+      <div class="col">
+        <input type="text" class="form-control" id="busquedaCheck2_v2" placeholder="Buscar 2...">
+      </div>
+      <div class="col">
+        <select class="form-select" id="columnaFiltroCheck2_v2">
+          <option value="todos">Todas las columnas</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="text-end mt-2">
+      <button id="btnBuscarCheck_v2" class="btn btn-info btn-sm px-3">
+        <i class="fa fa-search me-1"></i>Buscar
+      </button>
+      <button class="btn btn-success btn-sm" onclick="descargarExcelVerificaciones_v2()" title="Descargar Excel">
+    <i class="fa-solid fa-file-excel me-1"></i> Excel
+  </button>
+    </div>
+  </div>
+</div>
+
+  <div id="spinnerCheck_v2" class="text-center my-2" style="display: none;">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-1 small">Estamos organizando los datos para ti...</p>
+  </div>
+
+  <div id="tabla-registro-checklist_v2"></div>
+
+  <div class="text-center my-3">
+    <button id="cargarMasCheck_v2" class="btn btn-outline-secondary shadow-sm">
+      <i class="fa-solid fa-arrow-down"></i> Ver más
+    </button>
+  </div>
+</div>
+
+    <div id="skeleton-loading2_v2" class="d-none">
+      <div class="row g-3 py-2">
+        <div class="col-sm-6 col-md-4 col-lg-3">
+          <div class="skeleton-card"></div>
+        </div>
+        <div class="col-sm-6 col-md-4 col-lg-3">
+          <div class="skeleton-card"></div>
+        </div>
+        <div class="col-sm-6 col-md-4 col-lg-3">
+          <div class="skeleton-card"></div>
+        </div>
+        <div class="col-sm-6 col-md-4 col-lg-3">
+          <div class="skeleton-card"></div>
+        </div>
+      </div>
+    </div>
+    
+<script>
+// ✅ CACHE MANAGER V2
+class CacheManagerCheck_v2 {
+  static getWithExpiry(key, expiryHours = 12) {
+    const item = localStorage.getItem(key);
+    if (!item) return null;
+    
+    const data = JSON.parse(item);
+    const now = new Date().getTime();
+    
+    if (now > data.timestamp + (expiryHours * 60 * 60 * 1000)) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    
+    return data.value;
+  }
+  
+  static setWithExpiry(key, value, expiryHours = 12) {
+    const data = {
+      value: value,
+      timestamp: new Date().getTime()
+    };
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+  
+  static getSessionWithExpiry(key, expiryMinutes = 30) {
+    const item = sessionStorage.getItem(key);
+    if (!item) return null;
+    
+    const data = JSON.parse(item);
+    const now = new Date().getTime();
+    
+    if (now > data.timestamp + (expiryMinutes * 60 * 1000)) {
+      sessionStorage.removeItem(key);
+      return null;
+    }
+    return data.value;
+  }
+  
+  static setSessionWithExpiry(key, value, expiryMinutes = 30) {
+    const data = {
+      value: value,
+      timestamp: new Date().getTime()
+    };
+    sessionStorage.setItem(key, JSON.stringify(data));
+  }
+}
+
+// ✅ VARIABLES GLOBALES OPTIMIZADAS V2
+let offsetCheck_v2 = 0;
+const limitCheck_v2 = 20;
+let searchCheck1_v2 = "", searchCheck2_v2 = "";
+let columnaFiltroCheck1_v2 = "todos", columnaFiltroCheck2_v2 = "todos";
+let headersCheckG_v2 = [];
+let itemsDataCheck_v2 = [];
+let itemsMap_v2 = new Map();
+let totalCoincidenciasCheck_v2 = 0;
+
+// ✅ VARIABLES DE CONTROL V2
+let searchTimeoutCheck_v2;
+let currentControllerCheck_v2;
+let isLoadingMoreCheck_v2 = false;
+let currentSearchIdCheck_v2 = 0; 
+let pendingReplacementCheck_v2 = false;
+
+var cachedDataCheckList_v2 = []; 
+let loginPasswords_v2 = [];
+let deletePasswords_v2 = [];
+
+// ✅ DEBOUNCE MEJORADO V2
+function debounceSearchCheck_v2(func, delay = 600) {
+  return function executedFunction(...args) {
+    clearTimeout(searchTimeoutCheck_v2);
+    
+    if (currentControllerCheck_v2) {
+      currentControllerCheck_v2.abort();
+    }
+    
+    searchTimeoutCheck_v2 = setTimeout(() => {
+      func(...args);
+    }, delay);
+  };
+}
+
+// ✅ CARGAR PASSWORDS CON CACHE V2
+async function cargarPasswordsCheck_v2() {
+  const cached = CacheManagerCheck_v2.getSessionWithExpiry('passwordsCheck_v2', 60);
+  if (cached) {
+    loginPasswords_v2 = cached.loginPasswords;
+    deletePasswords_v2 = cached.deletePasswords;
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    google.script.run.withSuccessHandler((passwords) => {
+      loginPasswords_v2 = passwords.loginPasswords;
+      deletePasswords_v2 = passwords.deletePasswords;
+      CacheManagerCheck_v2.setSessionWithExpiry('passwordsCheck_v2', passwords, 60);
+      resolve();
+    }).getAccessPasswords_v2(); 
+  });
+}
+
+// ✅ INICIALIZACIÓN V2
+google.script.run.withSuccessHandler(data => {
+  itemsDataCheck_v2 = data;
+
+  itemsMap_v2 = data.reduce((map, row) => {
+    const equipo = row[1];
+    if (!map.has(equipo)) {
+      map.set(equipo, []);
+    }
+    map.get(equipo).push(row);
+    return map;
+  }, new Map());
+
+  google.script.run.withSuccessHandler(headersData => {
+    headersCheckG_v2 = headersData;
+    const sel1 = document.getElementById("columnaFiltroCheck1_v2");
+    const sel2 = document.getElementById("columnaFiltroCheck2_v2");
+    
+    if (sel1 && sel2) {
+      headersCheckG_v2.forEach(col => {
+        [sel1, sel2].forEach(sel => {
+          const opt = document.createElement("option");
+          opt.value = col;
+          opt.textContent = col;
+          sel.appendChild(opt);
+        });
+      });
+    }
+
+    cargarDatosCheckG_v2();
+    actualizarTitulosDesdeSheet_v2();
+  }).getHeadersCheck_v2(); 
+
+}).getItemsData_v2(); 
+
+const camposChecklist_v2 = {
+  numid_v2: 0,          
+  ad1_v2: 1,            
+  ad3_v2: 2,            
+  ad4_v2: 3,            
+  ad2_v2: 4,            
+  ad9_v2: 5,            
+  ad6_v2: 6,            
+  ad5_v2: 7,  
+  ad7_v2: 8,            
+  imageData_v2: 10,     
+  estadoCheck2_v2: 12,  
+  actividadCheck_v2: 13, // <-- CAMBIO: ID nuevo apuntando a Col N
+  riesgoCheck_v2: 14
+};
+
+// function actualizarLabelsYPlaceholdersChecklist_v2() {
+//   Object.entries(camposChecklist_v2).forEach(([id, index]) => {
+//     const label = document.querySelector(`label[for="${id}"]`) ||
+//                   document.querySelector(`#${id}`)?.closest(".col-md-6, .col-12")?.querySelector("label");
+
+//     const input = document.getElementById(id);
+
+//     if (label && headersCheckG_v2[index]) {
+//       label.textContent = headersCheckG_v2[index];
+//     }
+
+//     if (input && headersCheckG_v2[index] && input.tagName === "INPUT" && input.type !== "file") {
+//       input.placeholder = headersCheckG_v2[index];
+//     }
+//   });
+// }
+
+// ✅ EVENT LISTENERS MEJORADOS V2
+document.addEventListener('DOMContentLoaded', function() {
+  const btnBuscarCheck = document.getElementById("btnBuscarCheck_v2");
+  const btncargarMasCheck = document.getElementById("cargarMasCheck_v2");
+  const busquedaCheck1 = document.getElementById("busquedaCheck1_v2");
+  const busquedaCheck2 = document.getElementById("busquedaCheck2_v2");
+  
+  if (btnBuscarCheck) {
+    btnBuscarCheck.addEventListener("click", (e) => {
+      e.preventDefault();
+      debounceSearchCheck_v2(reiniciarTablaCheck_v2)();
+    });
+  }
+  
+  if (btncargarMasCheck) {
+    btncargarMasCheck.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (!isLoadingMoreCheck_v2) {
+        cargarDatosCheckG_v2();
+      }
+    });
+  }
+
+  if (busquedaCheck1) {
+    busquedaCheck1.addEventListener("input", debounceSearchCheck_v2(reiniciarTablaCheck_v2));
+  }
+  if (busquedaCheck2) {
+    busquedaCheck2.addEventListener("input", debounceSearchCheck_v2(reiniciarTablaCheck_v2));
+  }
+
+  // Cargar totales
+  let totalCheck1 = document.getElementById('totalCheck1_v2');
+  let totalCheck2 = document.getElementById('totalCheck2_v2');
+  
+  if (totalCheck1 && totalCheck2) {
+    google.script.run.withSuccessHandler(data => {
+      totalCheck1.innerHTML = data[0];
+      totalCheck2.innerHTML = data[1];
+    }).setStatusCheck_v2();
+  }
+
+  cargarPasswordsCheck_v2();
+  mostrarEstadoCargaCheck_v2('skeleton', true);
+});
+
+function checkPasswordLocal_v2(password) {
+  return loginPasswords_v2.includes(password);
+}
+
+function checkDeletePasswordLocal_v2(password) {
+  return deletePasswords_v2.includes(password);
+}
+
+// ✅ REINICIAR TABLA V2
+function reiniciarTablaCheck_v2() {
+  currentSearchIdCheck_v2++;
+  const searchId = currentSearchIdCheck_v2;
+  
+  if (currentControllerCheck_v2) {
+    currentControllerCheck_v2.abort();
+  }
+  currentControllerCheck_v2 = new AbortController();
+
+  offsetCheck_v2 = 0;
+  cachedDataCheckList_v2 = [];
+  isLoadingMoreCheck_v2 = false;
+  pendingReplacementCheck_v2 = true;
+  
+  searchCheck1_v2 = document.getElementById("busquedaCheck1_v2")?.value.trim() || "";
+  searchCheck2_v2 = document.getElementById("busquedaCheck2_v2")?.value.trim() || "";
+  columnaFiltroCheck1_v2 = document.getElementById("columnaFiltroCheck1_v2")?.value || "todos";
+  columnaFiltroCheck2_v2 = document.getElementById("columnaFiltroCheck2_v2")?.value || "todos";
+  
+  mostrarEstadoCargaCheck_v2('skeleton', true);
+  
+  cargarDatosCheckG_v2(searchId);
+}
+
+// ✅ CARGAR DATOS V2
+function cargarDatosCheckG_v2(searchId = currentSearchIdCheck_v2) {
+  if (isLoadingMoreCheck_v2) return;
+  isLoadingMoreCheck_v2 = true;
+  
+  if (offsetCheck_v2 === 0) {
+    mostrarEstadoCargaCheck_v2('skeleton', true);
+  } else {
+    mostrarEstadoCargaCheck_v2('spinner', true);
+  }
+  
+  const btnBuscarCheck = document.getElementById("btnBuscarCheck_v2");
+  const btncargarMasCheck = document.getElementById("cargarMasCheck_v2");
+  
+  if (btnBuscarCheck) btnBuscarCheck.disabled = true;
+  if (btncargarMasCheck) btncargarMasCheck.disabled = true;
+
+  google.script.run
+    .withSuccessHandler((data) => {
+      if (searchId !== currentSearchIdCheck_v2) {
+        console.log("Respuesta checklist obsoleta ignorada");
+        isLoadingMoreCheck_v2 = false;
+        return;
+      }
+      renderizarTablaCheck_v2(data, searchId);
+    })
+    .withFailureHandler(err => {
+      console.error("Error cargando datos checklist:", err);
+      mostrarEstadoCargaCheck_v2('', false); 
+      isLoadingMoreCheck_v2 = false;
+      if (btnBuscarCheck) btnBuscarCheck.disabled = false;
+      if (btncargarMasCheck) btncargarMasCheck.disabled = false;
+    })
+    .getDatosRegistroCheck_v2(offsetCheck_v2, limitCheck_v2, searchCheck1_v2, searchCheck2_v2, columnaFiltroCheck1_v2, columnaFiltroCheck2_v2);
+}
+
+// ✅ RENDERIZAR TABLA V2
+function renderizarTablaCheck_v2(respuesta, searchId = currentSearchIdCheck_v2) {
+  if (searchId !== currentSearchIdCheck_v2) {
+    console.log("Renderizado checklist obsoleto cancelado");
+    isLoadingMoreCheck_v2 = false;
+    return;
+  }
+
+  const contenedorCheck = document.getElementById("tabla-registro-checklist_v2");
+  const btnBuscarCheck = document.getElementById("btnBuscarCheck_v2");
+  const btncargarMasCheck = document.getElementById("cargarMasCheck_v2");
+
+  if (!respuesta || !respuesta.data || respuesta.data.length === 0) {
+    if (offsetCheck_v2 === 0) {
+      contenedorCheck.innerHTML = "<p>No se encontraron resultados.</p>";
+      pendingReplacementCheck_v2 = false;
+    }
+    mostrarEstadoCargaCheck_v2('', false);
+    isLoadingMoreCheck_v2 = false;
+    if (btnBuscarCheck) btnBuscarCheck.disabled = false;
+    if (btncargarMasCheck) btncargarMasCheck.disabled = false;
+    return;
+  }
+
+  if (offsetCheck_v2 === 0 && pendingReplacementCheck_v2) {
+    contenedorCheck.innerHTML = "";
+    cachedDataCheckList_v2 = [...respuesta.data];
+    pendingReplacementCheck_v2 = false;
+  }else {
+    if (cachedDataCheckList_v2 && Array.isArray(cachedDataCheckList_v2)) {
+       cachedDataCheckList_v2 = [...cachedDataCheckList_v2, ...respuesta.data];
+    }
+  }
+  mostrarEstadoCargaCheck_v2('', false);
+  isLoadingMoreCheck_v2 = false;
+  if (btnBuscarCheck) btnBuscarCheck.disabled = false;
+  if (btncargarMasCheck) btncargarMasCheck.disabled = false;
+
+  totalCoincidenciasCheck_v2 = respuesta.total;
+
+  const fragment = document.createDocumentFragment();
+  const cardsRow = document.createElement("div");
+  cardsRow.className = "row g-3 py-2";
+
+  respuesta.data.forEach(fila => {
+    // FILA DATA: 0=ID, 1=Empresa, 2=Checklist(Equipo), 3=Codigo, ... 14=Checks
+    // itemsMap key debe ser el nombre del Checklist (Col 2), no el Codigo unico (Col 3)
+    const complianceList = fila[15].split(',').map(c => c.trim());
+    
+    // CORRECCIÓN IMPORTANTE: Buscar items por NOMBRE DE CHECKLIST (fila[2]), no por ID único
+    const items = itemsMap_v2.get(fila[2]) || []; 
+
+    const { siCount, noCount, otrosCount } = complianceList.reduce((acc, v) => {
+      // Normalizar conteo para escala y texto
+      const val = v.toUpperCase();
+      if (val === 'SI' || val === '5' || val === '4') acc.siCount++;
+      else if (val === 'NO' || val === '1' || val === '2') acc.noCount++;
+      else acc.otrosCount++;
+      return acc;
+    }, { siCount: 0, noCount: 0, otrosCount: 0 });
+
+    const { texto: detallesTexto, html: detallesHTML } = generarDetallesItems_v2(complianceList, items);
+    const mensajeWhatsApp = generarMensajeWhatsApp_v2(fila, siCount, noCount, detallesTexto);
+    const imagenPrincipal = (!fila[10] || fila[10].trim() === "" || fila[10] === "NA") ? "https://lh5.googleusercontent.com/d/1uU0A4gwDjF2X35ussSiTnuXbibK6lnGN" : fila[10];
+
+    const cardHTML = `
+  <div class='col-sm-6 col-md-4 col-lg-3'>
+    <div class='tiktok-card' style='overflow: hidden; position: relative;'>
+      
+            ${(() => {
+        const totalRespuestas = siCount + noCount;
+        const cumplimiento = totalRespuestas > 0 ? Math.round((siCount / totalRespuestas) * 100) : 0;
+        const estado = fila[12] || 'Sin estado';
+
+        let colorEstado = '#6c757d'; 
+        if (estado === 'Abierto') colorEstado = '#dc3545';
+        else if (estado === 'Cerrado') colorEstado = '#28a745';
+        else if (estado === 'Conforme') colorEstado = '#ffc107'; 
+
+        let colorCumplimiento = '#dc3545'; 
+        if (cumplimiento >= 95) colorCumplimiento = '#28a745'; 
+        else if (cumplimiento >= 80) colorCumplimiento = '#ffc107'; 
+
+        return `
+          <div style="position: absolute; top: 10px; left: 5px; z-index: 5; display: flex; gap: 6px; flex-wrap: wrap;">
+            <div class="estado-badge" style="background-color:${colorEstado}; left: 55px;">${estado}</div>
+            <div class="estado-badge" style="background-color:${colorCumplimiento}; color:#000;">
+              ${cumplimiento}%
+            </div>
+          </div>`;
+      })()}
+
+      <img src='${imagenPrincipal}' loading="lazy" decoding="async" onclick='showImageCheckList_v2("${imagenPrincipal}")'>
+      ${fila[11] && fila[11].trim() !== "" && fila[11] !== "NA" ? `
+        <div style='position: absolute; top: 12px; right: 60px; z-index: 3;'>
+          <button onclick='showImageCheckList_v2("${fila[11]}")' style='border: none; background: transparent; padding: 0;'>
+            <img src='${fila[11]}' loading="lazy" decoding="async" style='width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.5);'>
+          </button>
+        </div>` : ""}
+      <div class='overlay-buttons'>
+        <div class="avatar-wrapper" onclick="toggleNombreUsuario_v2(this)">
+          <div class="avatar-circle-only">${fila[6].split(' ').map(p => p[0]).join('').substring(0, 3).toUpperCase()}</div>
+          <div class="nombre-completo hidden-nombre">${fila[6]}</div>
+        </div>
+        <button onclick='checkPasswordAndEdit_v2(${JSON.stringify(fila)})'><i class='fa fa-edit'></i></button>
+        <button onclick='deleteData_v2(${fila[0]}, this)'><i class='fa fa-trash'></i></button>
+        <button onclick="sendWhatsApp_v2('${mensajeWhatsApp}')"><i class="fa-brands fa-whatsapp"></i></button>
+        <button id='exportPdfBtn_v2' data-column-a='${fila[0]}'><i class="fa-solid fa-file-pdf"></i></button>
+      </div>
+      <div class='tiktok-text' style='max-height: 80%; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;'>
+        <div style="font-size: 16px; font-weight: bold; color: white;">ID: ${fila[3]} – ${fila[2]}</div>
+        <div><strong>${headersCheckG_v2[7] || "Lugar"}:</strong> ${fila[7]}</div>
+        <div>
+          <b>Cumplimiento:</b>
+          <i class="fa-solid fa-check" style="color:green;"></i> ${siCount}  
+          <i class="fa-solid fa-xmark" style="color:red;"></i> ${noCount}  
+          <i class="fa-solid fa-circle" style="color:blue;"></i> ${otrosCount}
+        </div>
+        <div id='extra-content-check_v2-${fila[0]}' style='display: none; margin-top: 6px; font-size: 13px;'>
+        <ul style="padding: 0; margin: 0;">
+          <li><b>${headersCheckG_v2[9] || "Fecha"}:</b> ${fila[9]}</li>
+          <li><b>${headersCheckG_v2[1] || "Empresa"}:</b> ${fila[1]}</li>
+          <li><b>${headersCheckG_v2[5] || "Proceso"}:</b> ${fila[5]}</li>
+          <li><b>${headersCheckG_v2[13] || "Frecuencia"}:</b> ${fila[13]}</li>
+          <li><b>${headersCheckG_v2[8] || "Plan"}:</b> ${fila[8]}</li>
+          <li><b>${headersCheckG_v2[4] || "Área"}:</b> ${fila[4]}</li>
+        </ul>
+          <hr class="my-1">
+          <div class="mt-2">${detallesHTML}</div>
+        </div>
+        <div class='text-end mb-0'>
+          <a href='#' class='text-info fw-bold' onclick='toggleExtraContentCheck_v2("${fila[0]}", this); return false;'>Ver más</a>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+
+    const div = document.createElement("div");
+    div.innerHTML = cardHTML;
+    cardsRow.appendChild(div.firstElementChild);
+  });
+
+  // Completar fila incompleta
+  const esUltimaCarga = (offsetCheck_v2 + respuesta.data.length) >= totalCoincidenciasCheck_v2;
+  if (esUltimaCarga) {
+    const totalElementosEnPantalla = respuesta.data.length;
+    const elementosEnUltimaFila = totalElementosEnPantalla % 4;
+    
+    if (elementosEnUltimaFila > 0) {
+      const placeholdersNecesarios = 4 - elementosEnUltimaFila;
+      
+      for (let i = 0; i < placeholdersNecesarios; i++) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'col-sm-6 col-md-4 col-lg-3';
+        placeholder.innerHTML = '<div style="height: 1px; visibility: hidden;"></div>';
+        cardsRow.appendChild(placeholder);
+      }
+    }
+  }
+
+  fragment.appendChild(cardsRow);
+  contenedorCheck.appendChild(fragment);
+  
+  offsetCheck_v2 += limitCheck_v2;
+  
+  if (btncargarMasCheck) {
+    const hayMasDatos = offsetCheck_v2 < totalCoincidenciasCheck_v2;
+    
+    if (hayMasDatos) {
+      btncargarMasCheck.style.display = "block";
+      btncargarMasCheck.disabled = false;
+      btncargarMasCheck.innerHTML = `Cargar más (${offsetCheck_v2}/${totalCoincidenciasCheck_v2})`;
+    } else {
+      btncargarMasCheck.style.display = "none";
+    }
+  }
+}
+
+// ✅ MOSTRAR CARGA V2
+function mostrarEstadoCargaCheck_v2(tipo, mostrar = true) {
+  const skeleton = document.getElementById('skeleton-loading2_v2');
+  const spinner = document.getElementById('spinnerCheck_v2');
+  const container = document.getElementById("tabla-registro-checklist_v2");
+  
+  if (tipo === 'skeleton' && mostrar) {
+    skeleton?.classList.remove('d-none');
+    spinner?.style.setProperty('display', 'none');
+    if (container) {
+      container.style.opacity = "0.6";
+      container.style.pointerEvents = "none";
+    }
+  } else if (tipo === 'spinner' && mostrar) {
+    skeleton?.classList.add('d-none');
+    spinner?.style.setProperty('display', 'block');
+    if (container) {
+      container.style.opacity = "0.6";
+      container.style.pointerEvents = "none";
+    }
+  } else {
+    skeleton?.classList.add('d-none');
+    spinner?.style.setProperty('display', 'none');
+    if (container) {
+      container.style.opacity = "1";
+      container.style.pointerEvents = "auto";
+    }
+  }
+}
+
+// ✅ SCROLL V2
+document.addEventListener('scroll', function() {
+  const btncargarMasCheck = document.getElementById("cargarMasCheck_v2");
+  if (!btncargarMasCheck || isLoadingMoreCheck_v2) return;
+  
+  const scrollPosition = window.innerHeight + window.scrollY;
+  const documentHeight = document.documentElement.scrollHeight;
+  const threshold = documentHeight - 800;
+  
+  if (scrollPosition >= threshold && offsetCheck_v2 < totalCoincidenciasCheck_v2) {
+    cargarDatosCheckG_v2(); 
+  }
+}, { passive: true });
+
+// ✅ LIMPIEZA V2
+window.addEventListener('beforeunload', function() {
+  if (currentControllerCheck_v2) {
+    currentControllerCheck_v2.abort();
+  }
+  clearTimeout(searchTimeoutCheck_v2);
+});
+
+function toggleExtraContentCheck_v2(id, el) {
+  const content = document.getElementById(`extra-content-check_v2-${id}`);
+  const visible = content.style.display === "block";
+  content.style.display = visible ? "none" : "block";
+  el.textContent = visible ? "Ver más" : "Ver menos";
+}
+
+//Función password V2
+let esModoEdicion_v2 = false; 
+
+async function checkPasswordAndEdit_v2(rowData) {
+  const { value: password } = await Swal.fire({
+    title: 'Seguridad',
+    input: 'password',
+    inputLabel: 'Ingrese password para editar',
+    showCancelButton: true
+  });
+
+  if (password && checkPasswordLocal_v2(password)) {
+    esModoEdicion_v2 = true;
+    abrirFormularioParaEditar_v2(rowData);
+  } else if (password) {
+    Swal.fire('Error', 'Password incorrecto', 'error');
+  }
+}
+
+// ✅ FUNCIÓN CORREGIDA: ABRIR MODAL EDICIÓN CON COLUMNAS CORRECTAS
+function abrirFormularioParaEditar_v2(data) {
+  const modal = new bootstrap.Modal(document.getElementById('exampleModal2_v2'));
+  modal.show();
+  
+  // Contenedor de edición
+  const camposEdicion = document.getElementById('campos-edicion_v2');
+  if(camposEdicion) camposEdicion.style.display = 'block';
+  
+  // Botón de guardar/actualizar
+  const btnEnvio = document.getElementById('showsave_v2');
+  if(btnEnvio) {
+      btnEnvio.textContent = "ACTUALIZAR REPORTE";
+      btnEnvio.classList.replace('btn-success', 'btn-primary');
+  }
+
+  // --- Mapeo de Datos a los IDs V2 ---
+  if(document.getElementById('numid_v2')) document.getElementById('numid_v2').value = data[0];       
+  if(document.getElementById('ad6_v2')) document.getElementById('ad6_v2').value = data[6];       
+  
+  const setSelectValue = (id, value) => {
+    const el = document.getElementById(id);
+    if(el) {
+        if (![...el.options].some(opt => opt.value === value)) {
+          const opt = document.createElement("option");
+          opt.value = value;
+          opt.textContent = value;
+          el.appendChild(opt);
+        }
+        el.value = value;
+    }
+  };
+
+  setSelectValue('ad1_v2', data[1]); 
+  setSelectValue('ad2_v2', data[4]); 
+  setSelectValue('ad3_v2', data[2]); 
+  setSelectValue('ad4_v2', data[3]); 
+  
+  if(document.getElementById('ad9_v2')) document.getElementById('ad9_v2').value = data[5];       
+  if(document.getElementById('ad5_v2')) document.getElementById('ad5_v2').value = data[7];       
+  if(document.getElementById('ad7_v2')) document.getElementById('ad7_v2').value = data[8];       
+
+  // Mensajes de alerta (Warning / Vencimiento)
+  google.script.run.withSuccessHandler(info => {
+    const m1 = document.getElementById("message1_v2");
+    const m2 = document.getElementById("message2_v2");
+    if (info && info.message1 && m1) {
+      m1.textContent = "⚠ " + info.message1;
+      m1.classList.remove('d-none');
+    }
+    if (info && info.message2 && m2) {
+      m2.innerHTML = `Documento: <a href="${data.message2}" target="_blank" style="font-weight: bold; text-decoration: underline;">Link</a>`;
+      m2.classList.remove('d-none');
+    }
+  }).getAdditionalInfoByValue_v2(data[3]);
+
+  // Estados y actividad
+  if(document.getElementById('estadoCheck2_v2')) document.getElementById('estadoCheck2_v2').value = data[12] || "Abierto";
+  if(document.getElementById('actividadCheck_v2')) {
+      document.getElementById('actividadCheck_v2').value = data[13] || ""; 
+  }
+
+  // Imagen principal
+  const prev = document.getElementById('image-preview_v2');
+  if (data[10] && data[10] !== "NA" && prev) {
+    prev.src = data[10];
+    prev.style.display = 'block';
+    if(document.getElementById('imageData_v2')) document.getElementById('imageData_v2').value = data[10];
+  }
+
+  // --- PARTE CLAVE CORREGIDA: Generación de la lista de edición ---
+  const itemsGuardados = data[15].split(',');
+  const itemsRows = itemsMap_v2.get(data[2]) || []; // Obtenemos las filas completas de la lista, no solo nombres
+  generarChecklistEdicion_v2(itemsRows, itemsGuardados);
+  
+  // Mostrar la tabla contenedora
+  if(document.getElementById('tableshow_v2')) document.getElementById('tableshow_v2').style.display = 'block';
+}
+
+// ✅ FUNCIÓN CORREGIDA: GENERAR CHECKLIST DINÁMICO (TEXTO/ESCALA/BINARIO)
+function generarChecklistEdicion_v2(rows, valores) {
+  const container = document.getElementById('search-results_v2');
+  if(!container) return; 
+
+  let html = '';
+  
+  rows.forEach((row, idx) => {
+    const pregunta = row[3]; 
+    const tipoInputRaw = (row[4] || "BINARIO").trim();
+    const tipoInput = tipoInputRaw.toUpperCase();
+    const v = valores[idx] ? valores[idx].trim() : ""; 
+
+    html += `<div class="checklist-row_v2">
+               <div class="item-text_v2">${pregunta}</div>
+               <div class="input-container_v2" style="min-width: 140px; display: flex; justify-content: flex-end;">`;
+
+    if (tipoInput === 'TEXTO') {
+        html += `<input type="text" class="form-control form-control-sm check-value_v2" 
+                  value="${v}" placeholder="Observación..." style="font-size:11px; width:100%;">`;
+
+    } else if (tipoInput === 'FECHA') {
+        // ✅ NUEVO: Soporte para Fecha en Edición
+        html += `<input type="date" class="form-control form-control-sm check-value_v2" 
+                  value="${v}" style="font-size:11px; width:100%;">`;
+
+    } else if (tipoInput.startsWith('SELECT')) {
+        // ✅ NUEVO: Soporte para Select en Edición
+        let opciones = [];
+        if (tipoInputRaw.includes(':')) {
+          opciones = tipoInputRaw.split(':')[1].split(',').map(o => o.trim());
+        }
+        html += `<select class="form-select form-select-sm check-value_v2" style="font-size:11px; width:100%;">
+                  <option value="">Seleccione...</option>`;
+        opciones.forEach(opt => {
+          const isSelected = (v === opt) ? 'selected' : '';
+          html += `<option value="${opt}" ${isSelected}>${opt}</option>`;
+        });
+        html += `</select>`;
+
+    } else if (tipoInput === 'ESCALA') {
+        html += `<div class="scale-group_v2">`;
+        [1, 2, 3, 4, 5].forEach(val => {
+           const isChecked = String(v) === String(val) ? 'checked' : '';
+           html += `
+             <input type="radio" name="option${idx}_v2" value="${val}" id="r_${idx}_${val}" class="scale-btn-input_v2 check-value_v2" ${isChecked} onchange="updateCounters_v2()">
+             <label for="r_${idx}_${val}" class="scale-btn-label_v2">${val}</label>`;
+        });
+        const isNA = v.toUpperCase() === 'NA' ? 'checked' : '';
+        html += `
+             <input type="radio" name="option${idx}_v2" value="NA" id="r_${idx}_NA" class="scale-btn-input_v2 check-value_v2" ${isNA} onchange="updateCounters_v2()">
+             <label for="r_${idx}_NA" class="scale-btn-label_v2" style="font-size:9px; background:#edf2f7; color:#718096; border:1px solid #cbd5e0;">NA</label>
+           </div>`;
+    } else {
+        // BINARIO
+        const isSi = (v === 'Si' || v === 'SI' || v === '5' || v === '4') ? 'checked' : '';
+        const isNo = (v === 'No' || v === 'NO' || v === '1' || v === '2') ? 'checked' : '';
+        const isNa = (v === 'NA' || v === '3' || v === '') ? 'checked' : ''; 
+
+        html += `
+          <div class="radio-box_v2">
+            <input type="radio" name="option${idx}_v2" value="Si" id="esi${idx}_v2" class="btn-check-input_v2 check-value_v2" ${isSi} onchange="updateCounters_v2()">
+            <label for="esi${idx}_v2" class="btn-check-label_v2">SÍ</label>
+            <input type="radio" name="option${idx}_v2" value="No" id="eno${idx}_v2" class="btn-check-input_v2 check-value_v2" ${isNo} onchange="updateCounters_v2()">
+            <label for="eno${idx}_v2" class="btn-check-label_v2">NO</label>
+            <input type="radio" name="option${idx}_v2" value="NA" id="ena${idx}_v2" class="btn-check-input_v2 check-value_v2" ${isNa} onchange="updateCounters_v2()">
+            <label for="ena${idx}_v2" class="btn-check-label_v2">NA</label>
+          </div>`;
+    }
+
+    html += `</div></div>`;
+  });
+  
+  container.innerHTML = html;
+  if(typeof updateCounters_v2 === 'function') updateCounters_v2();
+}
+
+function previewImage2_v2(event) {
+  const reader = new FileReader();
+  reader.onload = function() {
+    // Apuntar al ID V2
+    const output = document.getElementById('imagen-preview-upload_v2');
+    if(output) {
+        output.src = reader.result;
+        output.style.display = 'block';
+    }
+  };
+  reader.readAsDataURL(event.target.files[0]);
+}
+
+//DELETE DATA V2
+async function deleteData_v2(id, el) {
+  const { value: password } = await Swal.fire({
+    title: 'Ingrese su password',
+    input: 'password',
+    inputLabel: 'Se requiere password para eliminar',
+    inputPlaceholder: 'Password aquí',
+    inputAttributes: {
+      maxlength: 10,
+      autocapitalize: 'off',
+      autocorrect: 'off'
+    },
+    showCancelButton: true
+  });
+
+  if (password) {
+    if (checkDeletePasswordLocal_v2(password)) {
+      Swal.fire({
+        title: 'Password correcto',
+        text: 'Eliminando...',
+        icon: 'success',
+        timer: 2500,
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      google.script.run.withSuccessHandler(() => {
+        reiniciarTablaCheck_v2();
+        Swal.close(); 
+      }).deleteData_v2(id); 
+
+    } else {
+      Swal.fire('Password incorrecto', '', 'error');
+    }
+  }
+}
+
+//ampliar imagen V2
+function showImageCheckList_v2(imgUrl) {
+  var modal = document.createElement('div');
+  modal.style.position = 'fixed';
+  modal.style.top = 0;
+  modal.style.bottom = 0;
+  modal.style.left = 0;
+  modal.style.right = 0;
+  modal.style.zIndex = 9999;
+  modal.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+  modal.style.display = 'flex';
+  modal.style.alignItems = 'center';
+  modal.style.justifyContent = 'center';
+
+  var img = document.createElement('img');
+  img.src = imgUrl;
+  img.style.maxWidth = '90%';
+  img.style.maxHeight = '90%';
+  img.style.border = '1px solid white';
+  img.style.borderRadius = '15px';
+  img.style.boxShadow = '0 0 20px rgba(255,255,255,0.5)';
+
+  modal.appendChild(img);
+
+  modal.onclick = function () {
+    modal.remove();
+  };
+
+  document.body.appendChild(modal);
+}
+
+function generarDetallesItems_v2(complianceList, items) {
+  let texto = '', html = '';
+
+  complianceList.forEach((valor, i) => {
+    const item = items[i] && items[i][3] ? items[i][3] : `Ítem ${i + 1} no encontrado`;
+    const v = valor.toUpperCase();
+
+    if (v === 'NO' || v === '1' || v === '2') {
+      texto += `X ${i + 1}. ${item}\n`;
+      html  += `<div class="small" style="color:#ff81b4;"><b><i class="fa-solid fa-square-xmark"></i></b> ${i + 1}. ${item}</div>`;
+    } else if (v === 'SI' || v === '4' || v === '5') {
+      texto += `✓ ${i + 1}. ${item}\n`;
+      html  += `<div class="small" style="color:#81ff8a;"><b><i class="fa-solid fa-square-check"></i></b> ${i + 1}. ${item}</div>`;
+    } else {
+      // ✅ Para FECHAS, SELECT y TEXTO usamos un color azul informativo
+      texto += `• ${i + 1}. ${item}: ${valor}\n`;
+      html  += `<div class="small" style="color:#83c1ff;"><i class="fa-solid fa-circle-info"></i> ${i + 1}. ${item} <span style="color:white;">[${valor}]</span></div>`;
+    }
+  });
+
+  return { texto, html };
+}
+
+// Event delegation para el botón dinámico V2
+document.addEventListener('click', function(event) {
+  const target = event.target.closest('#exportPdfBtn_v2');
+  
+  if (target) {
+    let columnAValue = target.getAttribute('data-column-a');
+
+    Swal.fire({
+      title: '¿Desea exportar este reporte a PDF?',
+      text: "Se generará un documento con los datos correspondientes.",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, exportar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: 'Generando PDF...',
+          text: 'Por favor, espere.',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+
+        generatePdf_v2(columnAValue); 
+      }
+    });
+  }
+});
+
+// Función placeholder para toggleNombreUsuario si no existe
+function toggleNombreUsuario_v2(el) {
+    const nombre = el.querySelector('.nombre-completo');
+    if(nombre) nombre.classList.toggle('hidden-nombre');
+}
+
+// Función placeholder para clearForm si no existe
+function clearForm_v2() {
+    console.log("Limpiando formulario (v2)...");
+}
+
+function generatePdf_v2(columnAValue) {
+    Swal.fire({
+        title: 'Generando PDF...',
+        text: 'Por favor, espera un momento.',
+        icon: 'info',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    google.script.run.withSuccessHandler(function(pdfUrl) {
+        Swal.fire({
+            position: 'top-center',
+            icon: 'success',
+            title: 'PDF generado',
+            text: 'El PDF se ha generado correctamente.',
+            showConfirmButton: true,
+            confirmButtonText: 'Cerrar',
+            allowOutsideClick: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#exampleModal2_v2').modal('hide');
+                clearForm_v2();
+            }
+        });
+
+        window.open(pdfUrl, '_blank');
+    }).getPdfUrl_v2(columnAValue); 
+}
+
+//WHATSAPP V2
+function generarMensajeWhatsApp_v2(fila, siCount, noCount, detallesTexto) {
+  return `*---REPORTE DE CHECKLIST---*
+*ID:* ${fila[0]}
+*Empresa:* ${fila[1]}
+*Equipo:* ${fila[2]}
+*Código:* ${fila[3]}
+*Área:* ${fila[4]}
+*Inspector:* ${fila[6]}
+*Proceso:* ${fila[5]}
+*Lugar:* ${fila[7]}
+*Fecha:* ${fila[9]}
+*Cumplimiento - Sí:* ${siCount}
+*Cumplimiento - No:* ${noCount}
+*Plan:* ${fila[8]}
+*Imagen:* ${fila[10]}
+*Corrección:* ${fila[11]}
+*Estado:* ${fila[12]}
+*Actividad:* ${fila[13]}
+*R crítico:* ${fila[14]}
+*Ítems evaluados:*
+${detallesTexto}`.replace(/\n/g, "\\n").replace(/"/g, '"');
+}
+
+ function sendWhatsApp_v2(message) {
+  Swal.fire({
+    title: 'Opciones de envío',
+    text: '¿Deseas ingresar un número o enviar a contactos?',
+    showDenyButton: true,
+    showCancelButton: true,
+    confirmButtonText: 'Ingresar número',
+    denyButtonText: 'Mis contactos'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      Swal.fire({
+        title: 'Número de teléfono',
+        input: 'text',
+        inputLabel: 'Ingrese el N° de teléfono a quien se enviará',
+        inputPlaceholder: 'e.g. 944222222', 
+        showCancelButton: true,
+        inputValidator: (value) => {
+          if (!value) {
+            return '¡Debe ingresar un número de teléfono!';
+          }
+        },
+        inputAttributes: {
+          maxlength: 10,
+          autocapitalize: 'off',
+          autocorrect: 'off'
+        },
+        didOpen: () => {
+          const swalModal = document.querySelector('.swal2-modal');
+          if (swalModal) {
+            swalModal.style.zIndex = '1060'; 
+          }
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          var telefono = "51" + result.value; 
+          var url = "https://wa.me/" + telefono + "?text=" + encodeURIComponent(message);
+          window.open(url, '_blank'); 
+        }
+      });
+    } else if (result.isDenied) {
+      var url = "https://wa.me/?text=" + encodeURIComponent(message);
+      window.open(url, '_blank'); 
+    }
+  });
+}
+
+// ✅ FUNCIÓN PARA DESCARGAR EXCEL (VERIFICACIONES V2)
+function descargarExcelVerificaciones_v2() {
+  // 1. Validar que existan datos
+  if (!cachedDataCheckList_v2 || cachedDataCheckList_v2.length === 0) {
+    Swal.fire({
+      icon: 'info',
+      title: 'Sin datos',
+      text: 'No hay registros visibles para exportar.'
+    });
+    return;
+  }
+
+  // 2. Validar encabezados
+  if (!headersCheckG_v2 || headersCheckG_v2.length === 0) {
+    Swal.fire("Error", "Los encabezados no se han cargado aún.", "error");
+    return;
+  }
+
+  // 3. Preparar la data: Unir encabezados con las filas acumuladas
+  const dataExportar = [headersCheckG_v2, ...cachedDataCheckList_v2];
+
+  // 4. Crear hoja y libro de Excel
+  const ws = XLSX.utils.aoa_to_sheet(dataExportar);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Reporte_Verificaciones");
+
+  // 5. Descargar archivo
+  const fecha = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `Verificaciones_${fecha}.xlsx`);
+}
+</script>
+</body>
+</html>

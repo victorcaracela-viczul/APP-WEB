@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+
+<style>
+  
+    .radio-group-label {
+      display: block;
+      width: 100%;
+    }
+
+    .radio-label {
+      position: relative;
+      display: inline-block;
+      padding:10px;
+    }
+
+    .choice {
+      width: 100%;
+      background-color :rgba(255,255,255,0.5);
+      border: 1px solid rgba(253, 3, 238, 0.25);
+      border-radius:5px;
+    }
+
+    .choice:hover{
+      color:rgba(255,255,255,1);
+      background-color: rgba(253, 3, 238, 0.5);
+    }
+
+    .radio-label input {
+      opacity: 0;
+      position: absolute;
+    }
+
+    .radio-label .inner-label1 {
+      position: relative;
+      display: inline-block;
+      padding-left: 10px;
+      transition: border-bottom;
+      //background:#f5f3f3;
+      font-weight: bold;
+      color: #154360 !important;
+    }
+
+    .radio-label .inner-label {
+      position: relative;
+      display: inline-block;
+      padding-left: 40px;
+    }
+
+    .radio-label .inner-label:before {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      border-bottom: 1px dashed rgba(50, 50, 50, 0.25);
+      width: 30px;
+      transition: border-bottom 0.5s ease;
+    }
+
+    .radio-label input:focus ~ .inner-label:before {
+      border-bottom: 1px solid rgba(50, 50, 50, 0.75);
+    }
+
+    .radio-label input:checked ~ .inner-label:after {
+      //content: "✓";
+      content: "✘";
+      color: #000;
+      position: absolute;
+      font-size: 1.8rem;
+      left: 1px;
+      top: -10px;
+      padding-bottom:20px;
+      height:40px;
+    }
+  .blink-live {
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      50% { opacity: 0.3; }
+    }
+/* CONTENEDOR */
+.codigo-wrapper {
+    transition: box-shadow 0.3s ease;
+    border-radius: 50px;
+}
+
+/* EFECTO GLOW CUANDO EL USUARIO ESCRIBE */
+.codigo-input:focus {
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.6) !important;
+}
+
+/* INPUT ESTILIZADO */
+.codigo-input {
+    background-color: #f5f7fa;
+    font-weight: 600;
+}
+
+/* ÍCONO IZQUIERDO */
+.codigo-wrapper .input-group-text {
+    font-size: 1rem;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+/* EFECTO CUANDO HAY ERROR (opcional) */
+.codigo-error {
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.6) !important;
+}
+
+/* EFECTO CUANDO EL CÓDIGO ES VÁLIDO (opcional) */
+.codigo-valid {
+    box-shadow: 0 0 8px rgba(0, 200, 90, 0.6) !important;
+}
+
+  /* ════════════════════════════════════════════════════════════════════
+     🎨 BOTÓN FLOTANTE ANIMADO - ESTILO ÉPICO
+  ════════════════════════════════════════════════════════════════════ */
+  .kahoot-floating-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 9999; /* Z-index alto para estar sobre todo */
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    animation: pulse-glow 2s infinite;
+  }
+
+  .kahoot-floating-btn:hover {
+    transform: scale(1.15) rotate(5deg);
+    box-shadow: 0 15px 50px rgba(102, 126, 234, 0.8);
+  }
+
+  .kahoot-floating-btn:active {
+    transform: scale(0.95);
+  }
+
+  .kahoot-floating-btn .icon {
+    font-size: 32px;
+    color: white;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  }
+
+  .kahoot-floating-btn .btn-text {
+    position: absolute;
+    right: 85px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.95), rgba(118, 75, 162, 0.95));
+    color: white;
+    padding: 10px 18px;
+    border-radius: 25px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transform: translateX(10px);
+  }
+
+  .kahoot-floating-btn:hover .btn-text {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 10px 40px rgba(102, 126, 234, 0.5); }
+    50% { box-shadow: 0 10px 60px rgba(118, 75, 162, 0.9); }
+  }
+
+  /* ════════════════════════════════════════════════════════════════════
+     🎯 MODAL CON IFRAME - PANTALLA COMPLETA
+  ════════════════════════════════════════════════════════════════════ */
+  .kahoot-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.98);
+    z-index: 10000; /* Superpuesto a todo */
+    animation: fadeIn 0.3s ease;
+    isolation: isolate;
+  }
+
+  .kahoot-modal-overlay.active {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .kahoot-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    background: rgba(102, 126, 234, 0.1);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .kahoot-modal-title {
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .kahoot-close-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    color: white;
+    font-size: 24px;
+    font-weight: 300;
+  }
+
+  .kahoot-close-btn:hover {
+    background: rgba(255, 59, 59, 0.9);
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: rotate(90deg) scale(1.1);
+  }
+
+  .kahoot-iframe-container {
+    flex: 1;
+    width: 100%;
+    position: relative;
+    background: #000;
+  }
+
+  .kahoot-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  
+  @media (max-width: 768px) {
+    .kahoot-floating-btn { width: 60px; height: 60px; bottom: 20px; right: 20px; }
+    .kahoot-floating-btn .icon { font-size: 28px; }
+    .kahoot-floating-btn .btn-text { display: none; }
+  }
+
+
+</style>
+</head>
+ <body>                                                                                                                                    
+      <div class="d-flex justify-content-between align-items-center mb-0">                                                                    
+      <div class="d-flex align-items-center">
+        <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+          <i class="fa-solid fa-user-graduate text-white"></i>
+        </div>
+        <div>
+          <h5 class="mb-0 text-success">Mis cursos</h5>
+          <small class="text-muted">Asignados y completados</small>
+        </div>
+      </div>                                         
+      <button class="btn btn-secondary my-4" onclick="abrirModalTabla()"><i class="fa-solid fa-print"></i></button>                           
+      <input type="text" id="buscadorCursos" onkeyup="filtrarCursos()" placeholder="Buscar curso..." class="form-control" style="max-width:   
+    250px;">                                                                                                                                  
+                                                                                                                                              
+    </div>    
+    <button type="button" class="btn btn-dark position-relative shadow-sm btn-sm rounded-pill" onclick="abrirModalFirma()">
+      <i class="fa-solid fa-pen-nib me-1"></i> Firmar registros
+      <!-- <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+        <i class="fa fa-bell"></i> <span id="totalCheck2">0</span>/<span id="totalCheck1">0</span>
+      </span> -->
+    </button>
+<button id="btnActualizarCursos" class="btn btn-outline-primary ms-2 btn-sm" onclick="actualizarDatosCursos()">
+  <i class="fa-solid fa-rotate-right"></i>
+</button>
+
+
+
+ <div id="contenedorGeneral" style="position: relative; min-height: 200px;">
+  <!-- Spinner que cubrirá solo esta sección -->
+<div id="loadingglobal" 
+     class="d-flex justify-content-center align-items-center invisible"
+     style="position: absolute; top: 10px; left: 0; right: 0; z-index: 10; gap: 0.5rem;">
+     
+  <div class="spinner-border" style="width: 1.5rem; height: 1.5rem;" role="status"></div>
+  <strong style="font-size: 0.9rem;">Preparando...</strong>
+</div>
+    <!-- SKELETON    -->      
+           <div id="skeleton-loading-cursos" class="d-none">
+      <div class="row g-3 py-2">
+        <div class="col-sm-6 col-md-4 col-lg-3" style="height: 400px;">
+          <div class="skeleton-card"></div>
+        </div>
+        <div class="col-sm-6 col-md-4 col-lg-3" style="height: 400px;">
+          <div class="skeleton-card"></div>
+        </div>
+        <div class="col-sm-6 col-md-4 col-lg-3" style="height: 400px;">
+          <div class="skeleton-card"></div>
+        </div>
+        <div class="col-sm-6 col-md-4 col-lg-3" style="height: 400px;">
+          <div class="skeleton-card"></div>
+        </div>
+      </div>
+    </div> 
+
+  <div id="datosPersona" hidden></div>
+  <div id="tablaCursos"></div>
+  <div id="mensajeCursos" class="mb-2 text-danger"></div>
+  <br>
+</div>
+
+
+ <!-- MODAL REGISTRO FIRMA -->
+<div class="modal fade" id="modalFirma" tabindex="-1" aria-labelledby="modalFirmaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content shadow-lg rounded-4 border-0">
+
+      <div class="modal-header bg-dark text-white py-2 rounded-top-4">
+        <h5 class="modal-title" id="modalFirmaLabel">
+          <i class="fa-solid fa-pen-nib me-2"></i> Registro de Firma
+        </h5>
+        <button type="button" class="btn-close btn-close-white me-2" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="formFirma" class="row g-3">
+
+          <!-- DATOS AUTOMÁTICOS -->
+          <div class="col-md-6">
+            <label class="form-label">Nombre y Apellido</label>
+            <input type="text" id="nombreFirma" class="form-control" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Cargo</label>
+            <input type="text" id="cargoFirma" class="form-control" readonly>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Empresa</label>
+            <input type="text" id="empresaFirma" class="form-control" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">ID/DNI</label>
+            <input type="text" id="dniFirma" class="form-control" readonly>
+          </div>
+
+          <hr class="mt-3">
+
+          <!-- DATOS DEL TEMA -->
+<div class="col-md-6">
+  <label class="form-label fw-bold text-primary">Código del Tema *</label>
+
+  <div class="input-group shadow-sm codigo-wrapper">
+    <span class="input-group-text bg-primary text-white fw-bold border-0 rounded-start-pill">
+      <i class="fa-solid fa-qrcode"></i>
+    </span>
+
+    <input 
+      type="text" 
+      id="codigoTemaFirma" 
+      class="form-control codigo-input rounded-end-pill border-0 px-3"
+      required 
+      placeholder="Ej: ABCD1234"
+      onblur="buscarTemaPorCodigo()" autocomplete="off">
+  </div>
+
+  <div id="estadoBusqueda" class="small text-muted mt-1" style="min-height:18px;"></div>
+</div>
+
+
+          <div class="col-md-6">
+            <label class="form-label">Tema *</label>
+            <input type="text" id="temaFirma" class="form-control" readonly required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Área *</label>
+            <input type="text" id="areaFirma2" class="form-control" readonly required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Capacitador *</label>
+            <input type="text" id="capacitadorFirma" class="form-control" readonly required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Duración (min) *</label>
+            <input type="number" id="duracionFirma" class="form-control" min="1" readonly required>
+          </div>
+
+          <!-- <div class="col-md-4">
+            <label class="form-label">Puntaje *</label>
+            <input type="number" id="puntajeFirma" class="form-control" min="0">
+          </div> -->
+
+          <div class="col-md-6">
+            <label class="form-label">Intentos (veces)</label>
+            <input type="number" id="intentosFirma" class="form-control" readonly>
+          </div>
+          <button id="btnTestRegistro" type="button" class="btn btn-secondary" onclick="iniciarTest()" style="display:none;">Iniciar test</button>
+
+          <!-- CONTENEDOR DEL TEST -->
+<div id="bloqueTest" class="mt-3" style="display:none;">
+  <h5 class="fw-bold">Evaluación del Tema</h5>
+
+  <div id="contenedorPreguntas"></div>
+
+  <!-- Navegación -->
+  <div class="d-flex justify-content-between mt-3">
+    <button id="btnBack" class="btn btn-outline-secondary" onclick="testBack()" style="display:none;">
+      ⬅ Anterior
+    </button>
+
+    <button id="btnNext" class="btn btn-primary" onclick="testNext()" style="display:none;">
+      Siguiente ➡
+    </button>
+
+    <button id="btnFinalizarTest" class="btn btn-success" onclick="finalizarTest()" style="display:none;">
+      Finalizar Test
+    </button>
+  </div>
+
+  <div id="mensajeSinEvaluacion" class="text-danger fw-bold mt-3" style="display:none;">
+    Tema sin evaluación registrada.
+  </div>
+</div>
+
+          <div class="col-12">
+            <label class="form-label">Comentarios</label>
+            <textarea id="detalleFirma" class="form-control" rows="2" placeholder="Comentarios adicionales..."></textarea>
+          </div>
+
+          <!-- FIRMA -->
+          <div class="col-12">
+            <label class="form-label fw-bold">Firma del trabajador *</label>
+            <canvas id="canvasFirma" width="600" height="200"
+              class="border border-secondary rounded-3 w-100" style="cursor: crosshair;"></canvas>
+            <div class="mt-2 text-end">
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="limpiarFirmaCap()">🧹 Limpiar</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-success" onclick="guardarFirma()">Guardar registro</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="kahoot-floating-btn" onclick="abrirKahootModal()" title="Abrir Quiz Arena">
+  <span class="btn-text">⚡ Practicar lo aprendido</span>
+  <span class="icon">🎮</span>
+</button>
+
+<!-- 🎯 MODAL PANTALLA COMPLETA -->
+<div id="kahootModalOverlay" class="kahoot-modal-overlay">
+  
+  <!-- Header -->
+  <div class="kahoot-modal-header">
+    <div class="kahoot-modal-title">
+      <span>🚀</span>
+      <span>QUIZ ARENA - Zona de Entrenamiento</span>
+    </div>
+    <button class="kahoot-close-btn" onclick="cerrarKahootModal()" title="Cerrar (ESC)">✕</button>
+  </div>
+  
+  <!-- Contenedor del Juego -->
+  <div class="kahoot-iframe-container">
+    <iframe id="frameKahoot" class="kahoot-iframe"></iframe>
+  </div>
+  
+</div>
+
+      <script>                                                                                                                                                         
+      
+      function cargarDatosDNI(usuario) {
+      const cacheKey = `datosDNI_${usuario}`;
+      const cache = localStorage.getItem(cacheKey);
+      const tiempoCacheMs = 5 * 60 * 1000;
+      if (cache) {
+        const { data, timestamp } = JSON.parse(cache);
+        if (new Date().getTime() - timestamp < tiempoCacheMs) {
+          mostrarResultados(data);
+          return;
+        }
+      }
+  mostrarEstadoCargaCursos(true);
+  loadingStartG();
+  google.script.run.withSuccessHandler(function (respuesta) {
+    localStorage.setItem(cacheKey, JSON.stringify({ data: respuesta, timestamp: new Date().getTime() }));
+    mostrarResultados(respuesta);
+  }).obtenerDatosPorDNI(usuario);
+}
+
+  function loadingStartG(){
+    $('#loadingglobal').removeClass('invisible');
+  }
+
+  function loadingEndG(){
+    $('#loadingglobal').addClass('invisible');   
+  }
+                                                                                                                              
+     // ✅ VARIABLES GLOBALES OPTIMIZADAS
+let duracionGlobal = "";
+let areaGlobal = "";
+let nombreGlobal = "";
+let empresaGlobal = "";
+let cargoGlobal = "";
+let cursosGlobal = [];
+let capacitadorGlobal = "";
+
+// ✅ NUEVAS VARIABLES DE CONTROL PARA RENDIMIENTO
+let searchTimeoutCursos;
+let isRenderingCursos = false;
+let currentFilterCursos = "";
+
+// ✅ CACHE DE ELEMENTOS DOM
+const elementsCache = {
+  contenedorPersona: null,
+  contenedorCursos: null,
+  mensajeCursos: null,
+  buscadorCursos: null
+};
+
+// ✅ INICIALIZAR CACHE DE ELEMENTOS
+function initElementsCache() {
+  elementsCache.contenedorPersona = document.getElementById("datosPersona");
+  elementsCache.contenedorCursos = document.getElementById("tablaCursos");
+  elementsCache.mensajeCursos = document.getElementById("mensajeCursos");
+  elementsCache.buscadorCursos = document.getElementById("buscadorCursos");
+}
+
+// ✅ DEBOUNCE PARA FILTROS
+function debounceFilterCursos(func, delay = 300) {
+  return function executedFunction(...args) {
+    clearTimeout(searchTimeoutCursos);
+    searchTimeoutCursos = setTimeout(() => {
+      func(...args);
+    }, delay);
+  };
+}
+
+// ✅ VALIDACIÓN Y SANITIZACIÓN MEJORADA
+function validateAndSanitize(data) {
+  if (!data || typeof data !== 'object') return null;
+  
+  // Sanitizar strings para prevenir XSS
+  const sanitize = (str) => {
+    if (typeof str !== 'string') return str;
+    return str.replace(/[<>\"']/g, match => {
+      const map = { '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' };
+      return map[match];
+    });
+  };
+
+  if (data.persona) {
+    Object.keys(data.persona).forEach(key => {
+      if (typeof data.persona[key] === 'string') {
+        data.persona[key] = sanitize(data.persona[key]);
+      }
+    });
+  }
+
+  if (Array.isArray(data.cursos)) {
+    data.cursos.forEach(curso => {
+      Object.keys(curso).forEach(key => {
+        if (typeof curso[key] === 'string') {
+          curso[key] = sanitize(curso[key]);
+        }
+      });
+    });
+  }
+
+  return data;
+}
+
+// ✅ ESTADOS DE CARGA OPTIMIZADOS
+function mostrarEstadoCargaCursos(mostrar = true) {
+  const skeleton = document.getElementById('skeleton-loading-cursos');
+  const container = elementsCache.contenedorCursos;
+  
+  if (mostrar) {
+    skeleton?.classList.remove('d-none');
+    if (container) {
+      container.style.opacity = "0.6";
+      container.style.pointerEvents = "none";
+    }
+  } else {
+    skeleton?.classList.add('d-none');
+    if (container) {
+      container.style.opacity = "1";
+      container.style.pointerEvents = "auto";
+    }
+  }
+}
+
+// ✅ RENDERIZADO VIRTUAL OPTIMIZADO PARA CURSOS
+function renderizarCursosOptimizado(cursos) {
+  if (isRenderingCursos) return;
+  isRenderingCursos = true;
+
+  mostrarEstadoCargaCursos(true);
+
+  // Usar requestAnimationFrame para renderizado suave
+  requestAnimationFrame(() => {
+    const fragment = document.createDocumentFragment();
+    const container = document.createElement('div');
+    container.className = 'row g-3';
+
+    // Renderizar por lotes para mejor rendimiento
+    const batchSize = 6;
+    let currentBatch = 0;
+
+    function renderBatch() {
+      const start = currentBatch * batchSize;
+      const end = Math.min(start + batchSize, cursos.length);
+
+      for (let i = start; i < end; i++) {
+        const curso = cursos[i];
+        const cardElement = crearCardCurso(curso, i);
+        container.appendChild(cardElement);
+      }
+
+      currentBatch++;
+
+      if (end < cursos.length) {
+        // Continuar con el siguiente lote
+        requestAnimationFrame(renderBatch);
+      } else {
+        // Finalizar renderizado
+        fragment.appendChild(container);
+        //elementsCache.contenedorCursos.innerHTML = '';
+        elementsCache.contenedorCursos.appendChild(fragment);
+        
+        // Animaciones de entrada escalonadas
+        animarEntradaCursos();
+        
+        isRenderingCursos = false;
+        mostrarEstadoCargaCursos(false);
+      }
+    }
+
+    renderBatch();
+  });
+}
+
+/**
+ * Función auxiliar para convertir minutos a formato legible (d, h, min)
+ */
+function formatearTiempo(minutosTotales) {
+  if (!minutosTotales || minutosTotales === 0) return "0 min";
+  
+  const dias = Math.floor(minutosTotales / 1440);
+  const horas = Math.floor((minutosTotales % 1440) / 60);
+  const minutos = minutosTotales % 60;
+
+  let partes = [];
+  if (dias > 0) partes.push(`${dias} d`);
+  if (horas > 0) partes.push(`${horas} h`);
+  if (minutos > 0 || partes.length === 0) partes.push(`${minutos} min`);
+
+  return partes.join(" ");
+}
+
+function crearCardCurso(curso, index) {
+  // 🔹 Colores por estado
+  const badgeClass = {
+    "Reprobado": "bg-danger",
+    "Aprobado": "bg-success",
+    "Pendiente": "bg-warning text-dark",
+    "Caducado": "bg-dark"
+  }[curso.estado] || "bg-secondary";
+
+  // 🔹 Íconos por estado
+  const estadoIcon = {
+    "Aprobado": "fa-check-circle",
+    "Reprobado": "fa-times-circle",
+    "Pendiente": "fa-hourglass-half",
+    "Caducado": "fa-calendar-xmark"
+  }[curso.estado] || "fa-question-circle";
+
+  // 🔹 Detectar “En vivo”
+  const esEnVivo = curso.programacion?.toLowerCase().includes("en vivo");
+  const deshabilitarTest = curso.intentosHoy >= 2;
+  const tooltip = deshabilitarTest ? 'title="Ya realizaste 2 intentos hoy. Intenta mañana."' : "";
+
+  // 🔹 Botón Test
+  const botonTest = esEnVivo
+    ? `<button class="btn btn-sm btn-secondary w-50" ${tooltip} ${deshabilitarTest ? "disabled" : ""} 
+          onclick="abrirEvaluacion('${curso.tema}', '${curso.area}', '${curso.duracion}', '${curso.capacitador}')">
+          Test ✏️
+        </button>`
+    : `<button class="btn btn-sm btn-secondary w-50" disabled>Test cerrado</button>`;
+
+  // 🔹 Botón Certificado
+  let botonCertificado = "";
+  if (curso.tieneCertificacion) {
+    botonCertificado = curso.estado === "Aprobado"
+      ? `<button class="btn btn-sm btn-success w-100 mt-2" onclick="generarCertificado('${nombreGlobal}', '${curso.tema}')">
+            🏅 Certificado
+         </button>`
+      : `<button class="btn btn-sm btn-secondary w-100 mt-2" disabled>🔒 Sin certificado</button>`;
+  } else {
+    botonCertificado = `<button class="btn btn-sm btn-secondary w-100 mt-2" disabled>⚠️ No aplica certificado</button>`;
+  }
+
+  // 🔹 Verificación de caducidad
+  if (curso.estado === "Aprobado" && curso.fecha && curso.temporabilidad) {
+    const [dia, mes, anio] = curso.fecha.split("/");
+    const fechaAprob = new Date(`${mes}/${dia}/${anio}`);
+    const fechaVence = new Date(fechaAprob.getTime() + curso.temporabilidad * 86400000);
+    if (new Date() > fechaVence) {
+      curso.estado = "Caducado";
+    }
+  }
+
+  // 🔹 Procesar texto de programación, cronómetro y finalización
+  let tiempoRestanteHTML = "";
+  let infoFinalizacion = ""; // Para mostrar cuándo termina exactamente
+  let textoProgramacion = curso.programacion || "-";
+
+  if (esEnVivo) {
+    const partes = textoProgramacion.split("|");
+    const fechaTexto = partes[1]?.trim();
+
+    if (fechaTexto) {
+      const [dia, mes, resto] = fechaTexto.split("/");
+      const [anio, hora] = resto.split(" ");
+      const fechaInicio = new Date(`${mes}/${dia}/${anio} ${hora}`);
+      const fechaFin = new Date(fechaInicio.getTime() + curso.duracion * 60000);
+      const ahora = new Date();
+      const idCrono = `crono_${index}`;
+
+      // Lógica de finalización: si dura más de 24h muestra fecha, si no, hora
+      if (curso.duracion > 1440) {
+        infoFinalizacion = `<span class="text-muted d-block" style="font-size: 0.75rem;">Termina el: ${fechaFin.toLocaleDateString()}</span>`;
+      } else {
+        const horaFin = fechaFin.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        infoFinalizacion = `<span class="text-muted d-block" style="font-size: 0.75rem;">Finaliza: ${horaFin}</span>`;
+      }
+
+      if (ahora < fechaFin) {
+        tiempoRestanteHTML = `<span id="${idCrono}" class="text-danger small ms-2"></span>`;
+        iniciarCronometro(idCrono, fechaFin);
+      } else {
+        tiempoRestanteHTML = `<span class="text-muted small ms-2">⏰ Finalizado</span>`;
+      }
+    }
+    textoProgramacion = `<span class="fw-bold text-danger">En vivo <span class="blink-live">🔴</span></span>`;
+  }
+
+  // 🔹 Formatear Horas Lectivas para el frontend
+  const horasLectivasVista = formatearTiempo(curso.horasLectivas);
+
+  // 🔹 Crear la tarjeta
+  const cardDiv = document.createElement("div");
+  cardDiv.className = "col-md-6 col-lg-3 curso-card";
+  cardDiv.id = "nosaleimprimir";
+  cardDiv.style.opacity = "0";
+  cardDiv.style.transform = "translateY(20px)";
+
+  cardDiv.innerHTML = `
+    <div class="card border-0 shadow-sm rounded-4 h-100 d-flex flex-column" style="font-size: 0.85rem;">
+      <img src="${curso.image}" class="card-img-top rounded-top-4" alt="imagen"
+           style="height: 140px; object-fit: cover;" loading="lazy">
+
+      <div class="card-body px-3 py-2 flex-grow-1">
+        <div class="text-muted small mb-1">
+          Válido por: [${curso.temporabilidad || "-"} días] – Realizado el: ${curso.fecha || "-"}
+        </div>
+        <h6 class="fw-bold mb-2" style="font-size: 0.95rem;">${curso.tema}</h6>
+
+        <div class="d-flex justify-content-between flex-wrap small mb-2">
+          <div><strong>Área:</strong> ${curso.area}</div>
+          <div><strong>Puntaje:</strong> ${curso.puntaje} – (<i class="fa-solid fa-arrow-up"></i>${curso.puntajeMinimo})</div>
+        </div>
+
+        <div class="d-flex justify-content-between flex-wrap align-items-center mb-2 small">
+          <div>
+            <strong>Horas lectivas:</strong> ${horasLectivasVista}
+          </div>
+          <span class="badge ${badgeClass}">
+            <i class="fa-solid ${estadoIcon} me-1"></i> ${curso.estado}
+          </span>
+        </div>
+
+        <div class="bg-light p-1 rounded-3">
+          <strong>Próxima sesión:</strong>
+            ${textoProgramacion} ${tiempoRestanteHTML}
+            <div>
+            ${infoFinalizacion}
+          </div>
+          <div class="mt-1"><strong>Capacitador:</strong> ${curso.capacitador || "-"}</div>
+        </div>
+      </div>
+
+      <div class="px-3 pb-3 mt-auto">
+        <div class="d-flex justify-content-between">
+          <a href="${curso.link}" target="_blank"
+             class="btn btn-sm btn-outline-secondary w-50 me-1"
+             style="border-radius: 10px;">Ver curso</a>
+          ${botonTest}
+        </div>
+        <div>${botonCertificado}</div>
+      </div>
+    </div>
+  `;
+
+  return cardDiv;
+}
+
+
+// ✅ ANIMACIONES DE ENTRADA MEJORADAS
+function animarEntradaCursos() {
+  const cards = document.querySelectorAll('.curso-card');
+  
+  cards.forEach((card, index) => {
+    setTimeout(() => {
+      card.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, index * 100); // Escalonado cada 100ms
+  });
+}
+
+// ✅ FUNCIÓN PRINCIPAL OPTIMIZADA
+function mostrarResultados(respuesta) {
+  // Inicializar cache si no existe
+  if (!elementsCache.contenedorPersona) {
+    initElementsCache();
+  }
+
+  // Validar y sanitizar datos
+  const datosValidados = validateAndSanitize(respuesta);
+  
+  if (!datosValidados || !datosValidados.encontrado) {
+    elementsCache.mensajeCursos.innerHTML = 
+      "<b>Ningún curso asignado o faltan completar datos en la matriz, como Puntaje, Duración, url, etc.</b>";
+    elementsCache.contenedorCursos.innerHTML = "";
+    loadingEndG();
+    return;
+  }
+
+  const { nombre, empresa, cargo, id } = datosValidados.persona;
+
+  // Actualizar variables globales
+  nombreGlobal = nombre;
+  empresaGlobal = empresa; 
+  cargoGlobal = cargo;
+
+  // Renderizar datos de persona
+  elementsCache.contenedorPersona.innerHTML = `
+    <div class="persona-info">
+      <p><b>Nombre:</b> ${nombre}</p>
+      <p><b>Empresa:</b> ${empresa}</p>
+      <p><b>Cargo:</b> ${cargo}</p>
+    </div>
+  `;
+
+  const cursos = datosValidados.cursos;
+
+  if (cursos.length === 0) {
+    elementsCache.contenedorCursos.innerHTML = 
+      "<p>No se encontraron cursos para este cargo.</p>";
+    loadingEndG();
+    return;
+  }
+
+  elementsCache.mensajeCursos.innerHTML = "";
+  cursosGlobal = cursos;
+
+  // Extraer datos del primer curso
+  ({ duracion: duracionGlobal, area: areaGlobal, capacitador: capacitadorGlobal } = cursos[0]);
+
+  // === Calcular estadísticas generales ===
+  const totalCursos = cursos.length;
+  const cursosAprobados = cursos.filter(c => c.estado === "Aprobado").length;
+  const porcentaje = Math.round((cursosAprobados / totalCursos) * 100);
+
+  // === Crear contenedor principal ===
+  elementsCache.contenedorCursos.innerHTML = "";
+
+  // === Barra de progreso general ===
+  const barraProgreso = document.createElement("div");
+  barraProgreso.className = "mb-2";
+  barraProgreso.innerHTML = `
+    <label class="form-label text-muted">
+      <strong>Cumplimiento:</strong> (${cursosAprobados}/${totalCursos})
+    </label>
+    <div class="progress rounded-4" style="height: 18px;">
+      <div class="progress-bar bg-success" role="progressbar"
+           style="width: ${porcentaje}%;"
+           aria-valuenow="${porcentaje}" aria-valuemin="0" aria-valuemax="100">
+        ${porcentaje}%
+      </div>
+    </div>
+  `;
+  elementsCache.contenedorCursos.appendChild(barraProgreso);
+
+  // === Calcular resumen de áreas ===
+  const areasResumen = {};
+  cursos.forEach(c => {
+    if (!areasResumen[c.area]) areasResumen[c.area] = { total: 0, aprobados: 0 };
+    areasResumen[c.area].total++;
+    if (c.estado === "Aprobado") areasResumen[c.area].aprobados++;
+  });
+
+  // === Crear contenedor de chips ===
+  const chipsContainer = document.createElement("div");
+  chipsContainer.className = "d-flex flex-wrap gap-2 mt-2 mb-3";
+
+  Object.entries(areasResumen).forEach(([area, stats]) => {
+    const chip = document.createElement("div");
+    chip.className = "chip-area badge rounded-pill bg-success text-dark border border-success px-3 py-2";
+    chip.dataset.area = area;
+    chip.style.cursor = "pointer";
+    chip.textContent = `${area} ${stats.aprobados} de ${stats.total}`;
+    chip.addEventListener("click", () => filtrarPorArea(area, chipsContainer));
+    chipsContainer.appendChild(chip);
+  });
+
+  elementsCache.contenedorCursos.appendChild(chipsContainer);
+
+  // === Renderizar tarjetas de cursos ===
+  renderizarCursosOptimizado(cursos);
+
+  // === Reset de buscador ===
+  if (elementsCache.buscadorCursos) {
+    elementsCache.buscadorCursos.value = "";
+  }
+
+  // === Filtro inicial (suave) ===
+  setTimeout(() => {
+    filtrarCursosOptimizado();
+  }, 100);
+
+  loadingEndG();
+}
+
+
+// ✅ FILTRO DE CURSOS SUPER OPTIMIZADO
+const filtrarCursosOptimizado = debounceFilterCursos(function() {
+  if (isRenderingCursos) return; // No filtrar durante renderizado
+
+  const input = elementsCache.buscadorCursos;
+  if (!input) return;
+
+  const filter = input.value.toLowerCase().trim();
+  
+  // Si el filtro no cambió, no hacer nada
+  if (filter === currentFilterCursos) return;
+  currentFilterCursos = filter;
+
+  // Usar requestAnimationFrame para filtrado suave
+  requestAnimationFrame(() => {
+    const cards = document.querySelectorAll("#tablaCursos .curso-card");
+    
+    // Filtrado optimizado con Set para mejor rendimiento
+    const hiddenCards = new Set();
+    
+    cards.forEach((card, index) => {
+      const text = card.textContent.toLowerCase();
+      const shouldShow = !filter || text.includes(filter);
+      
+      if (shouldShow) {
+        if (card.style.display === 'none') {
+          card.style.display = '';
+          // Animar entrada
+          card.style.opacity = '0';
+          card.style.transform = 'translateY(10px)';
+          setTimeout(() => {
+            card.style.transition = 'all 0.3s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+          }, index * 20);
+        }
+      } else {
+        card.style.display = 'none';
+        hiddenCards.add(card);
+      }
+    });
+
+    // Mostrar estadísticas de filtrado
+    const totalVisible = cards.length - hiddenCards.size;
+    console.log(`📊 Filtro aplicado: ${totalVisible}/${cards.length} cursos visibles`);
+  });
+});
+
+// === FILTRAR POR ÁREA ===
+function filtrarPorArea(area, chipsContainer) {
+  const cards = document.querySelectorAll(".curso-card");
+  const chipActivo = chipsContainer.querySelector(".chip-area.active");
+
+  // Si se vuelve a hacer clic en el mismo chip → quitar filtro
+  if (chipActivo && chipActivo.dataset.area === area) {
+    chipActivo.classList.remove("active", "bg-success", "text-white");
+    cards.forEach(c => c.style.display = "");
+    actualizarProgreso(cursosGlobal);
+    return;
+  }
+
+  // Activar chip y desactivar otros
+  chipsContainer.querySelectorAll(".chip-area").forEach(chip => {
+    chip.classList.remove("active", "bg-success", "text-white");
+  });
+
+  const chip = chipsContainer.querySelector(`[data-area='${area}']`);
+  chip.classList.add("active", "bg-success", "text-white");
+
+  // Filtrar tarjetas
+  cards.forEach(card => {
+    const texto = card.textContent.toLowerCase();
+    card.style.display = texto.includes(area.toLowerCase()) ? "" : "none";
+  });
+
+  // Actualizar progreso de esa área
+  const cursosArea = cursosGlobal.filter(c => c.area === area);
+  actualizarProgreso(cursosArea);
+}
+
+// === ACTUALIZAR PROGRESO ===
+function actualizarProgreso(cursos) {
+  const aprobados = cursos.filter(c => c.estado === "Aprobado").length;
+  const total = cursos.length;
+  const porcentaje = total > 0 ? Math.round((aprobados / total) * 100) : 0;
+
+  const progressBar = document.querySelector(".progress-bar");
+  const label = document.querySelector(".form-label.text-muted strong");
+
+  if (progressBar) {
+    progressBar.style.width = `${porcentaje}%`;
+    progressBar.setAttribute("aria-valuenow", porcentaje);
+    progressBar.textContent = `${porcentaje}%`;
+  }
+
+  if (label) {
+    label.innerHTML = `Cumplimiento: (${aprobados}/${total})`;
+  }
+}
+
+
+// ✅ FUNCIÓN PÚBLICA PARA COMPATIBILIDAD
+function filtrarCursos() {
+  filtrarCursosOptimizado();
+}
+
+// ✅ CONFIGURAR EVENT LISTENERS OPTIMIZADOS
+function configurarEventListenersCursos() {
+  const buscador = elementsCache.buscadorCursos;
+  if (buscador && !buscador.hasAttribute('data-listeners-configured')) {
+    // Usar input en lugar de keyup para mejor rendimiento
+    buscador.addEventListener('input', filtrarCursosOptimizado);
+    buscador.setAttribute('data-listeners-configured', 'true');
+    console.log("✅ Event listeners de cursos configurados");
+  }
+}
+
+// ✅ LIMPIEZA DE RECURSOS
+function limpiarRecursosCursos() {
+  clearTimeout(searchTimeoutCursos);
+  isRenderingCursos = false;
+  currentFilterCursos = "";
+}
+
+// ✅ INICIALIZACIÓN AUTOMÁTICA
+document.addEventListener('DOMContentLoaded', function() {
+  initElementsCache();
+  configurarEventListenersCursos();
+});
+
+// ✅ LIMPIEZA AL CAMBIAR DE PÁGINA
+window.addEventListener('beforeunload', limpiarRecursosCursos);
+
+// 🔥 DEBUGGING PARA CURSOS
+window.debugCursos = function() {
+  console.log("🐞 Estado del módulo de cursos:");
+  console.log("- isRenderingCursos:", isRenderingCursos);
+  console.log("- currentFilterCursos:", currentFilterCursos);
+  console.log("- cursosGlobal.length:", cursosGlobal.length);
+  console.log("- Cache elementos:", elementsCache);
+};
+                                                                                                                                         
+                                                                                                                                              
+    function abrirModalTabla() {                                                                                                              
+      const contenedor = document.getElementById("contenedorTablaCursos");                                                                    
+                                                                                                                                              
+      const filasHTML = cursosGlobal.map(({                                                                                                   
+        tema, image, area, puntajeMinimo, duracion, capacitador,                                                                              
+        temporabilidad, programacion, link, puntaje, fecha, estado                                                                            
+      }) => `                                                                                                                                 
+        <tr>                                                                                                                                  
+          <td>${tema}</td>                                                                                                                    
+          <td><img src="${image}" alt="imagen" style="max-width: 100px; max-height: 80px;"></td>                                              
+          <td>${area}</td>                                                                                                                    
+          <td>${puntajeMinimo}</td>                                                                                                           
+          <td>${duracion}</td>                                                                                                                
+          <td>${capacitador}</td>                                                                                                             
+          <td>${temporabilidad}</td>                                                                                                          
+          <td>${programacion}</td>                                                                                                            
+          <td><a href="${link}" target="_blank">Ver</a></td>                                                                                  
+          <td>${puntaje}</td>                                                                                                                 
+          <td>${fecha}</td>                                                                                                                   
+          <td>${estado}</td>                                                                                                                  
+        </tr>                                                                                                                                 
+      `).join("");                                                                                                                            
+                                                                                                                                              
+      contenedor.innerHTML = `                                                                                                                
+        <div class="table-responsive print-container">                                                                                        
+          <center><strong>Mis capacitaciones</strong></center>                                                                                
+          <table class="table table-bordered table-hover table-sm">                                                                           
+            <thead class="table-light">                                                                                                       
+              <tr>                                                                                                                            
+                <th>Tema</th>                                                                                                                 
+                <th>Imagen</th>                                                                                                               
+                <th>Área</th>                                                                                                                 
+                <th>Puntaje mínimo</th>                                                                                                       
+                <th>Duración (min)</th>                                                                                                       
+                <th>Capacitador</th>                                                                                                          
+                <th>Validez (días)</th>                                                                                                       
+                <th>Programación</th>                                                                                                         
+                <th>Link</th>                                                                                                                 
+                <th>Puntaje</th>                                                                                                              
+                <th>Fecha</th>                                                                                                                
+                <th>Estado</th>                                                                                                               
+              </tr>                                                                                                                           
+            </thead>                                                                                                                          
+            <tbody>                                                                                                                           
+              ${filasHTML}                                                                                                                    
+            </tbody>                                                                                                                          
+          </table>                                                                                                                            
+        </div>                                                                                                                                
+      `;                                                                                                                                      
+                                                                                                                                              
+      // Botón WhatsApp (después de renderizar)                                                                                               
+      document.getElementById("btnWhatsappCap").addEventListener("click", () => {                                                             
+        const filas = document.querySelectorAll("#contenedorTablaCursos tbody tr");                                                           
+        const mensaje = Array.from(filas).map(fila => {                                                                                       
+          const tema = fila.cells[0].textContent.trim();                                                                                      
+          const estado = fila.cells[11].textContent.trim();                                                                                   
+          return `✓ ${tema} - *${estado}*`;                                                                                                   
+        }).join("\n");                                                                                                                        
+                                                                                                                                              
+        const url = `https://wa.me/?text=${encodeURIComponent("*Ꙭ Mis cursos son:*\n\n" + mensaje)}`;                                         
+        window.open(url, "_blank");                                                                                                           
+      });                                                                                                                                     
+                                                                                                                                              
+      // Mostrar modal                                                                                                                        
+      const modal = new bootstrap.Modal(document.getElementById('modalTablaCursos'));                                                         
+      modal.show();                                                                                                                           
+    }                                                                                                                                         
+                                                                                                                                              
+                                                                                                                                              
+    function filtrarCursos() {                                                                                                                
+      const input = document.getElementById("buscadorCursos");                                                                                
+      const filter = input.value.toLowerCase();                                                                                               
+      const cards = document.querySelectorAll("#tablaCursos .card");                                                                          
+                                                                                                                                              
+      cards.forEach(card => {                                                                                                                 
+        // Obtiene todo el texto visible de la tarjeta                                                                                        
+        const text = card.innerText.toLowerCase();                                                                                            
+        // Si encuentra el texto buscado, muestra la tarjeta, sino la oculta                                                                  
+        if (text.includes(filter)) {                                                                                                          
+          card.parentElement.style.display = ""; // Muestra                                                                                   
+        } else {                                                                                                                              
+          card.parentElement.style.display = "none"; // Oculta                                                                                
+        }                                                                                                                                     
+      });                                                                                                                                     
+    }                                                                                                                                         
+                                                                                                                                              
+    let temaValido = false; // declarar globalmente                                                                                           
+                                                                                                                                              
+    function abrirEvaluacion(tema, area, duracion) {                                                                                          
+      duracionGlobal = duracion;                                                                                                              
+      areaGlobal = area;                                                                                                                      
+                                                                                                                                              
+      const interval = setInterval(() => {                                                                                                    
+        const select = document.getElementById('select_id');                                                                                  
+        if (select) {                                                                                                                         
+          const existeTema = Array.from(select.options).some(option => option.value === tema);                                                
+                                                                                                                                              
+          if (existeTema) {                                                                                                                   
+            select.value = tema;                                                                                                              
+            temaValido = true; // tema válido                                                                                                 
+          } else {                                                                                                                            
+            select.value = "no_disponible";                                                                                                   
+            document.getElementById('next').style.display = 'none';                                                                           
+            temaValido = false; // tema inválido                                                                                              
+          }                                                                                                                                   
+                                                                                                                                              
+          select.dispatchEvent(new Event('change'));                                                                                          
+          clearInterval(interval);                                                                                                            
+        }                                                                                                                                     
+      }, 100);                                                                                                                                
+                                                                                                                                              
+      const modal = new bootstrap.Modal(document.getElementById('exampleModal'));                                                             
+      modal.show();                                                                                                                           
+    }                                                                                                                                         
+                                                                                                                                              
+function generarCertificado(nombre, tema) {
+  Swal.fire({
+    title: `¿Deseas generar e imprimir el certificado?`,
+    html: `<b>${nombre}</b><br>${tema}`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, generar',
+    cancelButtonText: 'Cancelar'
+  }).then(result => {
+    if (!result.isConfirmed) return;
+
+    Swal.fire({
+      title: 'Validando información...',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    google.script.run
+      .withSuccessHandler(base64 => {
+        const link = document.createElement('a');
+        link.href = 'data:application/pdf;base64,' + base64;
+        link.download = `Certificado - ${nombre}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        Swal.close();
+      })
+      .withFailureHandler(error => {
+        Swal.fire('Error', 'No se pudo generar el certificado: ' + error.message, 'error');
+      })
+      .generarCertificadoDesdeNombreYTema(nombre, tema);
+  });
+}
+
+                                                                                                                                         
+      </script>                                                                                                                               
+                                                                                                                                              
+      <script>                                                                                                                                
+                                                                                                                                              
+    /*************** covariable **********************/                                                                                       
+      var qNumb = 0;                                                                                                                          
+      var maxValue = 0;                                                                                                                       
+      var correct_ans = []                                                                                                                    
+      var questionPoints = [];                                                                                                                
+                                                                                                                                              
+    /*************** examen de carga **********************/                                                                                  
+    function loadQuiz() {
+  const selectedValue = document.getElementById('select_id').value;
+  const contenedor = document.getElementById('getDataQuestion');
+
+  // 🕐 Mensaje temporal de carga
+  contenedor.innerHTML = `
+    <div class="text-center my-3 text-secondary fs-5" id="loadingMessage">
+      <i class="fa fa-spinner fa-spin"></i> Un momento... estamos preparando las preguntas
+    </div>
+  `;
+
+  qNumb = 0;
+
+  google.script.run.withSuccessHandler(function(quiz) {
+    // ✅ Reemplazar el texto por las preguntas reales
+    contenedor.innerHTML = quiz[2];
+
+    // Asignar variables
+    maxValue = quiz[0];
+    correct_ans = quiz[1];
+    questionPoints = quiz[3];
+
+    // Mostrar primera pregunta
+    updateQuestion(++qNumb);
+  }).getDataQuestion(selectedValue);
+}
+                                                                                                                                      
+                                                                                                                                              
+                                                                                                                                              
+                                                                                                                                              
+    /*************** Haga clic en Nex para continuar con el siguiente paso. ***************/                                                  
+      function nextClick() {                                                                                                                  
+        if(qNumb < maxValue){                                                                                                                 
+          updateQuestion(++qNumb);                                                                                                            
+                                                                                                                                              
+        }                                                                                                                                     
+      }                                                                                                                                       
+                                                                                                                                              
+    /*************** hacer clic Back Volver al punto anterior ***************/                                                                
+      function backClick() {                                                                                                                  
+        if(qNumb > 1){                                                                                                                        
+          updateQuestion(--qNumb);                                                                                                            
+                                                                                                                                              
+        }                                                                                                                                     
+      }                                                                                                                                       
+                                                                                                                                              
+    /*************** Active y desactive cada pregunta individualmente. **********************/                                                
+          function updateQuestion() {                                                                                                         
+          if (!temaValido) return; // no hacer nada si el tema no es válido                                                                   
+                                                                                                                                              
+          // Actualiza textos si existen                                                                                                      
+          const backText = document.getElementById("numbBack");                                                                               
+          const nextText = document.getElementById("numbNext");                                                                               
+          if (backText) backText.innerHTML = "Anterior " + (qNumb - 1);                                                                       
+          if (nextText) nextText.innerHTML = "Siguiente " + (qNumb + 1);                                                                      
+                                                                                                                                              
+          // Controla visibilidad de preguntas                                                                                                
+          const current = document.getElementById(qNumb);                                                                                     
+          const prev = document.getElementById(qNumb - 1);                                                                                    
+          const next = document.getElementById(qNumb + 1);                                                                                    
+                                                                                                                                              
+          if (qNumb > 1 && qNumb < maxValue && current && prev && next) {                                                                     
+            current.style.display = "block";                                                                                                  
+            prev.style.display = "none";                                                                                                      
+            next.style.display = "none";                                                                                                      
+          }                                                                                                                                   
+                                                                                                                                              
+          if (qNumb == 1 && current && next) {                                                                                                
+            current.style.display = "block";                                                                                                  
+            next.style.display = "none";                                                                                                      
+          }                                                                                                                                   
+                                                                                                                                              
+          if (qNumb == maxValue && current && prev) {                                                                                         
+            current.style.display = "block";                                                                                                  
+            prev.style.display = "none";                                                                                                      
+          }                                                                                                                                   
+                                                                                                                                              
+          // Botones                                                                                                                          
+          const submitBtn = document.getElementById('submit');                                                                                
+          const nextBtn = document.getElementById('next');                                                                                    
+          const backBtn = document.getElementById('back');                                                                                    
+                                                                                                                                              
+          if (qNumb != maxValue && submitBtn && nextBtn) {   
+            submitBtn.style.display = "none";
+            nextBtn.style.display = "block";
+            document.getElementById("firmaBloque").style.display = "none"; // 👈 oculta la firma
+          } else if (submitBtn && nextBtn) {
+            submitBtn.style.display = "block";
+            nextBtn.style.display = "none";
+            document.getElementById("firmaBloque").style.display = "block"; // 👈 muestra la firma solo al final
+          }
+                                                                                                                                            
+                                                                                                                                              
+          if (qNumb != 1 && qNumb != 0 && backBtn) {                                                                                          
+            backBtn.style.display = "block";                                                                                                  
+          } else if (backBtn) {                                                                                                               
+            backBtn.style.display = "none";                                                                                                   
+          }                                                                                                                                   
+                                                                                                                                              
+          if (qNumb == 0) {                                                                                                                   
+            if (nextBtn) nextBtn.style.display = "none";                                                                                      
+            if (backBtn) backBtn.style.display = "none";                                                                                      
+            if (submitBtn) submitBtn.style.display = "none";                                                                                  
+          }                                                                                                                                   
+        }                                                                                                                                     
+                                                                                                                                              
+                                                                                                                                              
+    /*************** enviar respuesta **********************/                                                                                 
+    function submitAns() {
+  const submitBtn = document.getElementById('submit');
+  const canvas = document.getElementById("firmaCap");
+  const ctx = canvas.getContext("2d");
+
+  // ✅ Validar si el canvas está en blanco
+  const blank = document.createElement('canvas');
+  blank.width = canvas.width;
+  blank.height = canvas.height;
+
+  if (canvas.toDataURL() === blank.toDataURL()) {
+    Swal.fire("Atención", "Por favor firma antes de enviar tus respuestas.", "warning");
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = 'Enviando...';
+
+  const selectedValue = document.getElementById('select_id').value;
+  const dniInput = JSON.parse(localStorage.getItem('userName')).usuario;
+  let point = 0;
+
+  const answers = Array.from({ length: maxValue }, (_, i) => {
+    const options = document.getElementsByName(`q${i + 1}`);
+    const selected = Array.from(options).find(opt => opt.checked);
+
+    if (selected) {
+      if (selected.value == correct_ans[i]) {
+        point += questionPoints[i];
+      }
+      return selected.value;
+    }
+    return "";
+  });
+
+  const firmaBase64 = canvas.toDataURL("image/png");
+
+  google.script.run.withSuccessHandler(info => {
+    if (info && info[0] === 'success') {
+      Swal.fire(  "Guardado", `Respuestas y firma registradas correctamente.  Tu puntaje es: <b>${info[1]}</b>  Estado: <b>${info[2]}</b>`,  "success"
+);
+
+      resetx();
+      document.getElementById("evaluacion").style.display = "block";
+      google.script.run.withSuccessHandler(mostrarResultados).obtenerDatosPorDNI(dniInput);
+    } else {
+      Swal.fire("Error", "No se pudo guardar la información.", "error");
+    }
+
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fa fa-paper-plane" aria-hidden="true"></i> Enviar respuesta';
+  })
+  .recordData(
+    dniInput,
+    nombreGlobal,
+    cargoGlobal,
+    empresaGlobal,
+    selectedValue,
+    areaGlobal,
+    point,
+    duracionGlobal,
+    answers,
+    firmaBase64
+  );
+}
+
+function iniciarCronometro(id, fechaFin) {
+  function actualizar() {
+    const ahora = new Date();
+    const diff = fechaFin - ahora;
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    if (diff <= 0) {
+      el.textContent = "⏰ Finalizado";
+      clearInterval(intervalo);
+
+      // 🔹 Buscar el card donde está el cronómetro
+      const card = el.closest(".curso-card");
+      if (card) {
+        // 🔹 Ocultar o reemplazar el texto "En vivo ((🔴))"
+        const spanEnVivo = card.querySelector("span.text-danger.fw-bold");
+        if (spanEnVivo) {
+          spanEnVivo.textContent = "Finalizado"; // reemplaza el texto
+          spanEnVivo.classList.remove("text-danger", "fw-bold");
+          spanEnVivo.classList.add("text-muted");
+        }
+
+        // 🔹 Bloquear y cambiar botón del test
+        const btnTest = card.querySelector("button.btn-secondary.w-50");
+        if (btnTest) {
+          btnTest.disabled = true;
+          btnTest.textContent = "Test cerrado";
+          btnTest.classList.add("btn-dark");
+          btnTest.classList.remove("btn-secondary");
+        }
+      }
+      return;
+    }
+
+    // Calcular tiempo restante
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    el.textContent = `(${h > 0 ? h + "h " : ""}${m}m ${s}s rest)`;
+  }
+
+  actualizar();
+  const intervalo = setInterval(actualizar, 1000);
+}
+
+
+
+                                                                                                             
+                                                                                                                                              
+    /*************** Configure la página del examen después de enviar las respuestas. ***************/                                        
+      function resetx(){                                                                                                                      
+        document.getElementById(qNumb).style.display = "none";                                                                                
+        document.getElementById('back').style.display = "none";                                                                               
+        document.getElementById('submit').style.display = "none";      
+        document.getElementById("firmaBloque").style.display = "none";
+                                                                       
+        qNumb = 0;                                                                                                                            
+        setTimeout(function(){                                                                                                                
+            updateQuestion(qNumb);                                                                                                            
+          }, 500);                                                                                                                            
+      }                                                                                                                                       
+                                                                                                                                              
+    /*************** Recargar página de inicio **********************/                                                                        
+      function reLoad() {                                                                                                                     
+        google.script.run.withSuccessHandler(function(url){                                                                                   
+          window.open(url,'_top');                                                                                                            
+        }).getScriptURL();                                                                                                                    
+      }                                                                                                                                       
+
+  </script>   
+<script>
+let firmaCanvasReg, firmaCtx, firmando = false;
+let debounceTimer, ultimoCodigoBuscado = "";
+
+// --- Abrir modal de firma ---
+function abrirModalFirma() {
+  const modal = new bootstrap.Modal(document.getElementById('modalFirma'));
+  modal.show();
+
+  try {
+    const userRaw = localStorage.getItem("userName") || localStorage.getItem("usuario") || "";
+    let dniUsuario = "";
+    if (userRaw.startsWith("{")) {
+      const userObj = JSON.parse(userRaw);
+      dniUsuario = userObj.usuario || userObj.dni || userObj.ID || "";
+      document.getElementById('nombreFirma').value = userObj.nombre || '';
+      document.getElementById('cargoFirma').value = userObj.cargo || '';
+      document.getElementById('empresaFirma').value = userObj.empresa || '';
+    } else {
+      dniUsuario = userRaw;
+      document.getElementById('nombreFirma').value = nombreGlobal || '';
+      document.getElementById('cargoFirma').value = cargoGlobal || '';
+      document.getElementById('empresaFirma').value = empresaGlobal || '';
+    }
+    document.getElementById('dniFirma').value = dniUsuario || '';
+  } catch (e) {
+    console.error("Error cargando datos de usuario:", e);
+  }
+
+  setTimeout(() => inicializarCanvasFirma(), 300);
+}
+
+// --- Inicializa el área de firma ---
+function inicializarCanvasFirma() {
+  firmaCanvasReg = document.getElementById('canvasFirma');
+  firmaCtx = firmaCanvasReg.getContext('2d');
+  firmaCtx.lineWidth = 2;
+  firmaCtx.strokeStyle = "#000";
+  firmaCtx.lineCap = "round";
+
+  firmaCanvasReg.onmousedown = startDraw;
+  firmaCanvasReg.onmousemove = draw;
+  firmaCanvasReg.onmouseup = stopDraw;
+  firmaCanvasReg.onmouseleave = stopDraw;
+
+  firmaCanvasReg.ontouchstart = startDraw;
+  firmaCanvasReg.ontouchmove = draw;
+  firmaCanvasReg.ontouchend = stopDraw;
+  firmaCanvasReg.ontouchcancel = stopDraw;
+
+  function getCoords(e) {
+    const rect = firmaCanvasReg.getBoundingClientRect();
+    const scaleX = firmaCanvasReg.width / rect.width;
+    const scaleY = firmaCanvasReg.height / rect.height;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+  }
+
+  function startDraw(e) {
+    e.preventDefault();
+    firmando = true;
+    const pos = getCoords(e);
+    firmaCtx.beginPath();
+    firmaCtx.moveTo(pos.x, pos.y);
+  }
+
+  function draw(e) {
+    if (!firmando) return;
+    e.preventDefault();
+    const pos = getCoords(e);
+    firmaCtx.lineTo(pos.x, pos.y);
+    firmaCtx.stroke();
+  }
+
+  function stopDraw() {
+    firmando = false;
+  }
+}
+
+// --- Limpiar firma ---
+function limpiarFirmaCap() {
+  if (firmaCtx && firmaCanvasReg)
+    firmaCtx.clearRect(0, 0, firmaCanvasReg.width, firmaCanvasReg.height);
+}
+
+// --- Buscar tema (con indicador visual y control de caché) ---
+async function buscarTemaPorCodigo(forzar = false) {
+  const codigo = document.getElementById("codigoTemaFirma").value.trim();
+  const estadoDiv = document.getElementById("estadoBusqueda");
+  const input = document.getElementById("codigoTemaFirma");
+
+  // Obtener elementos de forma segura
+  const btnTest = document.getElementById("btnTestRegistro");   // puede ser null si no existe
+  const bloqueTest = document.getElementById("bloqueTest"); // puede ser null si no existe
+
+  if (!codigo) {
+    if (estadoDiv) estadoDiv.innerHTML = "";
+    if (btnTest) btnTest.style.display = "none";
+    if (bloqueTest) bloqueTest.style.display = "none";
+    return;
+  }
+
+  if (!forzar && codigo === ultimoCodigoBuscado) return;
+  ultimoCodigoBuscado = codigo;
+
+  if (estadoDiv) estadoDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-1"></i> Buscando...`;
+  if (input) input.disabled = true;
+
+  try {
+    const data = await new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(reject)
+        .getTemaPorCodigo(codigo);
+    });
+
+    // Si hay error → limpiar y ocultar test
+    if (data.error) {
+      if (estadoDiv) estadoDiv.innerHTML = `<span class="text-danger">${data.error}</span>`;
+      limpiarCamposTema();
+      if (btnTest) btnTest.style.display = "none";
+      if (bloqueTest) bloqueTest.style.display = "none";
+      return;
+    }
+
+    // Llenar campos (solo si existen)
+    if (document.getElementById("temaFirma")) document.getElementById("temaFirma").value = data.tema || "";
+    if (document.getElementById("areaFirma2")) document.getElementById("areaFirma2").value = data.area || "";
+    if (document.getElementById("capacitadorFirma")) document.getElementById("capacitadorFirma").value = data.capacitador || "";
+    if (document.getElementById("duracionFirma")) document.getElementById("duracionFirma").value = data.duracion || "";
+    if (document.getElementById("intentosFirma")) document.getElementById("intentosFirma").value = data.intentos || "";
+
+    // CONTROL DEL BOTÓN TEST SEGÚN COLUMNA K (asegurando existencia)
+    //const tieneStatusSi = data.status && data.status.toString().trim().toLowerCase() === "si";
+    const tieneStatusSi = (() => { if (!data.status) return false; let val = data.status.toString().trim().toLowerCase(); val = val.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  return val === "si";
+})();
+
+    if (btnTest) {
+      btnTest.style.display = tieneStatusSi ? "inline-block" : "none";
+    } else {
+      // opcional: avisar en consola si no existe el botón (útil en desarrollo)
+      if (!tieneStatusSi === false) { /* noop */ } // mantener linter feliz
+    }
+
+    // Si el test no está permitido, ocultar el bloque por seguridad
+    if (!tieneStatusSi && bloqueTest) {
+      bloqueTest.style.display = "none";
+    }
+
+    if (estadoDiv) estadoDiv.innerHTML = `<span class="text-success">Tema encontrado ✅</span>`;
+
+  } catch (err) {
+    console.error(err);
+    if (estadoDiv) estadoDiv.innerHTML = `<span class="text-danger">Error al buscar tema.</span>`;
+    if (btnTest) btnTest.style.display = "none";
+    if (bloqueTest) bloqueTest.style.display = "none";
+
+  } finally {
+    if (input) input.disabled = false;
+    document.getElementById("bloqueTest").style.display = "none";
+    document.getElementById("btnTestRegistro").disabled = false;
+    
+  }
+}
+
+
+function limpiarCamposTema() {
+  document.getElementById("temaFirma").value = "";
+  document.getElementById("areaFirma2").value = "";
+  document.getElementById("capacitadorFirma").value = "";
+  document.getElementById("duracionFirma").value = "";
+  document.getElementById("intentosFirma").value = "";
+}
+
+// --- Botón "Actualizar" para forzar nueva búsqueda y recargar cache ---
+async function forzarActualizacionTema() {
+  const btn = document.getElementById("btnActualizarTemas");
+  const estadoDiv = document.getElementById("estadoBusqueda");
+
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+  estadoDiv.innerHTML = `<i class="fa-solid fa-hourglass-half me-1"></i> Actualizando temas...`;
+
+  try {
+    const msg = await new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(reject)
+        .actualizarCacheTemas();
+    });
+
+    estadoDiv.innerHTML = `<span class="text-success">${msg}</span>`;
+    ultimoCodigoBuscado = "";
+  } catch (err) {
+    estadoDiv.innerHTML = `<span class="text-danger">Error al actualizar.</span>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fa-solid fa-rotate-right"></i>`;
+  }
+}
+
+// --- Guardar firma ---
+function guardarFirma() {
+  const dni = document.getElementById('dniFirma').value.trim();
+  const nombre = document.getElementById('nombreFirma').value.trim();
+  const cargo = document.getElementById('cargoFirma').value.trim();
+  const empresa = document.getElementById('empresaFirma').value.trim();
+  const tema = document.getElementById('temaFirma').value.trim();
+  const area = document.getElementById('areaFirma2').value.trim();
+  //const puntaje = parseFloat(document.getElementById('puntajeFirma').value);
+  const duracion = parseInt(document.getElementById('duracionFirma').value);
+  const capacitador = document.getElementById('capacitadorFirma').value.trim();
+  const detalle = document.getElementById('detalleFirma').value.trim();
+
+  const firmaVacia = (() => {
+    if (!firmaCtx || !firmaCanvasReg) return true;
+    const pixels = firmaCtx.getImageData(0, 0, firmaCanvasReg.width, firmaCanvasReg.height).data;
+    for (let i = 3; i < pixels.length; i += 4) {
+      if (pixels[i] !== 0) return false;
+    }
+    return true;
+  })();
+
+  if (!tema || !area || !duracion || !capacitador || firmaVacia) {
+    Swal.fire("Completa todos los campos requeridos y firma antes de guardar.", "", "warning");
+    return;
+  }
+
+  const firmaBase64 = firmaCanvasReg.toDataURL("image/png");
+
+  Swal.fire({
+    title: "¿Deseas registrar esta capacitación?",
+    html: `<b>${nombre}</b><br>${tema} - ${area}`,
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: "Sí, guardar",
+    cancelButtonText: "Cancelar"
+  }).then(res => {
+    if (!res.isConfirmed) return;
+
+    Swal.fire({ title: "Guardando...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    google.script.run.withSuccessHandler(resp => {
+      Swal.close();
+      if (resp[0] === "success") {
+        Swal.fire("✅ Registro exitoso", `Puntaje: ${resp[1]}<br>Estado: ${resp[2]}`, "success");
+        limpiarFirmaCap();
+        document.getElementById('formFirma').reset();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalFirma'));
+        modal.hide();
+        document.getElementById("btnTestRegistro").style.display = "none";
+        document.getElementById("btnTestRegistro").disabled = false;
+      } else {
+        Swal.fire("Error", resp[1] || "Ocurrió un error al registrar.", "error");
+      }
+    }).recordData(
+    dni,
+    nombre,
+    cargo,
+    empresa,
+    tema,
+    area,
+    resultadoTest.point,
+    duracion,
+    resultadoTest.respuestas,
+    firmaBase64,
+    capacitador,
+    duracion,
+    detalle
+);
+
+  });
+}
+
+//TESTE REGISTRO
+function iniciarTest() {
+  const tema = document.getElementById("temaFirma").value;
+
+  if (!tema) {
+    Swal.fire("Atención", "Debes seleccionar un tema primero.", "warning");
+    return;
+  }
+
+  // Mostrar bloque del test
+  document.getElementById("bloqueTest").style.display = "block";
+  document.getElementById("contenedorPreguntas").innerHTML = `
+      <div class="text-center my-2 text-secondary">
+        <i class="fa fa-spinner fa-spin"></i> Cargando preguntas...
+      </div>
+  `;
+
+  // Usar tu función ACTUAL sin duplicarla
+  google.script.run.withSuccessHandler(function(data){
+      maxValue = data[0];
+      correct_ans = data[1];
+      const htmlPreguntas = data[2];
+      questionPoints = data[3];
+      qNumb = 1;
+
+      if (maxValue === 0) {
+        document.getElementById("mensajeSinEvaluacion").style.display = "block";
+        document.getElementById("contenedorPreguntas").innerHTML = "";
+        return;
+      }
+
+      document.getElementById("mensajeSinEvaluacion").style.display = "none";
+      document.getElementById("contenedorPreguntas").innerHTML = htmlPreguntas;
+      document.getElementById("btnTestRegistro").disabled = true;
+      actualizarVistaTest();
+
+  }).getDataQuestion(tema);
+}
+function actualizarVistaTest(){
+    for (let i = 1; i <= maxValue; i++) {
+        const box = document.getElementById(i);
+        if (!box) continue;
+        box.style.display = (i === qNumb ? "block" : "none");
+    }
+
+    // Mostrar / ocultar botones
+    document.getElementById("btnBack").style.display = qNumb > 1 ? "block" : "none";
+    document.getElementById("btnNext").style.display = qNumb < maxValue ? "block" : "none";
+    document.getElementById("btnFinalizarTest").style.display = qNumb === maxValue ? "block" : "none";
+}
+
+function testNext() {
+    if (qNumb < maxValue) {
+        qNumb++;
+        actualizarVistaTest();
+    }
+}
+
+function testBack() {
+    if (qNumb > 1) {
+        qNumb--;
+        actualizarVistaTest();
+    }
+}
+let resultadoTest = {
+    point: 0,
+    respuestas: []
+};
+
+function finalizarTest(){
+    let puntoTotal = 0;
+    let respuestas = [];
+
+    for (let i = 1; i <= maxValue; i++) {
+        const opciones = document.getElementsByName(`q${i}`);
+        const marcado = Array.from(opciones).find(op => op.checked);
+
+        if (marcado) {
+            respuestas.push(marcado.value);
+
+            if (marcado.value == correct_ans[i-1]) {
+                puntoTotal += questionPoints[i-1];
+            }
+        } else {
+            respuestas.push("");
+        }
+    }
+
+    resultadoTest.point = puntoTotal;
+    resultadoTest.respuestas = respuestas;
+
+    Swal.fire(
+      "Evaluación completada, Firme y Guardelo",
+      //`Puntaje obtenido: <b>${puntoTotal}</b>`,
+      "Gracias!!"
+    );
+     document.getElementById("bloqueTest").style.display = "none";
+}
+
+
+//Actualizador
+function actualizarDatosCursos() {
+  const btn = document.getElementById("btnActualizarCursos");
+  if (!btn) return;
+
+  try {
+    // Cambiar icono a spinner
+    btn.disabled = true;
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+
+    // Obtener usuario desde localStorage
+    const userRaw = localStorage.getItem("userName") || localStorage.getItem("usuario") || "";
+    let usuario = "";
+    if (userRaw.startsWith("{")) {
+      usuario = JSON.parse(userRaw).usuario || "";
+    } else {
+      usuario = userRaw;
+    }
+
+    if (!usuario) {
+      btn.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-warning"></i>`;
+      setTimeout(() => {
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+      }, 2000);
+      return;
+    }
+
+    // Limpiar caché local
+    localStorage.removeItem(`datosDNI_${usuario}`);
+
+    // Mostrar indicador de carga visual
+    mostrarEstadoCargaCursos(true);
+    loadingStartG();
+
+    // Llamar al backend
+    google.script.run.withSuccessHandler((respuesta) => {
+      mostrarResultados(respuesta);
+      loadingEndG();
+
+      // Mostrar “check” verde de éxito
+      btn.innerHTML = `<i class="fa-solid fa-check text-success"></i>`;
+      setTimeout(() => {
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+      }, 1500);
+    }).obtenerDatosPorDNI(usuario);
+
+  } catch (error) {
+    console.error(error);
+    btn.innerHTML = `<i class="fa-solid fa-bug text-danger"></i>`;
+    setTimeout(() => {
+      btn.innerHTML = `<i class="fa-solid fa-rotate-right"></i>`;
+      btn.disabled = false;
+    }, 2000);
+  }
+}
+
+function abrirKahootModal() {
+    // 1. Crear el overlay (fondo oscuro)
+    const modalOverlay = document.createElement('div');
+    modalOverlay.id = 'modalKahootOverlay';
+    modalOverlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px);
+        z-index: 10000; display: flex; justify-content: center; align-items: center;
+        opacity: 0; transition: opacity 0.3s ease; padding: 20px;
+    `;
+
+    // 2. Crear el contenedor del modal Kahoot
+    const modalContainer = document.createElement('div');
+    modalContainer.style.cssText = `
+        position: relative; width: 100%; max-width: 900px; height: 90vh;
+        background: white; border-radius: 15px; overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); transform: scale(0.9);
+        transition: transform 0.3s ease;
+    `;
+
+    // 3. Botón para cerrar
+    const btnCerrar = document.createElement('button');
+    btnCerrar.innerHTML = '✕';
+    btnCerrar.style.cssText = `
+        position: absolute; top: 15px; right: 15px; width: 40px; height: 40px;
+        border: none; background: white; color: #333; border-radius: 50%;
+        cursor: pointer; z-index: 10001; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        transition: all 0.2s ease;
+    `;
+    
+    // Efecto hover para el botón cerrar
+    btnCerrar.onmouseenter = () => {
+        btnCerrar.style.background = '#ff4757';
+        btnCerrar.style.color = 'white';
+    };
+    btnCerrar.onmouseleave = () => {
+        btnCerrar.style.background = 'white';
+        btnCerrar.style.color = '#333';
+    };
+    
+    btnCerrar.onclick = () => cerrarModalKahoot();
+
+    // 4. El Iframe de Kahoot
+    const iframe = document.createElement('iframe');
+    iframe.src = "https://script.google.com/macros/s/AKfycbwXinXT0nRjsrJVcH5-1ip6rsKtqaHlOFolqPdHCe--1AhfcwiE3QwqcSOqICQjIJ9nYg/exec"; // URL principal de Kahoot
+    iframe.style.cssText = "width: 100%; height: 100%; border: none;";
+    iframe.setAttribute("allow", "microphone; camera; fullscreen"); 
+    iframe.setAttribute("allowfullscreen", "true");
+
+    // Ensamblar todo
+    modalContainer.appendChild(btnCerrar);
+    modalContainer.appendChild(iframe);
+    modalOverlay.appendChild(modalContainer);
+    document.body.appendChild(modalOverlay);
+
+    // Animación de entrada
+    setTimeout(() => {
+        modalOverlay.style.opacity = '1';
+        modalContainer.style.transform = 'scale(1)';
+    }, 10);
+
+    // ✅ ESCUCHAR MENSAJES DEL IFRAME HIJO
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.action === 'cerrarKahoot') {
+            cerrarModalKahoot();
+        }
+    });
+
+    // ✅ CERRAR CON TECLA ESCAPE
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            cerrarModalKahoot();
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+
+    // ✅ FUNCIÓN PARA CERRAR EL MODAL
+    function cerrarModalKahoot() {
+        const modal = document.getElementById('modalKahootOverlay');
+        if (modal) {
+            modal.style.opacity = '0';
+            modalContainer.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                if (document.body.contains(modal)) {
+                    document.body.removeChild(modal);
+                }
+                // Remover el event listener del escape
+                document.removeEventListener('keydown', handleEscape);
+            }, 300);
+        }
+    }
+
+    // ✅ CERRAR AL HACER CLIC FUERA DEL MODAL
+    modalOverlay.onclick = (e) => {
+        if (e.target === modalOverlay) {
+            cerrarModalKahoot();
+        }
+    };
+}
+
+
+
+function cerrarKahootModal() {
+  const modal = document.getElementById('kahootModalOverlay');
+  modal.classList.remove('active');
+  document.body.style.overflow = ''; // Restaurar scroll
+}
+
+// Cerrar con tecla ESC
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') cerrarKahootModal();
+});
+</script>
+                                                                                                                           
+    </body>   
+</html>
+

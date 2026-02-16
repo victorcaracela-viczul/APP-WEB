@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    /* Switch compacto para observaciones */
+    .switch-obs {
+      position: relative;
+      display: inline-block;
+      width: 34px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+    .switch-obs input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider-obs {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      border-radius: 18px;
+      transition: .3s;
+    }
+    .slider-obs:before {
+      position: absolute;
+      content: "";
+      height: 12px;
+      width: 12px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      border-radius: 50%;
+      transition: .3s;
+    }
+    .switch-obs input:checked + .slider-obs {
+      background-color: #ff9800;
+    }
+    .switch-obs input:checked + .slider-obs:before {
+      transform: translateX(16px);
+    }
+    .switch-obs input:disabled + .slider-obs {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .obs-row-panel {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: nowrap;
+    }
+    .obs-input-comment {
+      flex: 1;
+      min-width: 80px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.8em;
+      height: 28px;
+    }
+    .obs-cam-label {
+      cursor: pointer;
+      font-size: 1.1em;
+      margin: 0;
+      color: #555;
+      flex-shrink: 0;
+    }
+    .obs-cam-label:hover {
+      color: #ff9800;
+    }
+    .obs-thumbs-container {
+      display: none;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .obs-thumb-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+    .obs-thumb-wrapper img {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    .obs-thumb-remove {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #e53935;
+      color: white;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      font-size: 10px;
+      line-height: 16px;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+    }
+    .obs-thumb-label {
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      background: #2c5aa0;
+      color: #fff;
+      border-radius: 50%;
+      width: 15px;
+      height: 15px;
+      font-size: 8px;
+      line-height: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+
+<body>
+  <div class="container-fluid px-0" style="padding:0px; margin:0px;" id="checkid">
+    <div class="row py-0">
+      <div class="p-0 m-0 border rounded-3">
+        <div class="imgbg">
+          <!-- Button trigger modal -->
+          <div class="form-group mb-3 text-center">
+            <br>
+            <center>
+              <div class="wrapper">
+                <div class="display">
+                  <div id="time"></div>
+                </div>
+                <span></span>
+                <span></span>
+              </div>
+            </center>
+
+          </div>
+
+          <div class="container">
+            <form id="search-form" class="form-inline" onsubmit="submitForm(this)">
+              <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon1" style="height:43px;"><i class="fa-solid fa-person-digging"></i></span>
+                <select class="form-select" id="ad1" name="ad1" required></select>
+              </div>
+              <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon1" style="height:43px;"><i class="fa-solid fa-house-user"></i></span>
+                <select class="form-select" id="ad2" name="ad2" required></select>
+              </div>
+              <div class="input-group mb-3">
+                <span class="input-group-text"><i class="fa-solid fa-location-dot"></i></span>
+                <input type="text" class="form-control" id="ad9" name="ad9"  placeholder="Proceso" list="listProcesoCheck" required autocomplete="off">
+                <datalist id="listProcesoCheck"></datalist> 
+              </div>
+              <div class="input-group mb-3">
+                <span class="input-group-text"><i class="fa-solid fa-location-dot"></i></span>
+                <input type="text" class="form-control" id="ad5" name="ad5"  placeholder="Lugar/ubicación" list="checkTipo" required autocomplete="off">
+                <datalist id="checkTipo"></datalist> 
+              </div>
+              <div class="input-group mb-3"> 
+                <span class="input-group-text"><i class="fa-solid fa-user-check"></i></span>
+                <input type="text" class="form-control" id="ad6" name="ad6"  placeholder="Inspector" list="listIsp" readonly>
+                <datalist id="listIsp"></datalist> 
+              </div>
+              <!-- ✅ SECCIÓN OCULTA hasta que ad5 tenga valor -->
+              <div id="hidden-check-section" style="display:none;">
+              <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon1" style="height:43px;"><i class="fa-solid fa-closed-captioning"></i></span>
+                <select class="form-control" id="ad3" name="ad3" required></select>
+              </div>
+              
+              <div class="input-group mb-0 pb-0">
+                <span class="input-group-text" id="basic-addon1" style="height:43px;"><i class="fa-sharp fa-solid fa-van-shuttle"></i></span>
+                <select class="form-control" id="ad4" name="ad4" onclick="btnw()" required></select>
+              </div>
+              <div class="mb-2">
+                <div id="message1" style="margin: 0; padding: 0; color: blue; font-size: 12px;"></div>
+                <div id="message2" style="margin: 0; padding: 0; color: blue; font-size: 12px;"></div>
+              </div>
+              <div class="form-group mb-2 text-center ">
+                
+                <button id="serach" type="submit" class="btn btn-info mb-2 rounded-pill"><i class="fa-solid fa-search"></i> Buscar</button>
+                <button id="btn-dt" type="button" class="btn btn-secondary mb-2 rounded-pill" onclick="loaddata()"><i class="fa-solid fa-table"></i> Historial</button>
+              </div>
+              <div style="font-size:10px; color:#FF5058;">
+                Si el item con (*) no cumple, entonces se paraliza o retira el equipo
+                </div>
+              </div><!-- fin hidden-check-section -->
+            </form>
+          </div>
+            <div class="container-fluid bg-white text-center" id="tableshow" style="display: none;">
+
+              <!-- Resultados de búsqueda -->
+              <div id="search-results" class="table-responsive"></div>
+
+              <!-- Comentarios -->
+              <div class="input-group mb-3" id="comentarios">
+                <span class="input-group-text" id="basic-addon1">
+                  <i class="fa-regular fa-comments"></i>
+                </span>
+                <textarea class="form-control" id="ad7" name="ad7" placeholder="Indique el plan de acción en caso aplique"></textarea>
+              </div>
+
+              <!-- Mensaje de IA -->
+              <div id="comentarioia" style="font-size: 11px;">
+                <i class="fa-solid fa-vial-virus"></i>
+                Suba una imagen enfoque y encuadre bien un único objeto en la imagen y deja que la IA detecte fallas.
+              </div>
+
+              <!-- Subida de imagen -->
+              <div class="input-group mb-3" id="image-upload" style="align-items: center; justify-content: center;">
+                <label for="ad8" class="input-group-text" id="basic-addon1" style="width: 100px; display: flex; align-items: center; justify-content: center;">
+                  <i class="fa-regular fa-image"></i>
+                </label>
+                <input type="file" class="form-control visually-hidden" id="ad8" name="ad8" accept="image/*" onchange="previewImage(event)">
+              </div>
+
+              <!-- Imagen en base64 -->
+              <input type="hidden" id="imageData" name="imageData">
+
+              <!-- Vista previa -->
+              <div class="text-center">
+                <img id="image-preview" src="" alt="Image Preview" style="max-width: 100%; display: none;" />
+              </div>
+
+              <!-- Botones -->
+              <div class="mb-3">
+                <button class="btn btn-success" id="showsave" onclick="whenButtonClicked()">Enviar</button>
+                <button class="btn btn-warning" id="boton-limpiar" onclick="clearForm()">Limpiar</button>
+                <button type="button" class="btn btn-primary" id="analyze-image-btn">Verificar IA</button>
+              </div>
+
+            </div>
+
+
+          <div class="col-lg-12 mx-auto shadow p-1 border bg-light text-center" id="dataTable2" style="display:none">
+            <label>Historial</label>
+            <table id="example" class="display " style="width:100%">
+              <thead class="text-center bg-info"></thead>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    setInterval(()=>{
+           const time = document.querySelector(".display #time");
+           let date = new Date();
+           let hours = date.getHours();
+           let minutes = date.getMinutes();
+           let seconds = date.getSeconds();
+           let day_night = "AM";
+           if(hours > 12){
+             day_night = "PM";
+             hours = hours - 12;
+           }
+           if(seconds < 10){
+             seconds = "0" + seconds;
+           }
+           if(minutes < 10){
+             minutes = "0" + minutes;
+           }
+           if(hours < 10){
+             hours = "0" + hours;
+           }
+           time.textContent = hours + ":" + minutes + ":" + seconds + " "+ day_night;
+         });
+
+        function llenarChosenDesdeLista(id, lista = []) {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.innerHTML = '';
+          lista.forEach(op => {
+            const option = document.createElement("option");
+            option.value = op;
+            option.textContent = op;
+            el.appendChild(option);
+          });
+          $(`#${id}`).trigger("chosen:updated");
+        }
+
+  </script>
+
+<!-- dropdown -->
+  <script>
+  // 1 */                  
+            var arrayOfValues;
+             function affterPageLoads(){
+               google.script.run.withSuccessHandler(affterDropdownArrayReturned).getDropDownarray(); 
+             }
+// 2 */ 
+            function affterDropdownArrayReturned(arrayOfArrays){
+            arrayOfValues = arrayOfArrays.filter(function(r){ return true;});
+            console.log(arrayOfValues)
+            var item = document.getElementById("ad1");
+            addUniqueOptionToDropDown(item,arrayOfValues,0);
+            afterfirstDropDownChange();
+            aftersecondDropDownChange();
+          }
+
+// 3 */           
+          function addUniqueOptionToDropDown(el,arrayOfArrays,index){
+              var currentlyAdded = [];      
+              el.innerHTML = '';
+              arrayOfArrays.forEach(function(r){ 
+           if(currentlyAdded.indexOf(r[index]) === -1){
+              var option = document.createElement("option");    
+              option.textContent = r[index];
+              el.appendChild(option);
+              currentlyAdded.push(r[index]);
+              }
+               });
+          }
+// 4 */          
+          function afterfirstDropDownChange(){
+            var ad2 = document.getElementById("ad2");
+            var ad1 = document.getElementById("ad1").value;
+            var filterarrayOfValue = arrayOfValues.filter(function(r){return r[0] === ad1 });
+            addUniqueOptionToDropDown(ad2,filterarrayOfValue,1);  
+            aftersecondDropDownChange();
+          }
+
+          function aftersecondDropDownChange(){
+            var itemtype = document.getElementById("ad3");
+            var ad1 = document.getElementById("ad1").value;
+            var ad2 = document.getElementById("ad2").value;
+            var filterarrayOfValue = arrayOfValues.filter(function(r){return r[0] === ad1 && r[1] === ad2 });
+            addUniqueOptionToDropDown(itemtype,filterarrayOfValue,2); 
+            afterthirdDropDownChange();       
+          }
+
+          function afterthirdDropDownChange(){
+            var itemtype = document.getElementById("ad4");
+            var ad1 = document.getElementById("ad1").value;
+            var ad2 = document.getElementById("ad2").value;
+            var ad3 = document.getElementById("ad3").value;
+            var filterarrayOfValue = arrayOfValues.filter(function(r){return r[0] === ad1 && r[1] === ad2 && r[2] === ad3 });
+            
+            addUniqueOptionToDropDown(itemtype,filterarrayOfValue,3); 
+                  
+          }   
+     
+       function runcodepost(){
+         var t1 = document.getElementById("ad1").value;
+         var u1 = document.getElementById("ad2").value;
+         var ch1 = document.getElementById("ad3").value;
+         var ch2 = document.getElementById("ad4").value;
+         if(ch2.length != ""){
+          google.script.run.withSuccessHandler(updatecodepost).setcodepost(t1,u1,ch1 ,ch2);
+            }
+            
+       }        
+
+            document.getElementById("ad1").addEventListener("change",afterfirstDropDownChange);
+            document.getElementById("ad2").addEventListener("change",aftersecondDropDownChange);
+            document.getElementById("ad3").addEventListener("change",afterthirdDropDownChange);
+
+            // ✅ Mostrar/ocultar sección de check cuando ad5 tiene valor
+            document.getElementById("ad5").addEventListener("input", function() {
+              var hiddenSection = document.getElementById('hidden-check-section');
+              if (this.value.trim() !== '') {
+                hiddenSection.style.display = 'block';
+              } else {
+                hiddenSection.style.display = 'none';
+                document.getElementById('tableshow').style.display = 'none';
+              }
+            });
+          
+</script>
+
+<!-- Check -->
+<script>
+function loaddata() {
+  event.preventDefault();
+  $('#dataTable2').show();
+  var user = {};
+  user.ad4 = document.getElementById("ad4").value;
+  user.ad3 = document.getElementById("ad3").value;
+  google.script.run.withSuccessHandler(showDataTable).getDataCheckList(user);
+}
+
+function showDataTable(result) {
+  if (result.length > 0) {
+    $(document).ready(function() {
+      var table = $('#example').DataTable({
+        data: result,
+        destroy: true,
+        searching: false,
+        paging: false,
+        ordering: false,
+        info: false,
+        scrollY: '100px',
+        scrollCollapse: true,
+        responsive: true,
+        columns: [
+          { 'title': 'Fecha' },
+          { 'title': 'SI' },
+          { 'title': 'NO' },
+          { 'title': 'ID' },
+          { 'title': 'Equipo' }
+        ],
+        columnDefs: [
+          {
+            targets: [0],
+            createdCell: function(td, cellData, rowData, row, col) {
+              $(td).addClass('td_wrap');
+            }
+          },
+          {
+            targets: [0, 1, 2, 3, 4],
+            createdCell: function(td, cellData, rowData, row, col) {
+              $(td).addClass('td_center');
+            }
+          }
+        ]
+      });
+
+      $('#example tbody').on('click', 'tr', function() {
+        var data = table.row(this).data();
+        var id = data[3]; 
+        $('#numid').val(id); 
+        $('#exampleModal2').modal('show');
+        showData(); 
+      });
+    });
+  } else {
+    Swal.fire({
+      position: 'center',
+      icon: 'error',
+      title: 'Datos no encontrados',
+      showConfirmButton: false,
+      timer: 1500
+    });
+  }
+}
+</script>
+
+<script>
+function submitForm(obj) {
+  event.preventDefault();
+
+  const ad4Value = document.getElementById("ad4").value;
+  google.script.run.withSuccessHandler(function(data) {
+    if (data) {
+      document.getElementById("message1").textContent = data.message1 ? "⚠︎ " + data.message1 : '';
+      document.getElementById("message2").textContent = data.message2 ? "Vencimiento: " + data.message2 : '';
+    } else {
+      document.getElementById("message1").textContent = '';
+      document.getElementById("message2").textContent = '';
+    }
+  }).getAdditionalInfoByValue(ad4Value);
+
+  google.script.run.withSuccessHandler(showTable).searchData(obj);
+}
+
+
+// =============================================
+// VARIABLE GLOBAL: fotos por sección
+// =============================================
+var sectionPhotos = {};
+var totalSections = 0;
+
+
+// =============================================
+// CONSTRUIR FILA DE SWITCH POR SECCIÓN
+// =============================================
+function buildSwitchRow(sectionIdx) {
+  return "<tr data-section='" + sectionIdx + "' data-type='switch'>" +
+    "<td colspan='4' style='padding:5px 8px; background:#f0f0f0; border-top:1px solid #ddd;'>" +
+      "<div class='obs-row-panel'>" +
+        // Switch
+        "<label class='switch-obs'>" +
+          "<input type='checkbox' id='switch-" + sectionIdx + "' disabled onchange='toggleObsPanel(" + sectionIdx + ")'>" +
+          "<span class='slider-obs'></span>" +
+        "</label>" +
+        // Panel oculto: comentario + cámaras por ítem
+        "<div id='obs-panel-" + sectionIdx + "' style='display:none; flex:1;'>" +
+          "<input type='text' id='obs-comment-" + sectionIdx + "' class='obs-input-comment' placeholder='Obs...' style='margin-bottom:3px;'>" +
+          "<div id='obs-items-" + sectionIdx + "'></div>" +
+        "</div>" +
+      "</div>" +
+      // Thumbnails de fotos
+      "<div id='obs-thumbs-" + sectionIdx + "' class='obs-thumbs-container'></div>" +
+    "</td>" +
+  "</tr>";
+}
+
+
+// =============================================
+// MOSTRAR TABLA (MODIFICADO CON SWITCHES)
+// =============================================
+function showTable(dataArray) {
+    if (dataArray && dataArray !== undefined && dataArray.length != 0) {
+        // Reset fotos de secciones
+        sectionPhotos = {};
+        totalSections = 0;
+
+        var sectionIndex = -1;
+        var rows = [];
+
+        // Primer paso: identificar secciones
+        for (var i = 0; i < dataArray.length; i++) {
+            var itemText = dataArray[i][2];
+            var esTitulo = /^\d+\./.test(itemText.trim());
+
+            if (esTitulo) {
+                sectionIndex++;
+            }
+
+            rows.push({
+                type: esTitulo ? 'title' : 'item',
+                data: dataArray[i],
+                section: Math.max(sectionIndex, 0),
+                idx: i
+            });
+        }
+
+        totalSections = sectionIndex + 1;
+
+        // Construir tabla
+        var result = "<table class='table table-sm table-bordered' id='dtable' style='font-size:0.9em; border-radius:8px; overflow:hidden;'>" +
+            "<thead class='table-light text-center sticky-top'>" +
+            "<tr>" +
+            "<th scope='col' style='color:green; font-size:18px; max-width:20px; width:20px;'><i class='fa-solid fa-circle-check'></i></th>" +
+            "<th scope='col' style='color:red; font-size:18px; max-width:20px; width:20px;'><i class='fa-solid fa-circle-xmark'></i></th>" +
+            "<th scope='col' style='color:blue; font-size:18px; max-width:20px; width:20px;'><i class='fa-solid fa-circle-minus'></i></th>" +
+            "<th scope='col' style='font-size:17px;'>Ítems de Verificación</th>" +
+            "</tr>" +
+            "</thead><tbody>";
+
+        var currentSection = -1;
+        var itemCounter = 0;
+
+        for (var r = 0; r < rows.length; r++) {
+            var row = rows[r];
+
+            // Si aparece un nuevo título y ya hubo sección previa → cerrar con switch
+            if (row.type === 'title' && currentSection >= 0) {
+                result += buildSwitchRow(currentSection);
+            }
+
+            if (row.type === 'title') {
+                currentSection = row.section;
+            }
+
+            var i = row.idx;
+            for (var j = 2; j < row.data.length; j++) {
+                if (row.type === 'title') {
+                    result += "<tr class='align-middle text-start' data-section='" + row.section + "' data-type='title'>";
+                    result += "<td colspan='4' style=\"font-weight:bold; font-size:0.9em; color:#ffffff; background-color:#2c5aa0; padding:9px; text-align:center; border:none;\">";
+                    result += "<i class='fa-solid fa-list-check me-2'></i>" + row.data[j];
+                    result += "<input type=\"radio\" name=\"option" + i + "\" value=\"NA\" class=\"form-check-input multi radio-blue\" checked style=\"display:none;\" />";
+                    result += "</td>";
+                    result += "</tr>";
+                } else {
+                    itemCounter++;
+                    result += "<tr class='align-middle text-start' data-section='" + row.section + "' data-type='item' data-itemnum='" + itemCounter + "'>";
+                    result += "<td>";
+                    result += "<input type=\"radio\" name=\"option" + i + "\" value=\"Si\" class=\"form-check-input multi radio-green\" checked onchange=\"checkSectionNos(" + row.section + ")\" />";
+                    result += "</td>";
+                    result += "<td>";
+                    result += "<input type=\"radio\" name=\"option" + i + "\" value=\"No\" class=\"form-check-input multi radio-red\" onchange=\"checkSectionNos(" + row.section + ")\" />";
+                    result += "</td>";
+                    result += "<td>";
+                    result += "<input type=\"radio\" name=\"option" + i + "\" value=\"NA\" class=\"form-check-input multi radio-blue\" onchange=\"checkSectionNos(" + row.section + ")\" />";
+                    result += "</td>";
+
+                    if (row.data[j].includes("*")) {
+                        result += "<td style=\"color:red; font-weight:bold; text-align:left; font-size:0.9em; padding-left:20px;\">" + row.data[j] + "</td>";
+                    } else {
+                        result += "<td style=\"text-align:left; font-size:0.9em; padding-left:20px;\">" + row.data[j] + "</td>";
+                    }
+                    result += "</tr>";
+                }
+            }
+        }
+
+        // Cerrar última sección con switch
+        if (currentSection >= 0) {
+            result += buildSwitchRow(currentSection);
+        }
+
+        result += "</tbody></table>";
+
+        var div = document.getElementById('search-results');
+        div.innerHTML = result;
+        $('#tableshow').show();
+        $('#image-upload').show();
+    } else {
+        var div = document.getElementById('search-results');
+        div.innerHTML = "<div class='alert alert-warning text-center'>¡Datos no encontrados!</div>";
+    }
+}
+
+
+// =============================================
+// DETECTAR "NO" EN SECCIÓN → HABILITAR SWITCH
+// =============================================
+function checkSectionNos(sectionIdx) {
+    var nosChecked = document.querySelectorAll('tr[data-section="' + sectionIdx + '"][data-type="item"] input[type="radio"][value="No"]:checked');
+    var switchEl = document.getElementById('switch-' + sectionIdx);
+    if (!switchEl) return;
+
+    if (nosChecked.length > 0) {
+        switchEl.disabled = false;
+        if (switchEl.checked) buildPerItemCameras(sectionIdx);
+    } else {
+        switchEl.disabled = true;
+        switchEl.checked = false;
+        toggleObsPanel(sectionIdx);
+    }
+}
+
+
+// =============================================
+// TOGGLE PANEL DE OBSERVACIÓN
+// =============================================
+function toggleObsPanel(sectionIdx) {
+    var switchEl = document.getElementById('switch-' + sectionIdx);
+    var panel = document.getElementById('obs-panel-' + sectionIdx);
+    var thumbs = document.getElementById('obs-thumbs-' + sectionIdx);
+    if (!panel) return;
+
+    if (switchEl && switchEl.checked) {
+        panel.style.display = 'block';
+        buildPerItemCameras(sectionIdx);
+        if (sectionPhotos[sectionIdx] && sectionPhotos[sectionIdx].length > 0) {
+            thumbs.style.display = 'flex';
+        }
+    } else {
+        panel.style.display = 'none';
+        thumbs.style.display = 'none';
+    }
+}
+
+
+// =============================================
+// CONSTRUIR CÁMARAS POR ÍTEM "NO"
+// =============================================
+function buildPerItemCameras(sectionIdx) {
+    var container = document.getElementById('obs-items-' + sectionIdx);
+    if (!container) return;
+
+    var noRadios = document.querySelectorAll('tr[data-section="' + sectionIdx + '"][data-type="item"] input[type="radio"][value="No"]:checked');
+    var html = '';
+
+    noRadios.forEach(function(radio) {
+        var row = radio.closest('tr');
+        var itemNum = row.getAttribute('data-itemnum');
+        var itemText = row.querySelector('td:last-child').textContent.trim();
+        var shortText = itemText.length > 30 ? itemText.substring(0, 30) + '…' : itemText;
+
+        html += '<div style="display:flex; align-items:center; gap:4px; margin:2px 0;">' +
+          '<span style="font-size:0.75em; color:#dc3545; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">❌ <b>' + itemNum + '.</b> ' + shortText + '</span>' +
+          '<label for="obs-photo-' + sectionIdx + '-' + itemNum + '" class="obs-cam-label" style="flex-shrink:0;"><i class="fa-solid fa-camera"></i></label>' +
+          '<input type="file" id="obs-photo-' + sectionIdx + '-' + itemNum + '" accept="image/*" capture="environment" style="display:none;" onchange="addSectionPhoto(' + sectionIdx + ',' + itemNum + ',event)">' +
+        '</div>';
+    });
+
+    container.innerHTML = html || '<div style="font-size:0.75em; color:#999;">Sin ítems No</div>';
+}
+
+
+// =============================================
+// AGREGAR FOTO CON ITEM + FECHA/HORA ESTAMPADA
+// =============================================
+function addSectionPhoto(sectionIdx, itemNum, event) {
+    var file = event.target.files[0];
+    if (!file) return;
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+            var canvas = document.createElement('canvas');
+            var maxW = 800;
+            var scale = img.width > maxW ? maxW / img.width : 1;
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            var now = new Date();
+            var stamp = String(now.getDate()).padStart(2, '0') + '/' +
+                        String(now.getMonth() + 1).padStart(2, '0') + '/' +
+                        now.getFullYear() + '  ' +
+                        String(now.getHours()).padStart(2, '0') + ':' +
+                        String(now.getMinutes()).padStart(2, '0') + ':' +
+                        String(now.getSeconds()).padStart(2, '0');
+
+            var fontSize = Math.max(14, Math.floor(canvas.width * 0.035));
+            ctx.font = 'bold ' + fontSize + 'px Arial';
+
+            // ✅ ITEM label esquina superior izquierda
+            var itemLabel = 'ITEM ' + itemNum;
+            var labelW = ctx.measureText(itemLabel).width;
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(4, 4, labelW + 14, fontSize + 10);
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText(itemLabel, 11, fontSize + 7);
+
+            // ✅ Fecha/hora esquina inferior derecha
+            var textW = ctx.measureText(stamp).width;
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(canvas.width - textW - 18, canvas.height - fontSize - 14, textW + 14, fontSize + 10);
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText(stamp, canvas.width - textW - 11, canvas.height - 11);
+
+            var stampedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+
+            if (!sectionPhotos[sectionIdx]) sectionPhotos[sectionIdx] = [];
+            sectionPhotos[sectionIdx].push({ num: itemNum, b64: stampedBase64 });
+            renderThumbs(sectionIdx);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+}
+
+
+// =============================================
+// ELIMINAR FOTO DE SECCIÓN
+// =============================================
+function removeSectionPhoto(sectionIdx, photoIdx) {
+    if (sectionPhotos[sectionIdx]) {
+        sectionPhotos[sectionIdx].splice(photoIdx, 1);
+        renderThumbs(sectionIdx);
+    }
+}
+
+
+// =============================================
+// RENDERIZAR THUMBNAILS DE SECCIÓN (con badge de ítem)
+// =============================================
+function renderThumbs(sectionIdx) {
+    var container = document.getElementById('obs-thumbs-' + sectionIdx);
+    if (!container) return;
+    container.innerHTML = '';
+    var photos = sectionPhotos[sectionIdx] || [];
+
+    photos.forEach(function(photo, idx) {
+        var div = document.createElement('div');
+        div.className = 'obs-thumb-wrapper';
+        div.innerHTML = '<img src="' + photo.b64 + '">' +
+            '<span class="obs-thumb-label">' + photo.num + '</span>' +
+            '<button class="obs-thumb-remove" onclick="removeSectionPhoto(' + sectionIdx + ',' + idx + ')">✕</button>';
+        container.appendChild(div);
+    });
+
+    container.style.display = photos.length > 0 ? 'flex' : 'none';
+}
+
+
+// =============================================
+// GENERAR COLLAGE (CANVAS) AL GUARDAR
+// =============================================
+function buildCollage(sectionIdx) {
+    return new Promise(function(resolve) {
+        var photos = sectionPhotos[sectionIdx] || [];
+        if (photos.length === 0) { resolve(''); return; }
+        if (photos.length === 1) { resolve(photos[0].b64); return; }
+
+        var images = [];
+        var loaded = 0;
+
+        photos.forEach(function(photo, i) {
+            var img = new Image();
+            img.onload = function() {
+                images[i] = img;
+                loaded++;
+                if (loaded === photos.length) {
+                    var cols = photos.length === 1 ? 1 : 2;
+                    var rows = Math.ceil(photos.length / cols);
+                    var cellW = 400;
+                    var cellH = 300;
+
+                    var canvas = document.createElement('canvas');
+                    canvas.width = cellW * cols;
+                    canvas.height = cellH * rows;
+                    var ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    images.forEach(function(im, idx) {
+                        var col = idx % cols;
+                        var row = Math.floor(idx / cols);
+                        var x = col * cellW;
+                        var y = row * cellH;
+
+                        var sc = Math.min(cellW / im.width, cellH / im.height);
+                        var w = im.width * sc;
+                        var h = im.height * sc;
+                        var ox = x + (cellW - w) / 2;
+                        var oy = y + (cellH - h) / 2;
+
+                        ctx.drawImage(im, ox, oy, w, h);
+                        ctx.strokeStyle = '#ddd';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(x, y, cellW, cellH);
+                    });
+
+                    resolve(canvas.toDataURL('image/jpeg', 0.8));
+                }
+            };
+            img.src = photo.b64;
+        });
+    });
+}
+
+
+// =============================================
+// RECOPILAR OBSERVACIONES DE TODAS LAS SECCIONES
+// =============================================
+async function collectSectionObservations() {
+    var observations = [];
+
+    for (var s = 0; s < totalSections; s++) {
+        var switchEl = document.getElementById('switch-' + s);
+        if (switchEl && switchEl.checked) {
+            var comment = document.getElementById('obs-comment-' + s);
+            var commentVal = comment ? comment.value.trim() : '';
+            var collage = await buildCollage(s);
+            observations.push({
+                section: s,
+                comment: commentVal,
+                image: collage
+            });
+        }
+    }
+
+    return observations;
+}
+
+</script>
+
+
+  <script>
+    let ad4 = document.getElementById('ad4');
+    let ad5 = document.getElementById('ad5');
+    let ad9 = document.getElementById('ad9');
+    let ad6 = document.getElementById('ad6');
+    let ad3 = document.getElementById('ad3');
+    let ad2 = document.getElementById('ad2');
+    let ad7 = document.getElementById('ad7');
+
+async function whenButtonClicked() {
+  event.preventDefault();
+  const btnSubmit = document.getElementById('showsave');
+  btnSubmit.innerHTML = "Enviando...";
+  btnSubmit.disabled = true;
+
+  if (!validateForm()) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Formulario incompleto',
+      text: 'Por favor, completa todos los campos requeridos antes de guardar.',
+    });
+    btnSubmit.innerHTML = "Enviar";
+    btnSubmit.disabled = false;
+    return;
+  }
+
+  let checked;
+  let temp = document.querySelectorAll('.multi:checked');
+  if (temp != null) {
+    let checkedvalues = Array.prototype.map.call(temp, function(el){ return el.value });
+    checked = checkedvalues.join(",");
+  } else {
+    checked = null;
+  }
+
+  // ✅ Recopilar observaciones de secciones (async por el canvas collage)
+  var sectionObs = await collectSectionObservations();
+
+let objData = {
+  ad1: document.getElementById('ad1').value,
+  ad4: ad4.value,
+  ad5: ad5.value,
+  ad9: ad9.value,
+  ad6: ad6.value,
+  ad3: ad3.value,
+  ad2: ad2.value,
+  ad7: ad7.value,
+  checked: checked,
+  imageData: document.getElementById('imageData').value,
+  sectionObs: JSON.stringify(sectionObs) // ✅ Observaciones por sección
+};
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      savesuccess(result);
+      reiniciarTablaCheck();
+    })
+    .withFailureHandler(function(error) {
+      console.error("Error al guardar:", error.message);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al guardar',
+        text: 'No se pudo guardar. Verifica tu conexión a internet o inténtalo nuevamente.',
+      });
+      btnSubmit.innerHTML = "Enviar";
+      btnSubmit.disabled = false;
+    })
+    .saveDataCheck(objData);
+}
+
+
+function previewImage(event) {
+    var reader = new FileReader();
+    reader.onload = function() {
+        var output = document.getElementById('image-preview');
+        output.src = reader.result;
+        output.style.display = 'block';
+        document.getElementById('imageData').value = reader.result;
+    };
+    reader.readAsDataURL(event.target.files[0]);
+}
+
+//IA
+document.getElementById('analyze-image-btn').addEventListener('click', function() {
+    const base64Image = document.getElementById('imageData').value;
+    if (!base64Image) {
+        Swal.fire('Advertencia', 'Por favor, selecciona una imagen antes de analizar.', 'warning');
+        return;
+    }
+
+    const listaItems = obtenerListaDeItems();
+
+    Swal.fire({
+        title: 'Analizando imagen...',
+        text: 'Esto puede tardar unos segundos.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    google.script.run.withSuccessHandler(function(respuestas) {
+        Swal.close();
+        aplicarRespuestas(respuestas);
+    }).analizarImagenConLista(base64Image.split(',')[1], 'image/png', listaItems);
+});
+
+
+function obtenerListaDeItems() {
+    const filas = document.querySelectorAll('#dtable tbody tr');
+    let lista = [];
+
+    filas.forEach(fila => {
+        const tipo = fila.getAttribute('data-type');
+        if (tipo === 'item') {
+            const textoItem = fila.querySelector('td:last-child').innerText.trim();
+            lista.push(textoItem);
+        }
+    });
+
+    return lista;
+}
+
+
+function aplicarRespuestas(respuestas) {
+    const filas = document.querySelectorAll('#dtable tbody tr');
+
+    filas.forEach(fila => {
+        const tipo = fila.getAttribute('data-type');
+        if (tipo === 'item') {
+            const textoItem = fila.querySelector('td:last-child').innerText.trim();
+            const radios = fila.querySelectorAll('input[type="radio"]');
+            const match = respuestas.find(r => r.item === textoItem);
+            if (match) {
+                if (match.respuesta === 'Sí') radios[0].checked = true;
+                else if (match.respuesta === 'No') radios[1].checked = true;
+                else if (match.respuesta === 'NA') radios[2].checked = true;
+            }
+
+            // ✅ Después de aplicar IA, verificar switches
+            var section = fila.getAttribute('data-section');
+            if (section !== null) {
+                checkSectionNos(parseInt(section));
+            }
+        }
+    });
+}
+
+
+//FIN IA
+
+function savesuccess(result) {
+  let btnSubmit = document.getElementById('showsave');
+  Swal.fire({
+    title: 'Guardando datos...',
+    text: 'Por favor, espera un momento.',
+    icon: 'info',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
+  setTimeout(() => {
+    Swal.fire({
+      position: 'top-center',
+      icon: 'success',
+      title: 'Enviado correctamente',
+      html: 'Código de registro: ' + result.columnAValue + 
+          '<br><br><button class="btn btn-danger" id="exportPdfBtn" data-column-a="' + result.columnAValue + '">Exportar PDF</button>',
+      showConfirmButton: true,
+      confirmButtonText: 'Cerrar',
+      allowOutsideClick: false
+    }).then((res) => {
+      if (res.isConfirmed) {
+        $('#exampleModal2').modal('hide');
+        
+        clearForm();
+      }
+    });
+
+    btnSubmit.innerHTML = "Enviar";
+    btnSubmit.disabled = false;
+
+    let totalCheck1 = document.getElementById('totalCheck1');
+    let totalCheck2 = document.getElementById('totalCheck2');
+    google.script.run.withSuccessHandler(function(data) {
+      totalCheck1.innerHTML = data[0];    
+      totalCheck2.innerHTML = data[1];
+    }).setStatusCheck();
+  }, 500);
+}
+
+document.addEventListener('click', function(event) {
+  if (event.target && event.target.id === 'exportPdfBtn') {
+    let columnAValue = event.target.getAttribute('data-column-a');
+
+    Swal.fire({
+      title: '¿Desea exportar este reporte a PDF?',
+      text: "Se generará un documento con los datos correspondientes.",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, exportar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: 'Generando PDF...',
+          text: 'Por favor, espere.',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+
+        generatePdf(columnAValue);
+      }
+    });
+  }
+});
+
+function generatePdf(columnAValue) {
+    Swal.fire({
+        title: 'Generando PDF...',
+        text: 'Por favor, espera un momento.',
+        icon: 'info',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    google.script.run.withSuccessHandler(function(pdfUrl) {
+        Swal.fire({
+            position: 'top-center',
+            icon: 'success',
+            title: 'PDF generado',
+            text: 'El PDF se ha generado correctamente.',
+            showConfirmButton: true,
+            confirmButtonText: 'Cerrar',
+            allowOutsideClick: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#exampleModal2').modal('hide');
+                clearForm();
+            }
+        });
+
+        window.open(pdfUrl, '_blank');
+    }).getPdfUrl(columnAValue);
+}
+
+function clearForm() {
+  const form = document.getElementById('search-form');
+  const inputs = form.querySelectorAll('input, select, textarea');
+
+  inputs.forEach(input => {
+    if (input.tagName === 'SELECT') {
+      input.selectedIndex = 0;
+    } else if (input.type === 'file') {
+      input.value = ''; 
+    } else {
+      input.value = '';
+    }
+  });
+
+  document.getElementById('ad7').value = '';
+
+  const userObj = JSON.parse(localStorage.getItem('userName') || '{}');
+  const nombre = userObj.nombre || '';
+
+  const nombreInputCheck = document.getElementById('ad6');
+  if (nombreInputCheck) {
+    nombreInputCheck.value = nombre;
+  }
+
+  const imagePreview = document.getElementById('image-preview');
+  imagePreview.src = '';
+  imagePreview.style.display = 'none';
+
+  document.getElementById('imageData').value = '';
+
+  document.querySelectorAll('.multi').forEach(radio => {
+    radio.checked = (radio.value === 'Si');
+  });
+
+  const fileInput = document.getElementById('image-upload');
+  fileInput.removeEventListener('change', previewImage);
+  fileInput.addEventListener('change', previewImage);
+
+  document.getElementById('message1').textContent = '';
+  document.getElementById('message2').textContent = '';
+
+  // ✅ Ocultar tabla y sección de check
+  document.getElementById('tableshow').style.display = 'none';
+  document.getElementById('hidden-check-section').style.display = 'none';
+  document.getElementById('search-results').innerHTML = '';
+  document.getElementById('dataTable2').style.display = 'none';
+
+  // ✅ Limpiar observaciones de secciones
+  sectionPhotos = {};
+  for (var s = 0; s < totalSections; s++) {
+    var switchEl = document.getElementById('switch-' + s);
+    if (switchEl) {
+      switchEl.checked = false;
+      switchEl.disabled = true;
+    }
+    var panel = document.getElementById('obs-panel-' + s);
+    if (panel) panel.style.display = 'none';
+    var comment = document.getElementById('obs-comment-' + s);
+    if (comment) comment.value = '';
+    var thumbs = document.getElementById('obs-thumbs-' + s);
+    if (thumbs) { thumbs.innerHTML = ''; thumbs.style.display = 'none'; }
+  }
+}
+
+
+
+
+function btnw(){
+    $('#serach').click();
+    $('#tableshow').show();
+}
+
+function validateForm() {
+  const form = document.getElementById('search-form');
+  const inputs = form.querySelectorAll('input, select, textarea');
+  let valid = true;
+
+  inputs.forEach(input => {
+    if (
+      input.type !== 'file' &&
+      input.type !== 'radio' &&
+      input.hasAttribute('required') &&
+      input.value.trim() === ''
+    ) {
+      valid = false;
+    }
+  });
+
+  return valid;
+}
+
+
+//IA
+function analyzeImage() {
+  const base64Image = document.getElementById("imageData").value;
+
+  if (!base64Image) {
+    Swal.fire('Advertencia', 'Primero debes subir una imagen.', 'warning');
+    return;
+  }
+
+  const base64Only = base64Image.split(',')[1];
+  const mimeType = base64Image.split(',')[0].split(':')[1].split(';')[0];
+
+  Swal.fire({
+    title: 'Analizando imagen...',
+    text: 'Por favor espera unos segundos',
+    icon: 'info',
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading()
+  });
+
+  google.script.run.withSuccessHandler(function (descripcionIA) {
+    Swal.fire('Análisis completado', descripcionIA, 'success');
+    autoCheckFromDescription(descripcionIA);
+  }).describirImagenBase64(base64Only, mimeType);
+}
+
+
+function autoCheckFromDescription(descripcion) {
+  const rows = document.querySelectorAll('#dtable tbody tr');
+  rows.forEach((row, index) => {
+    if (row.getAttribute('data-type') === 'item') {
+      const text = row.querySelector('td:last-child').innerText.toLowerCase();
+      const radios = row.querySelectorAll('input[type="radio"]');
+
+      if (descripcion.toLowerCase().includes(text)) {
+        radios[1].checked = true;
+      } else {
+        radios[0].checked = true;
+      }
+
+      var section = row.getAttribute('data-section');
+      if (section !== null) checkSectionNos(parseInt(section));
+    }
+  });
+}
+
+  </script>
+</body>
+</html>

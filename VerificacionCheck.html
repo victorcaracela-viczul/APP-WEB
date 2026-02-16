@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* --- VARIABLES GLOBALES --- */
+    :root { 
+      --p-blue-v2: #004aad; 
+      --a-orange-v2: #ff8c00; 
+      --bg-v2: #f4f6f9; 
+    }
+    
+    /* --- ESTRUCTURA GENERAL --- */
+    .main-card_v2 { 
+      background: white; border-radius: 12px; padding: 2%; 
+      margin-top: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+    }
+    .form-label-sm_v2 { margin-bottom: 2px; font-weight: 700; font-size: 11px; color: var(--p-blue-v2); text-transform: uppercase; }
+    .mb-compact_v2 { margin-bottom: 10px !important; }
+
+    /* --- BOTONES DE ACCIÓN --- */
+    .btn-search_v2 { background: var(--a-orange-v2); color: white; font-weight: 700; border: none; border-radius: 10px; padding: 10px; transition: 0.3s; }
+    .btn-search_v2:hover { background: #e67e00; transform: scale(1.02); }
+    .btn-history_v2 { background: var(--p-blue-v2); color: white; border: none; border-radius: 10px; }
+
+    /* --- FILAS DEL CHECKLIST --- */
+    .checklist-row_v2 { 
+      background: #fff; border-bottom: 1px solid #edf2f7; padding: 8px 5px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px;
+    }
+    .item-text_v2 { flex: 1; padding-right: 12px; font-size: 12.5px; line-height: 1.3; font-weight: 500; }
+    .critical_v2 { color: #d63031; font-weight: 800; }
+    .category-header_v2 {
+      background: #edf2f7; color: var(--p-blue-v2); padding: 8px 12px;
+      font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+      border-radius: 8px; margin-top: 15px; margin-bottom: 5px; border-left: 4px solid var(--a-orange-v2);
+    }
+
+    /* --- LÓGICA DE INPUTS (OCULTAR RADIOS) --- */
+    .btn-check-input_v2, .scale-btn-input_v2 { display: none; }
+
+    /* =========================================
+       TIPO 1: BOTONES BINARIOS (CUADRADOS/RECTANGULARES)
+       ========================================= */
+    .radio-box_v2 { display: flex; gap: 6px; }
+    
+    .btn-check-label_v2 { 
+      width: 45px; height: 38px; display: flex; align-items: center; justify-content: center; 
+      border-radius: 8px; border: 2px solid #edf2f7; font-size: 11px; font-weight: 700; color: #a0aec0;
+      transition: 0.2s; cursor: pointer; background: white;
+    }
+
+    /* >>> COLORES BINARIOS (A prueba de fallos: Texto o Números) <<< */
+
+    /* VERDE (Bien): Si, SI, 5, 4 */
+    input[value="Si"]:checked + .btn-check-label_v2,
+    input[value="SI"]:checked + .btn-check-label_v2,
+    input[value="si"]:checked + .btn-check-label_v2,
+    input[value="5"]:checked + .btn-check-label_v2,
+    input[value="4"]:checked + .btn-check-label_v2 { 
+      background: #2ecc71; color: white; border-color: #2ecc71; box-shadow: 0 2px 5px rgba(46,204,113,0.4); 
+    }
+
+    /* ROJO (Mal): No, NO, 1, 2 */
+    input[value="No"]:checked + .btn-check-label_v2,
+    input[value="NO"]:checked + .btn-check-label_v2,
+    input[value="no"]:checked + .btn-check-label_v2,
+    input[value="1"]:checked + .btn-check-label_v2,
+    input[value="2"]:checked + .btn-check-label_v2 { 
+      background: #e74c3c; color: white; border-color: #e74c3c; box-shadow: 0 2px 5px rgba(231,76,60,0.4); 
+    }
+
+    /* AZUL/NEUTRO: NA, 3 */
+    input[value="NA"]:checked + .btn-check-label_v2,
+    input[value="na"]:checked + .btn-check-label_v2,
+    input[value="3"]:checked + .btn-check-label_v2 { 
+      background: var(--p-blue-v2); color: white; border-color: var(--p-blue-v2); box-shadow: 0 2px 5px rgba(0,74,173,0.4); 
+    }
+
+    /* =========================================
+       TIPO 2: ESCALA 1-5 (CIRCULARES)
+       ========================================= */
+    .scale-group_v2 { display: flex; gap: 4px; justify-content: flex-end; }
+    
+    .scale-btn-label_v2 {
+      width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+      border: 1px solid #cbd5e0; border-radius: 50%; font-size: 10px; font-weight: bold; color: #718096;
+      cursor: pointer; transition: all 0.2s; background: white;
+    }
+
+    /* Colores Específicos Escala 1-5 */
+    input[value="1"]:checked + .scale-btn-label_v2 { background: #e53e3e; color: white; border-color: #e53e3e; } /* Rojo */
+    input[value="2"]:checked + .scale-btn-label_v2 { background: #dd6b20; color: white; border-color: #dd6b20; } /* Naranja */
+    input[value="3"]:checked + .scale-btn-label_v2 { background: #d69e2e; color: white; border-color: #d69e2e; } /* Amarillo */
+    input[value="4"]:checked + .scale-btn-label_v2 { background: #38a169; color: white; border-color: #38a169; } /* Verde Claro */
+    input[value="5"]:checked + .scale-btn-label_v2 { background: #2f855a; color: white; border-color: #2f855a; } /* Verde Oscuro */
+    
+    /* NA en Escala (Cuadrado pequeño o diferenciado) */
+    input[value="NA"]:checked + .scale-btn-label_v2 { 
+        background: var(--p-blue-v2); color: white; border-color: var(--p-blue-v2); 
+        border-radius: 4px; /* Un poco más cuadrado para diferenciar */
+    }
+
+    /* --- IA Y MULTIMEDIA --- */
+    .ai-section_v2 { 
+      background: #f0f7ff; border-radius: 12px; padding: 12px; 
+      margin: 15px 0; border: 2px dashed var(--p-blue-v2); 
+    }
+    #image-preview_v2 { 
+      max-width: 100%; width: 220px; height: auto; border-radius: 10px; 
+      margin: 10px auto; display: none; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    /* =========================================
+       OPTIMIZACIÓN MÓVIL (RESPONSIVE)
+       ========================================= */
+    @media (max-width: 768px) {
+      /* 1. Cambiar la fila a columna: Pregunta arriba, Botones abajo */
+      .checklist-row_v2 {
+        flex-direction: column;
+        align-items: flex-start; /* Alinea texto a la izquierda */
+        gap: 12px; /* Espacio entre pregunta y botones */
+        padding: 15px 10px; /* Más área de respiro */
+      }
+
+      /* 2. Que la pregunta ocupe todo el ancho */
+      .item-text_v2 {
+        width: 100%;
+        padding-right: 0;
+        font-size: 14px; /* Un poco más grande para leer mejor */
+        margin-bottom: 5px;
+      }
+
+      /* 3. Contenedor de botones: Ocupar ancho completo y centrar */
+      .input-container_v2 {
+        width: 100% !important;
+        justify-content: center !important; /* Centrar los botones */
+        display: flex;
+      }
+
+      /* 4. Hacer los botones de escala (1-5) más grandes y fáciles de tocar */
+      .scale-btn-label_v2 {
+        width: 40px;  /* Antes 30px */
+        height: 40px; /* Antes 30px */
+        font-size: 14px; /* Número más grande */
+        margin: 0 2px; /* Separación entre ellos */
+      }
+      
+      /* 5. Hacer los botones de SI/NO más grandes */
+      .btn-check-label_v2 {
+        width: 60px; /* Más anchos */
+        height: 45px; /* Más altos */
+        font-size: 13px;
+      }
+
+      /* 6. Mejorar la barra de contadores (Items) superior */
+      .d-flex.flex-wrap.justify-content-between.align-items-center.gap-2.mb-2.fw-bold {
+        flex-direction: column; /* Apilar título y badges */
+        align-items: flex-start !important;
+      }
+      
+      /* Contenedor de los badges scrollable si son muchos */
+      #header-badges_v2 {
+        width: 100%;
+        overflow-x: auto; /* Permitir scroll lateral si no caben */
+        padding-bottom: 5px;
+        white-space: nowrap;
+        justify-content: flex-start !important;
+      }
+    }
+</style>
+</head>
+
+<body>
+
+  <div class="container-fluid" style="padding:0px;">
+    <div class="main-card_v2">
+      <form id="search-form_v2" onsubmit="submitForm_v2(this)">
+        <div class="mb-compact_v2">
+          <label class="form-label-sm_v2">Nombre del Inspector</label>
+          <div class="input-group">
+            <span class="input-group-text" ><i class="fa-solid fa-user-check"></i></span>
+            <input type="text" class="form-control" id="ad6_v2" name="ad6" readonly style="background:#f1f3f5">
+          </div>
+        </div>
+        <div class="row g-2">
+          <div class="col-6 mb-compact_v2">
+            <label class="form-label-sm_v2">Empresa</label>
+            <div class="input-group">
+              <span class="input-group-text" style="height:38px;"><i class="fa-solid fa-person-digging"></i></span>
+              <select class="form-select" id="ad1_v2" name="ad1" required></select>
+            </div>
+          </div>
+          <div class="col-6 mb-compact_v2">
+            <label class="form-label-sm_v2">Área/Sector</label>
+            <div class="input-group">
+              <span class="input-group-text" style="height:38px;"><i class="fa-solid fa-house-user"></i></span>
+              <select class="form-select" id="ad2_v2" name="ad2" required></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-2">
+          <div class="col-6 mb-compact_v2">
+            <label class="form-label-sm_v2">Observado</label>
+            <div class="input-group">
+              <span class="input-group-text" style="height:38px;"><i class="fa-solid fa-user"></i></span>
+              <select class="form-select" id="ad9_v2" name="ad9" required></select>
+            </div>
+          </div>
+          <div class="col-6 mb-compact_v2">
+            <label class="form-label-sm_v2">Ubicación</label>
+            <div class="input-group">
+              <span class="input-group-text" style="height:38px;"><i class="fa-solid fa-location-dot"></i></span>
+              <select class="form-select" id="ad5_v2" name="ad5" required></select>
+            </div>
+          </div>
+          </div>
+        <div class="row g-2">
+          <div class="col-6 mb-compact_v2">
+            <label class="form-label-sm_v2">Actividad</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa-solid fa-gears"></i></span>
+              <input type="text" class="form-control" id="actividadCheck_v2" name="actividadCheck" placeholder="..." list="checkActividad_v2" required utocomplete="off">
+              <datalist id="checkActividad_v2"></datalist>
+            </div>
+          </div>
+          <div class="col-6 mb-compact_v2">
+            <label class="form-label-sm_v2">R Critico</label>
+            <div class="input-group">
+              <span class="input-group-text" style="height:38px;"><i class="fa-solid fa-shield"></i></span>
+              <select class="form-select" id="riesgoCheck_v2" name="riesgoCheck" required></select>
+            </div>
+          </div>
+        </div>
+        <div class="row g-2">
+          <div class="col-6 mb-compact_v2">
+            <label class="form-label-sm_v2">Checklist</label>
+            <select class="form-select" id="ad3_v2" name="ad3" required></select>
+          </div>
+          <div class="col-6 mb-compact_v2">
+            <label class="form-label-sm_v2">Equipo/ID</label>
+            <select class="form-select" id="ad4_v2" name="ad4" required onclick="btnw_v2()"></select>
+          </div>
+        </div>
+
+        <div id="msg-box_v2" class="mb-2">
+          <div id="message1_v2" class="badge border border-danger text-danger text-wrap w-100 mb-1 d-none"></div>
+          <div id="message2_v2" class="badge border border-primary text-primary text-wrap w-100 d-none"></div>
+        </div>
+        <div class="row g-2 mb-2 text-center">
+          <div class="col-9">
+            <button id="serachCheck_v2" type="submit" class="btn btn-search_v2 w-100">
+              <span class="btn-text">INICIAR REVISIÓN</span>
+              <span class="spinner-border spinner-border-sm d-none" id="spinnerSearch_v2"></span>
+            </button>
+          </div>
+
+          <div class="col-3">
+            <button type="button" class="btn btn-history_v2 w-100 h-100" onclick="loaddata_v2()" hidden>
+              <i class="fa-solid fa-clock-rotate-left"></i>
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+
+    <div id="tableshow_v2" style="display: none;">
+      <div class="main-card_v2">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2 fw-bold" style="font-size:12px">
+        <span class="badge bg-secondary">Items</span>
+        <div class="d-flex gap-2" id="header-badges_v2"></div>
+      </div>
+
+        <div id="search-results_v2"></div>
+
+        <div class="ai-section_v2 mt-3 text-center">
+          <p class="fw-bold text-primary mb-2" style="font-size:11px"><i class="fa-solid fa-robot"></i> ASISTENTE DE IA</p>
+          <div class="d-flex justify-content-center gap-2 mb-2">
+             <label for="ad8_v2" class="btn btn-outline-primary btn-sm rounded-pill px-3"><i class="fa-solid fa-camera"></i> FOTO</label>
+             <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold" id="analyze-image-btn_v2"  hidden>ANALIZAR IA</button> 
+          </div>
+          <img id="image-preview_v2" src="">
+          <input type="file" class="visually-hidden" id="ad8_v2" accept="image/*" onchange="previewImage_v2(event)">
+          <input type="hidden" id="imageData_v2">
+        </div>
+
+        <textarea class="form-control mt-2" id="ad7_v2" rows="2" placeholder="Comentarios y/o observaciones..." style="font-size:12px; border-radius:10px;"></textarea>
+
+        <div id="campos-edicion_v2" style="display: none;" class="mt-3 border-top pt-2">
+          <input type="hidden" id="numid_v2"> <div class="row g-2">
+            <div class="col-6 mb-compact_v2">
+              <label class="form-label-sm_v2">Estado del Hallazgo</label>
+              <select class="form-select" id="estadoCheck2_v2">
+                <option value="Abierto">Abierto</option>
+                <option value="Conforme">Conforme</option>
+                <option value="Cerrado">Cerrado</option>
+              </select>
+            </div>
+            <div class="col-12 mb-compact_v2">
+              <label class="form-label-sm_v2">Imagen de Corrección (Evidencia)</label>
+              <input type="file" class="form-control" id="uploadImagen_v2" accept="image/*" onchange="previewImage2_v2(event)">
+              <img id="imagen-preview-upload_v2" src="" style="max-width: 100%; height: auto; display: none; margin-top:10px; border-radius:10px;">
+            </div>
+          </div>
+        </div>
+
+        <div class="d-grid mt-3">
+          <button class="btn btn-success fw-bold py-3 rounded-pill" id="showsave_v2" onclick="whenButtonClicked_v2()">ENVIAR REPORTE FINAL</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-card_v2" id="dataTable2_v2" style="display:none">
+      <table id="example_v2" class="table w-100" style="font-size: 11px;"></table>
+    </div>
+  </div>
+  <script>
+    // ==========================================
+    // 1. CARGA INICIAL Y CONFIGURACIÓN V2
+    // ==========================================
+    
+    // Variable global para guardar datos de INVENTARIO (Checklist, Equipo, etc.)
+    var arrayOfValues_v2; 
+
+    function affterPageLoads_v2() {
+      // A. Cargar datos dependientes desde Google Sheets (Checklist -> Equipo)
+      google.script.run.withSuccessHandler(affterDropdownArrayReturned_v2).getDropDownarray_v2();
+
+      // C. Auto-rellenar Inspector (Lógica original conservada)
+      const userObj = JSON.parse(localStorage.getItem('userName') || '{}');
+      const inspectorField = document.getElementById('ad6_v2');
+      if (userObj.nombre) {
+        inspectorField.value = userObj.nombre;
+      } else {
+        google.script.run.withSuccessHandler(n => { if(n) inspectorField.value = n; }).getUserNameFromServer_v2(); 
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", affterPageLoads_v2);
+
+    // ==========================================
+    // 3. LÓGICA DE CASCADA (CHECKLIST -> EQUIPO)
+    // ==========================================
+    
+    // Callback cuando vuelven los datos del servidor
+    function affterDropdownArrayReturned_v2(arrayOfArrays){
+      arrayOfValues_v2 = arrayOfArrays;
+      
+      // AHORA: El índice 0 es el Checklist (Antes Col D, ahora Col B en Sheet pero 0 en array procesado)
+      // El índice 1 es el Equipo (Antes Col E, ahora Col C en Sheet pero 1 en array procesado)
+      
+      // Llenamos directamente el dropdown de Checklist (ad3)
+      populate_v2(document.getElementById("ad3_v2"), arrayOfValues_v2, 0);
+      
+      // Limpiamos el equipo hasta que seleccionen checklist
+      document.getElementById("ad4_v2").innerHTML = '<option value="">Seleccione Checklist...</option>';
+    }
+
+    // Función auxiliar para llenar selects sin duplicados
+    function populate_v2(el, arr, idx){
+      var added = []; 
+      el.innerHTML = '<option value="">Seleccione...</option>';
+      arr.forEach(r => {
+        if(r[idx] && added.indexOf(r[idx]) === -1){
+          var opt = document.createElement("option"); 
+          opt.textContent = r[idx];
+          opt.value = r[idx]; // Aseguramos que el value también se asigne
+          el.appendChild(opt); 
+          added.push(r[idx]);
+        }
+      });
+    }
+
+    // Función que se ejecuta al cambiar el Checklist (ad3)
+    function updateEquipos_v2(){
+      const valChecklist = document.getElementById("ad3_v2").value;
+      const elEquipo = document.getElementById("ad4_v2");
+
+      if(!valChecklist) {
+         elEquipo.innerHTML = '<option value="">Seleccione...</option>';
+         return;
+      }
+
+      // Filtramos el array global buscando coincidencias en la columna 0 (Checklist)
+      var f = arrayOfValues_v2.filter(r => r[0] === valChecklist);
+      
+      // Llenamos el dropdown de Equipos (ad4) usando la columna 1 (Equipo) del array filtrado
+      populate_v2(elEquipo, f, 1);
+    }
+
+    // --- LISTENER ACTUALIZADO ---
+    // Solo necesitamos escuchar cambios en ad3 (Checklist) para actualizar ad4 (Equipo)
+    // ad1 y ad2 ahora son independientes.
+    document.getElementById("ad3_v2").addEventListener("change", updateEquipos_v2);
+
+
+    // ==========================================
+    // 4. FUNCIONES RESTANTES (TODO IGUAL QUE ANTES)
+    // ==========================================
+
+    // Mostrar Checklist V2
+    function submitForm_v2(obj) {
+      event.preventDefault();
+      showSearchSpinner_v2();
+
+      const val = document.getElementById("ad4_v2").value;
+
+      // LLAMADA GS
+      google.script.run.withSuccessHandler(data => {
+        const m1 = document.getElementById("message1_v2");
+        const m2 = document.getElementById("message2_v2");
+        if (data && data.message1) {
+          m1.textContent = "⚠ " + data.message1;
+          m1.classList.remove('d-none');
+        }
+        if (data && data.message2) {
+          m2.innerHTML = `Documento: <a href="${data.message2}" target="_blank" style="font-weight: bold; text-decoration: underline;">Link</a>`;
+          m2.classList.remove('d-none');
+        }
+      }).getAdditionalInfoByValue_v2(val); 
+
+      // LLAMADA GS
+      google.script.run.withSuccessHandler(data => {
+        showTable_v2(data);
+        hideSearchSpinner_v2();
+      }).searchData_v2(obj); 
+    }
+
+    function showTable_v2(dataArray) {
+      const container = document.getElementById('search-results_v2');
+      const tableShowDiv = document.getElementById('tableshow_v2');
+      
+      const headerBadgesContainer = document.getElementById('header-badges_v2');
+      const headerSection = tableShowDiv.querySelector('.d-flex.flex-wrap.justify-content-between');
+      const aiSection = tableShowDiv.querySelector('.ai-section_v2');
+      const observations = document.getElementById('ad7_v2');
+      const saveBtn = document.getElementById('showsave_v2');
+
+      if (!dataArray || dataArray.length == 0) {
+        if(headerSection) headerSection.style.display = 'none';
+        if(aiSection) aiSection.style.display = 'none';
+        if(observations) observations.style.display = 'none';
+        if(saveBtn) saveBtn.style.display = 'none';
+
+        container.innerHTML = `
+          <div class="alert alert-warning text-center mt-2 mb-0" style="border-radius: 12px; border: 2px dashed #ff8c00; background: #fffcf5;">
+            <i class="fa-solid fa-clipboard-question fa-3x mb-3" style="color: #ff8c00;"></i>
+            <h6 class="fw-bold" style="color: #004aad;">Aun no se ha creado lista para este equipo</h6>
+            <p class="small text-muted mb-0">No se encontraron ítems de inspección asociados a esta selección.</p>
+          </div>`;
+        
+        $('#tableshow_v2').fadeIn();
+        return;
+      }
+
+      if(headerSection) headerSection.style.display = 'flex';
+      if(aiSection) aiSection.style.display = 'block';
+      if(observations) observations.style.display = 'block';
+      if(saveBtn) saveBtn.style.display = 'block';
+
+      const esEscala = dataArray.some(row => (row[4] || "").toUpperCase().trim() === 'ESCALA');
+      
+      let badgesHtml = '';
+      if (esEscala) {
+        badgesHtml = `
+          <span class="badge" style="background:#e53e3e;">1: <span id="c1_v2">0</span></span>
+          <span class="badge" style="background:#dd6b20;">2: <span id="c2_v2">0</span></span>
+          <span class="badge" style="background:#d69e2e;">3: <span id="c3_v2">0</span></span>
+          <span class="badge" style="background:#38a169;">4: <span id="c4_v2">0</span></span>
+          <span class="badge" style="background:#2f855a;">5: <span id="c5_v2">0</span></span>
+          <span class="badge bg-primary">NA: <span id="cNa_v2">0</span></span>`;
+      } else {
+        badgesHtml = `
+          <span class="badge bg-success">SÍ: <span id="countSi_v2">0</span></span>
+          <span class="badge bg-danger">NO: <span id="countNo_v2">0</span></span>
+          <span class="badge bg-primary">NA: <span id="countNa_v2">0</span></span>`;
+      }
+      if(headerBadgesContainer) headerBadgesContainer.innerHTML = badgesHtml;
+
+      const groupedData = dataArray.reduce((acc, row, index) => {
+        const cat = row[2] || "GENERAL"; 
+        if (!acc[cat]) acc[cat] = [];
+        acc[cat].push({ ...row, originalIndex: index }); 
+        return acc;
+      }, {});
+
+      let html = '';
+      let globalIndex = 0; 
+
+      for (const [category, items] of Object.entries(groupedData)) {
+        html += `<div class="category-header_v2">${category}</div>`;
+
+        items.forEach(itemRow => {
+          const pregunta = itemRow[3]; 
+          const tipoInputRaw = (itemRow[4] || "BINARIO").trim(); 
+          const tipoInput = tipoInputRaw.toUpperCase();
+          const isCrit = pregunta.includes("*");
+          const idx = globalIndex++; 
+
+          html += `<div class="checklist-row_v2">
+                     <div class="item-text_v2 ${isCrit ? 'critical_v2' : ''}">${pregunta}</div>
+                     <div class="input-container_v2" style="min-width: 140px; display: flex; justify-content: flex-end;">`;
+
+          if (tipoInput === 'TEXTO') {
+            html += `<input type="text" class="form-control form-control-sm check-value_v2" 
+                     placeholder="Observación..." style="font-size:11px; width:100%;">`;
+          
+          } else if (tipoInput === 'FECHA') {
+            html += `<input type="date" class="form-control form-control-sm check-value_v2" style="font-size:11px; width:100%;">`;
+
+          } else if (tipoInput.startsWith('SELECT')) {
+            let opciones = [];
+            if (tipoInputRaw.includes(':')) {
+              opciones = tipoInputRaw.split(':')[1].split(',').map(o => o.trim());
+            }
+            html += `<select class="form-select form-select-sm check-value_v2" style="font-size:11px; width:100%;">
+                      <option value="">Seleccione...</option>`;
+            opciones.forEach(opt => { html += `<option value="${opt}">${opt}</option>`; });
+            html += `</select>`;
+
+          } else if (tipoInput === 'ESCALA') {
+            html += `<div class="scale-group_v2">`;
+            [1, 2, 3, 4, 5].forEach(val => {
+               html += `
+                 <input type="radio" name="opt_${idx}_v2" value="${val}" id="r_${idx}_${val}" class="scale-btn-input_v2 check-value_v2" onchange="updateCounters_v2()">
+                 <label for="r_${idx}_${val}" class="scale-btn-label_v2">${val}</label>`;
+            });
+            html += `
+                 <input type="radio" name="opt_${idx}_v2" value="NA" id="r_${idx}_NA" class="scale-btn-input_v2 check-value_v2" onchange="updateCounters_v2()">
+                 <label for="r_${idx}_NA" class="scale-btn-label_v2" style="font-size:9px; background:#edf2f7; color:#718096; border:1px solid #cbd5e0;">NA</label>
+               </div>`;
+
+          } else {
+            html += `<div class="radio-box_v2">
+              <input type="radio" name="opt_${idx}_v2" value="Si" id="si${idx}_v2" class="btn-check-input_v2 check-value_v2 multi_v2" checked onchange="updateCounters_v2()">
+              <label for="si${idx}_v2" class="btn-check-label_v2">SÍ</label>
+              <input type="radio" name="opt_${idx}_v2" value="No" id="no${idx}_v2" class="btn-check-input_v2 check-value_v2 multi_v2" onchange="updateCounters_v2()">
+              <label for="no${idx}_v2" class="btn-check-label_v2">NO</label>
+              <input type="radio" name="opt_${idx}_v2" value="NA" id="na${idx}_v2" class="btn-check-input_v2 check-value_v2 multi_v2" onchange="updateCounters_v2()">
+              <label for="na${idx}_v2" class="btn-check-label_v2">NA</label>
+            </div>`;
+          }
+
+          html += `</div></div>`;
+        });
+      }
+
+      container.innerHTML = html;
+      updateCounters_v2();
+      $('#tableshow_v2').fadeIn();
+    }
+
+    // --- CORRECCIÓN BOTÓN IA V2 ---
+    document.getElementById('analyze-image-btn_v2').addEventListener('click', function() {
+        const base64Image = document.getElementById('imageData_v2').value;
+        if (!base64Image) {
+            Swal.fire('Atención', 'Sube una foto antes de analizar.', 'warning');
+            return;
+        }
+
+        const filas = document.querySelectorAll('.checklist-row_v2');
+        let listaItems = [];
+        filas.forEach(f => listaItems.push(f.querySelector('.item-text_v2').innerText.trim()));
+
+        Swal.fire({
+            title: 'IA Analizando...',
+            text: 'Buscando fallas en la imagen',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        google.script.run.withSuccessHandler(function(respuestas) {
+            Swal.close();
+            filas.forEach(f => {
+                const texto = f.querySelector('.item-text_v2').innerText.trim();
+                const radios = f.querySelectorAll('input[type="radio"]');
+                const match = respuestas.find(r => r.item === texto);
+                if (match) {
+                    if (match.respuesta === 'Sí') radios[0].checked = true;
+                    else if (match.respuesta === 'No') radios[1].checked = true;
+                    else if (match.respuesta === 'NA') radios[2].checked = true;
+                }
+            });
+             updateCounters_v2();
+            Swal.fire('Análisis completo', 'La IA ha marcado los puntos detectados.', 'success');
+        }).analizarImagenConLista_v2(base64Image.split(',')[1], 'image/png', listaItems); 
+    });
+
+    // Guardar Reporte V2
+    async function whenButtonClicked_v2() {
+      const btn = document.getElementById('showsave_v2');
+      btn.disabled = true; 
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> PROCESANDO...';
+      
+      const filas = document.querySelectorAll('.checklist-row_v2');
+      let resultados = [];
+
+      filas.forEach(fila => {
+        const radioSelected = fila.querySelector('input[type="radio"].check-value_v2:checked');
+        const inputGeneric = fila.querySelector('input[type="text"].check-value_v2, input[type="date"].check-value_v2, select.check-value_v2');
+        
+        let valorFinal = "NA";
+
+        if (radioSelected) {
+          valorFinal = radioSelected.value;
+        } else if (inputGeneric) {
+          valorFinal = inputGeneric.value.trim().replace(/,/g, ';') || " - ";
+        }
+        
+        resultados.push(valorFinal);
+      });
+
+      let checks = resultados.join(",");
+      
+      let imgCorr = "";
+      const fileInput = document.getElementById('uploadImagen_v2');
+      if (fileInput && fileInput.files.length > 0) {
+        imgCorr = await new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onload = e => resolve(e.target.result);
+          reader.readAsDataURL(fileInput.files[0]);
+        });
+      }
+
+      let objData = {
+        id: document.getElementById('numid_v2').value,
+        ad1: document.getElementById('ad1_v2').value, 
+        ad4: document.getElementById('ad4_v2').value, 
+        ad5: document.getElementById('ad5_v2').value, 
+        ad9: document.getElementById('ad9_v2').value, 
+        ad6: document.getElementById('ad6_v2').value, 
+        ad3: document.getElementById('ad3_v2').value, 
+        ad2: document.getElementById('ad2_v2').value, 
+        ad7: document.getElementById('ad7_v2').value,  
+        riesgoCheck: document.getElementById('riesgoCheck_v2').value,
+        checked: checks, 
+        imageData: document.getElementById('imageData_v2').value,
+        estado: document.getElementById('estadoCheck2_v2').value,
+        actividad: document.getElementById('actividadCheck_v2').value, 
+        imgCorreccion: imgCorr
+      };
+
+      if (typeof esModoEdicion_v2 !== 'undefined' && esModoEdicion_v2) {
+        google.script.run.withSuccessHandler(res => {
+          Swal.fire('¡Actualizado!', 'El registro ha sido modificado con éxito.', 'success');
+          finalizarProceso_v2();
+        }).updateDataChecklistServer_v2(objData); 
+      } else {
+        google.script.run.withSuccessHandler(res => {
+          Swal.fire('¡Éxito!', 'Reporte guardado. ID: ' + res.columnAValue, 'success');
+          finalizarProceso_v2();
+        }).saveDataCheck_v2(objData); 
+      }
+    }
+
+    function finalizarProceso_v2() {
+      const btn = document.getElementById('showsave_v2');
+      btn.disabled = false; 
+      clearForm_v2();
+      if (typeof reiniciarTablaCheck_v2 === "function") reiniciarTablaCheck_v2();
+      
+      const modalElement = document.getElementById('exampleModal2_v2');
+      if (modalElement) {
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if(modalInstance) modalInstance.hide();
+      }
+    }
+
+    function previewImage_v2(e) {
+      var reader = new FileReader();
+      reader.onload = function() {
+        const prev = document.getElementById('image-preview_v2');
+        prev.src = reader.result;
+        prev.style.display = 'block';
+        document.getElementById('imageData_v2').value = reader.result;
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
+    
+    function previewImage2_v2(e) {
+      var reader = new FileReader();
+      reader.onload = function() {
+        const output = document.getElementById('imagen-preview-upload_v2');
+        output.src = reader.result;
+        output.style.display = 'block';
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
+
+    function clearForm_v2() {
+      if (typeof esModoEdicion_v2 !== 'undefined') esModoEdicion_v2 = false;
+      document.getElementById('search-form_v2').reset();
+
+      if(document.getElementById('ad7_v2')) {
+          document.getElementById('ad7_v2').value = "";
+      }
+      
+      const dataTableContainer = document.getElementById('dataTable2_v2');
+      if (dataTableContainer) {
+        dataTableContainer.style.display = 'none'; 
+        if ($.fn.DataTable.isDataTable('#example_v2')) {
+          $('#example_v2').DataTable().destroy();
+          document.getElementById('example_v2').innerHTML = ''; 
+        }
+      }
+
+      document.getElementById('message1_v2').classList.add('d-none');
+      document.getElementById('message2_v2').classList.add('d-none');
+      
+      document.getElementById('campos-edicion_v2').style.display = 'none';
+      document.getElementById('tableshow_v2').style.display = 'none';
+      
+      const btnEnvio = document.getElementById('showsave_v2');
+      if(btnEnvio) {
+          btnEnvio.textContent = "ENVIAR REPORTE FINAL";
+          btnEnvio.classList.replace('btn-primary', 'btn-success');
+      }
+      
+      document.getElementById('imageData_v2').value = '';
+      document.getElementById('image-preview_v2').style.display = 'none';
+      
+      document.getElementById('imagen-preview-upload_v2').style.display = 'none';
+      document.getElementById('imagen-preview-upload_v2').src = '';
+      
+      affterPageLoads_v2(); 
+    }
+
+    function btnw_v2(){ $('#serachCheck_v2').click(); }
+    
+    function loaddata_v2() {
+      const btn = document.querySelector('.btn-history_v2');
+      const originalContent = btn.innerHTML; 
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+      $('#dataTable2_v2').toggle();
+
+      google.script.run
+        .withSuccessHandler(res => {
+          $('#example_v2').DataTable({ 
+            data: res, 
+            destroy: true, 
+            columns: [
+              {title:'Fecha'},
+              {title:'SI'},
+              {title:'NO'},
+              {title:'ID'},
+              {title:'Equipo'}
+            ] 
+          });
+
+          btn.disabled = false;
+          btn.innerHTML = originalContent;
+        })
+        .withFailureHandler(err => {
+          console.error("Error al cargar historial:", err);
+          btn.disabled = false;
+          btn.innerHTML = originalContent;
+          Swal.fire('Error', 'No se pudo obtener el historial', 'error');
+        })
+        .getDataCheckList_v2({
+          ad4: document.getElementById("ad4_v2").value, 
+          ad3: document.getElementById("ad3_v2").value
+        }); 
+    }
+
+    function showSearchSpinner_v2() {
+      const btn = document.getElementById('serachCheck_v2');
+      btn.disabled = true;
+      btn.querySelector('.btn-text').classList.add('d-none');
+      document.getElementById('spinnerSearch_v2').classList.remove('d-none');
+    }
+
+    function hideSearchSpinner_v2() {
+      const btn = document.getElementById('serachCheck_v2');
+      btn.disabled = false;
+      btn.querySelector('.btn-text').classList.remove('d-none');
+      document.getElementById('spinnerSearch_v2').classList.add('d-none');
+    }
+
+    function updateCounters_v2() {
+      let counts = {
+        '1': 0, '2': 0, '3': 0, '4': 0, '5': 0,
+        'SI': 0, 'NO': 0, 'NA': 0
+      };
+
+      const inputsMarcados = document.querySelectorAll('input[type="radio"].check-value_v2:checked');
+
+      inputsMarcados.forEach(r => {
+        let val = r.value.toUpperCase(); 
+        if (val === 'SI') val = '5';
+        if (val === 'NO') val = '1';
+
+        if (counts[val] !== undefined) {
+          counts[val]++;
+        } else {
+          counts['NA']++; 
+        }
+      });
+
+      if (document.getElementById('c1_v2')) {
+        document.getElementById('c1_v2').textContent = counts['1'];
+        document.getElementById('c2_v2').textContent = counts['2'];
+        document.getElementById('c3_v2').textContent = counts['3'];
+        document.getElementById('c4_v2').textContent = counts['4'];
+        document.getElementById('c5_v2').textContent = counts['5'];
+        document.getElementById('cNa_v2').textContent = counts['NA'];
+        
+      } else if (document.getElementById('countSi_v2')) {
+        let totalSi = counts['5'] + counts['4'] + counts['SI'];
+        let totalNo = counts['1'] + counts['2'] + counts['NO'];
+        let totalNa = counts['NA'] + counts['3'];
+
+        document.getElementById('countSi_v2').textContent = totalSi;
+        document.getElementById('countNo_v2').textContent = totalNo;
+        document.getElementById('countNa_v2').textContent = totalNa;
+      }
+    }
+
+    function actualizarTitulosDesdeSheet_v2() {
+      const mapeoTitulos = {
+        'ad6_v2': 6, 
+        'ad1_v2': 1, 
+        'ad2_v2': 4, 
+        'ad9_v2': 5, 
+        'ad5_v2': 7, 
+        'riesgoCheck_v2': 14, 
+        'ad3_v2': 2, 
+        'ad4_v2': 3 
+      };
+
+      if (!headersCheckG_v2 || headersCheckG_v2.length === 0) return;
+
+      for (const [idInput, indexCol] of Object.entries(mapeoTitulos)) {
+        const textoSheet = headersCheckG_v2[indexCol];
+
+        if (textoSheet && textoSheet.trim() !== "") {
+          const inputEl = document.getElementById(idInput);
+          
+          if (inputEl) {
+            const parent = inputEl.closest('.col-6, .mb-compact_v2');
+            
+            if (parent) {
+              const label = parent.querySelector('.form-label-sm_v2');
+              if (label) {
+                label.textContent = textoSheet; 
+              }
+            }
+
+            if (inputEl.tagName === 'INPUT' && inputEl.type === 'text') {
+              inputEl.placeholder = textoSheet + "...";
+            }
+          }
+        }
+      }
+    }
+</script>
+</body>
+</html>

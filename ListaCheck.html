@@ -1,0 +1,455 @@
+<body>
+  <div class="d-flex align-items-center mt-3">
+    <div class="bg-purple rounded-circle d-flex align-items-center justify-content-center me-3"
+      style="width: 40px; height: 40px; background-color: #6f42c1;">
+      <i class="fas fa-check-square text-white"></i>
+    </div>
+    <div>
+      <h5 class="mb-0" style="color: #6610f2;">Listas de verificación</h5>
+      <small class="text-muted">Equipos y sus verificaciones</small>
+    </div>
+  </div>
+
+  <div class="container-fluid my-1 px-0" id="listaCheckid">
+    <div id="mensajeFaltantes" class="alert alert-warning p-2" style="display: none;"></div>
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+      <div class="d-flex align-items-center gap-1">
+        <button onclick="abrirFormularioCheck()" class="btn btn-secondary btn-sm">Nuevo CheckList</button>
+        <button class="btn btn-warning btn-sm" id="btnCheckPrint" onclick="window.print()" style="font-size:15px;">
+          <i class="fa-solid fa-print"></i>
+        </button>
+      </div>
+      <div>
+        <input type="text" id="buscadorCheck" class="form-control" placeholder="Buscar..."
+          style="max-width: 250px; height:30px;">
+      </div>
+    </div>
+
+    <div id="loadingListasCheck" class="text-center my-4" style="display: none;">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-2">Cargando lista...</p>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table print-container">
+        <thead>
+          <tr id="encabezadosCheck"></tr>
+        </thead>
+        <tbody id="cuerpoCheck"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <dialog id="modalCheck" class="border-0 rounded-3 shadow p-2" style="width: 90%; max-width: 650px;">
+    <div class="modal-content border-0">
+      <div class="modal-header py-2">
+        <h5 class="modal-title w-100 text-center" id="modal-tituloList">Nuevo CheckList</h5>
+        <button type="button" class="btn-close" aria-label="Cerrar" onclick="cerrarModalCheck()"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formularioCheck" method="dialog"></form>
+
+        <!-- IA: ocultable si estamos editando -->
+        <div id="bloqueIA" class="mt-3 border rounded p-2 bg-light">
+          <label class="form-label fw-bold">Generar ítems con IA</label>
+          <input type="number" id="numItemsIA" class="form-control mb-2" placeholder="Cantidad de ítems (opcional)">
+          <textarea id="textoBaseIA" class="form-control mb-2"
+            placeholder="Describe el equipo o el tipo de verificación..."></textarea>
+          <input type="file" id="archivoBaseIA" accept=".pdf,.doc,.docx,.txt" class="form-control mb-2">
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="generarItemsIA()">🤖 Generar con IA</button>
+          <div id="mensajeIA" class="mt-2 small text-muted"></div>
+        </div>
+
+        <div id="mensaje-error-Check" class="text-danger mt-2" style="display:none;"></div>
+      </div>
+
+      <div class="modal-footer d-flex justify-content-between align-items-center flex-wrap">
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-success btn-sm" onclick="agregarCampoC()">+ Añadir ítem</button>
+          <div class="small text-muted ms-2">Ítems: <span id="itemCount">0</span></div>
+        </div>
+        <div>
+          <button id="btn-guardar-Check" type="button" onclick="guardarCambiosCheck()" class="btn btn-primary">Guardar</button>
+          <button type="button" onclick="cerrarModalCheck()" class="btn btn-secondary">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    // ------------ estado cliente ------------
+    let datosGlobalesCheck = [];
+    let headersCheck = [];
+    let opcionesGlobalesInventario = [];
+
+    // precargar opciones
+    function precargarOpcionesInventario() {
+      google.script.run.withSuccessHandler(opciones => {
+        opcionesGlobalesInventario = opciones;
+      }).obtenerOpcionesInventario();
+    }
+    precargarOpcionesInventario();
+
+    // cargar tabla
+    function cargarDatosCheck() {
+      document.getElementById("loadingListasCheck").style.display = "block";
+      google.script.run.withSuccessHandler(res => {
+        headersCheck = res.headersCheck;
+        datosGlobalesCheck = res.filas;
+        document.getElementById("encabezadosCheck").innerHTML =
+          headersCheck.map(t => `<th>${t}</th>`).join("") + "<th>Acción</th>";
+        mostrarFilasCheck(datosGlobalesCheck);
+        document.getElementById("loadingListasCheck").style.display = "none";
+      }).obtenerDatosChecklist();
+    }
+
+    function mostrarFilasCheck(data) {
+      const tbody = document.getElementById("cuerpoCheck");
+      tbody.innerHTML = "";
+      data.forEach((fila, i) => {
+        const tr = document.createElement("tr");
+        fila.forEach(celda => {
+          const td = document.createElement("td");
+          td.textContent = celda;
+          tr.appendChild(td);
+        });
+        const btnTd = document.createElement("td");
+        btnTd.innerHTML = `
+          <button class="btn btn-sm btn-info me-1" onclick="abrirFormularioCheck(${i})">✏️</button>
+          <button class="btn btn-sm btn-danger" onclick="eliminarRegistroCheck(${i})">🗑️</button>
+        `;
+        tr.appendChild(btnTd);
+        tbody.appendChild(tr);
+      });
+    }
+
+    // cerrar modal
+    function cerrarModalCheck() {
+      document.getElementById("modalCheck").close();
+    }
+
+    // abrir modal: NUEVO o EDITAR
+    function abrirFormularioCheck(index = null) {
+  const modalCheck = document.getElementById("modalCheck");
+  const form = document.getElementById("formularioCheck");
+  const isNuevo = index === null;
+
+  document.getElementById("modal-tituloList").textContent = isNuevo ? "Nuevo Checklist" : "Editar Checklist";
+
+  // 🔹 Mostrar/ocultar bloque de IA solo en modo nuevo
+  const bloqueIA = document.getElementById("bloqueIA");
+  if (bloqueIA) bloqueIA.style.display = isNuevo ? "block" : "none";
+
+  // =========================
+  // 🟢 NUEVO CHECKLIST
+  // =========================
+  if (isNuevo) {
+    const nuevoId = datosGlobalesCheck.length + 1;
+    form.innerHTML = `
+      <div class="mb-3">
+        <label class="form-label">${headersCheck[0]}</label>
+        <input name="${headersCheck[0]}" value="${nuevoId}" type="text" readonly class="form-control">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">${headersCheck[1]}</label>
+        <select name="${headersCheck[1]}" class="form-select">
+          ${opcionesGlobalesInventario.map(op => `<option value="${op}">${op}</option>`).join("")}
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">${headersCheck[2]}</label>
+        <div id="contenedor-campos-c">
+          <div class="d-flex mb-2">
+            <input type="text" name="${headersCheck[2]}" class="form-control me-2"
+                   placeholder="Escribe el ítem (ej. Manómetro: Presión adecuada?)" data-id="">
+            <button type="button" class="btn btn-success btn-sm me-1" onclick="agregarCampoC()">+</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="eliminarCampoC(this)">–</button>
+          </div>
+        </div>
+        <div id="contadorItems" class="text-muted small mt-1">Total de ítems: 1</div>
+      </div>
+    `;
+    form.dataset.index = null;
+    modalCheck.showModal();
+    actualizarContadorItems();
+    return;
+  }
+
+  // =========================
+  // 🟠 EDITAR CHECKLIST
+  // =========================
+  const fila = datosGlobalesCheck[index];
+  const equipo = fila[1];
+
+  // Crear campos básicos (ID, Equipo y contenedor de ítems)
+  form.innerHTML = `
+    <div class="mb-3">
+      <label class="form-label">${headersCheck[0]}</label>
+      <input name="${headersCheck[0]}" value="${fila[0]}" type="text" readonly class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">${headersCheck[1]}</label>
+      <select name="${headersCheck[1]}" class="form-select">
+        ${opcionesGlobalesInventario.map(op => `<option value="${op}" ${op === equipo ? "selected" : ""}>${op}</option>`).join("")}
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">${headersCheck[2]}</label>
+      <div id="contenedor-campos-c">
+        <div class="text-muted small">Cargando ítems del equipo...</div>
+      </div>
+      <div id="contadorItems" class="text-muted small mt-1"></div>
+    </div>
+  `;
+  form.dataset.index = index;
+  modalCheck.showModal();
+
+  // 🔹 Obtener ítems del equipo (devuelve [{id, item}, ...])
+  google.script.run.withSuccessHandler(items => {
+    const cont = document.getElementById("contenedor-campos-c");
+
+    if (!items || !items.length) {
+      cont.innerHTML = `<div class="text-muted small">No hay ítems registrados para este equipo.</div>`;
+      actualizarContadorItems();
+      return;
+    }
+
+    // 🔹 Crear inputs con data-id
+    cont.innerHTML = items.map(p => `
+      <div class="d-flex mb-2">
+        <input type="text" name="${headersCheck[2]}" value="${p.item}" 
+               class="form-control me-2" data-id="${p.id}" 
+               placeholder="Escribe el ítem (ej. Manguera: Sin fugas)">
+        <button type="button" class="btn btn-success btn-sm me-1" onclick="agregarCampoC()">+</button>
+        <button type="button" class="btn btn-danger btn-sm" onclick="eliminarCampoC(this)">–</button>
+      </div>
+    `).join("");
+
+    actualizarContadorItems();
+  }).obtenerItemsPorEquipo(equipo);
+}
+
+
+    // añadir input de item (nuevo o edición)
+    /** ===========================
+ *  CHECKLIST FRONTEND JS
+ *  =========================== */
+
+/** 🔹 Agregar nuevo campo de ítem */
+function agregarCampoC() {
+  const contenedor = document.getElementById("contenedor-campos-c");
+  if (!contenedor) return;
+  const div = document.createElement("div");
+  div.className = "d-flex mb-2";
+  div.innerHTML = `
+    <input type="text" name="${headersCheck[2]}" class="form-control me-2"
+           placeholder="Escribe el ítem (ej: Manguera sin fugas)" data-id="">
+    <button type="button" class="btn btn-success btn-sm me-1" onclick="agregarCampoC()">+</button>
+    <button type="button" class="btn btn-danger btn-sm" onclick="eliminarCampoC(this)">–</button>`;
+  contenedor.appendChild(div);
+  actualizarContadorItems();
+}
+
+/** 🔹 Eliminar campo de ítem */
+function eliminarCampoC(btn) {
+  const div = btn.parentNode;
+  const contenedor = document.getElementById("contenedor-campos-c");
+  if (contenedor.children.length > 1) contenedor.removeChild(div);
+  actualizarContadorItems();
+}
+
+/** 🔹 Contador dinámico de ítems */
+function actualizarContadorItems() {
+  const total = document.querySelectorAll(`#contenedor-campos-c input[name="${headersCheck[2]}"]`).length;
+  const contador = document.getElementById("contadorItems");
+  if (contador) contador.textContent = `Total de ítems: ${total}`;
+}
+
+/** 🔹 Guardar (nuevo o edición) */
+function guardarCambiosCheck() {
+  const btnGuardar = document.getElementById("btn-guardar-Check");
+  const form = document.getElementById("formularioCheck");
+  const mensajeError = document.getElementById("mensaje-error-Check");
+
+  btnGuardar.textContent = "Guardando...";
+  btnGuardar.disabled = true;
+
+  const equipo = form.querySelector(`[name="${headersCheck[1]}"]`)?.value?.trim() || "";
+
+  const inputsItems = Array.from(form.querySelectorAll(`input[name="${headersCheck[2]}"]`));
+  const items = inputsItems
+    .map(i => ({
+      id: i.dataset.id ? parseInt(i.dataset.id) : null,
+      item: i.value.trim()
+    }))
+    .filter(o => o.item !== "");
+
+  if (!equipo) {
+    mensajeError.textContent = "El campo Equipo es obligatorio.";
+    mensajeError.style.display = "block";
+    resetGuardarBtn();
+    return;
+  }
+  if (!items.length) {
+    mensajeError.textContent = "Debes agregar al menos 1 ítem.";
+    mensajeError.style.display = "block";
+    resetGuardarBtn();
+    return;
+  }
+  mensajeError.style.display = "none";
+
+  const index = form.dataset.index;
+
+  // 🔹 NUEVO checklist
+  if (index === null || index === "null") {
+    const registros = items.map(obj => [null, equipo, obj.item]);
+    google.script.run
+      .withSuccessHandler(() => {
+        Swal.fire({ icon: 'success', title: 'Checklist guardado', timer: 1500, showConfirmButton: false });
+        cerrarModalCheck();
+        cargarDatosCheck();
+        mostrarEquiposSinChecklist();
+        resetGuardarBtn();
+      })
+      .withFailureHandler(() => {
+        mensajeError.textContent = "Error al guardar checklist.";
+        mensajeError.style.display = "block";
+        resetGuardarBtn();
+      })
+      .agregarChecklist(registros);
+    return;
+  }
+
+  // 🔹 EDICIÓN → enviar lista con IDs
+  google.script.run
+    .withSuccessHandler(() => {
+      Swal.fire({ icon: 'success', title: 'Checklist actualizado', timer: 1500, showConfirmButton: false });
+      cerrarModalCheck();
+      cargarDatosCheck();
+      mostrarEquiposSinChecklist();
+      resetGuardarBtn();
+    })
+    .withFailureHandler(err => {
+      mensajeError.textContent = err.message || "Error al actualizar checklist.";
+      mensajeError.style.display = "block";
+      resetGuardarBtn();
+    })
+    .actualizarChecklistPorEquipo(equipo, JSON.stringify(items));
+}
+
+/** 🔹 Restaurar botón Guardar */
+function resetGuardarBtn() {
+  const btnGuardar = document.getElementById("btn-guardar-Check");
+  btnGuardar.textContent = "Guardar";
+  btnGuardar.disabled = false;
+}
+
+    // GENERAR CON IA: si no indicas numItems, IA decide cantidad
+    function generarItemsIA() {
+      const numItemsRaw = parseInt(document.getElementById("numItemsIA").value);
+      const numItems = isNaN(numItemsRaw) ? null : numItemsRaw;
+      const textoBase = document.getElementById("textoBaseIA").value.trim();
+      const archivo = document.getElementById("archivoBaseIA").files[0];
+      const msg = document.getElementById("mensajeIA");
+
+      msg.innerHTML = "";
+      if (!textoBase && !archivo) {
+        msg.innerHTML = `<span class="text-danger">⚠️ Debes ingresar texto o subir un archivo.</span>`;
+        return;
+      }
+
+      msg.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-info"></i> Generando ítems...`;
+
+      const procesar = (res) => {
+        try {
+          const arr = JSON.parse(res); // array [{item: "..."}]
+          msg.innerHTML = `<span class="text-success">✅ Generados ${arr.length} ítems.</span>`;
+          const contenedor = document.getElementById("contenedor-campos-c");
+          // si no existe el contenedor (modal no abierto), crear la sección mínima
+          if (!contenedor) {
+            document.getElementById("formularioCheck").innerHTML += `
+              <div class="mb-3">
+                <label class="form-label">${headersCheck[2]}</label>
+                <div id="contenedor-campos-c"></div>
+              </div>`;
+          }
+          const cont = document.getElementById("contenedor-campos-c");
+          cont.innerHTML = arr.map(p => `
+              <div class="d-flex mb-2">
+                <input type="text" name="${headersCheck[2]}" value="${p.item}" class="form-control me-2">
+                <button type="button" class="btn btn-success btn-sm me-1" onclick="agregarCampoC()">+</button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="eliminarCampoC(this)">–</button>
+              </div>`).join("");
+          actualizarContadorItems();
+        } catch (e) {
+          msg.innerHTML = `<span class="text-danger">⚠️ Error al interpretar los datos generados.</span>`;
+        }
+      };
+
+      const call = google.script.run.withSuccessHandler(procesar).withFailureHandler(() => {
+        msg.innerHTML = `<span class="text-danger">❌ Error al usar IA.</span>`;
+      });
+
+      if (archivo) {
+        const reader = new FileReader();
+        reader.onload = ev => call.generarItemsConGemini(ev.target.result, document.getElementById("textoBaseIA").value || null, numItems);
+        reader.readAsDataURL(archivo);
+      } else {
+        call.generarItemsConGemini(null, document.getElementById("textoBaseIA").value || null, numItems);
+      }
+    }
+
+
+    // Eliminar registro (fila)
+    function eliminarRegistroCheck(index) {
+      Swal.fire({
+        title: '¿Eliminar?',
+        text: `¿Deseas eliminar el registro Nº ${datosGlobalesCheck[index][0]}?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          google.script.run.withSuccessHandler(() => {
+            cargarDatosCheck();
+            mostrarEquiposSinChecklist();
+            Swal.fire('Eliminado', 'El registro fue eliminado.', 'success');
+          }).eliminarChecklist(index);
+        }
+      });
+    }
+
+    // mensaje inicial + búsqueda
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("buscadorCheck").addEventListener("input", function () {
+        const texto = this.value.toLowerCase();
+        const filtrados = datosGlobalesCheck.filter(fila => fila.some(celda => String(celda).toLowerCase().includes(texto)));
+        mostrarFilasCheck(filtrados);
+      });
+      cargarDatosCheck();
+      // mensaje faltantes (si ya existe)
+      if (typeof mostrarEquiposSinChecklist === 'function') mostrarEquiposSinChecklist();
+    });
+
+
+    function mostrarEquiposSinChecklist() {
+  google.script.run.withSuccessHandler(function(faltantes) {
+    const mensajeDiv = document.getElementById("mensajeFaltantes");
+    if (faltantes && faltantes.length > 0) {
+      mensajeDiv.style.display = "block";
+      mensajeDiv.innerHTML = `<span style="font-size: 0.85em;">
+        <strong>${faltantes.join(", ")}</strong> aún no tienen checklist.
+      </span>`;
+    } else {
+      mensajeDiv.style.display = "none";
+    }
+  }).obtenerEquiposSinChecklist();
+}
+
+  </script>
+</body>

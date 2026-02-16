@@ -1,0 +1,1531 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <script src="https://code.jquery.com/jquery-3.6.3.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"> 
+  <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <?!= HtmlService.createHtmlOutputFromFile('css').getContent() ?>
+</head>
+
+<body>
+
+<!-- Aviso Automático Global Actualizado -->
+<div id="avisoGlobalEPP" style="
+    display: none;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #343a40;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 50px;
+    z-index: 20000;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    align-items: center;
+    gap: 15px;
+    border-left: 5px solid #ffc107;
+    font-family: 'Poppins', sans-serif;
+">
+  <!-- Icono de Casco de Seguridad -->
+  <div style="
+      background: #ffc107;
+      color: #343a40;
+      width: 35px;
+      height: 35px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-size: 1.1rem;
+  ">
+    <i class="fa-solid fa-helmet-safety"></i>
+  </div>
+  
+  <span id="textoAviso" style="font-weight: 500; letter-spacing: 0.3px;">
+    Tienes alertas pendientes. Revisa tu módulo de EPPs.
+  </span>
+</div>
+
+
+
+      <!-- ✅ Indicador de estado de conexión -->
+  <div id="connection-status" class="connection-status online d-none">
+    <i class="fa fa-wifi me-1"></i> Conectado
+  </div>
+
+  <div id="miVista2">
+ <div id="loading" class="d-flex justify-content-center  align-items-center invisible">
+    <div class="spinner-border" style="width: 3rem; height: 3rem;" role="status">
+    </div>
+  </div>
+
+<!-- Logyn -->
+<section id="pageA" class="min-vh-100 text-white" style="background: linear-gradient(rgba(13,17,23,0.65), rgba(13,17,23,0.65)),   url('https://lh5.googleusercontent.com/d/1ogGKZZwq8WeE3XSyZFWcb2CnNIfva6gf') no-repeat center center; background-size: cover;  background-attachment: fixed;  background-repeat: no-repeat;; position: relative; overflow: hidden;">  
+  <!-- Fondo animado -->  
+  <div style="position: absolute; inset: 0; z-index: 0;"> 
+    <svg width="100%" height="100%">
+      <defs>
+        <radialGradient id="grad" cx="50%" cy="50%" r="80%" fx="50%" fy="50%">
+          <stop offset="0%" style="stop-color:#00c6ff; stop-opacity:0.1" />
+          <stop offset="100%" style="stop-color:#0072ff; stop-opacity:0" />
+        </radialGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grad)" />
+    </svg>
+  </div>
+
+  <div class="container" style="z-index:1; position: relative; padding-top: 10%;">
+    <div class="row justify-content-center align-items-center">
+      <!-- Mensaje institucional -->
+  <div class="col-lg-6 text-center text-lg-start mb-1 mb-lg-0" style="font-family: 'Poppins', sans-serif;">
+    <h1 class="display-4 fw-bold mb-3 text-light" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.5); letter-spacing: 0.5px;">
+      <span style="color: #00f5d4;">Protege</span> tu equipo
+    </h1>
+    <p class="lead mb-4 text-light" style="line-height: 1.4; text-shadow: 1px 1px 2px rgba(0,0,0,0.4);">
+      Gestiona la seguridad laboral con <b style="color: #f72585;">eficiencia</b> y control total
+    </p>
+    <ul class="list-unstyled small fw-semibold text-light" style="font-size: 1rem;">
+      <li><i class="fa-solid fa-circle-check me-2"></i> <span style="color:#ffffffcc">Inspecciones <b style="color:#00f5d4">digitales</b> automatizadas</span></li>
+      <li><i class="fa-solid fa-circle-check me-2"></i> <span style="color:#ffffffcc">Reportes <b style="color:#00f5d4">inmediatos</b> de <b style="color:#00f5d4">incidentes</b></span></li>
+      <li><i class="fa-solid fa-circle-check me-2"></i> <span style="color:#ffffffcc">Capacitación <b style="color:#00f5d4">continua</b></span></li>
+    </ul>
+  </div>
+
+
+
+      <!-- Login -->
+      <div class="col-lg-4">
+        <div class="card shadow-lg p-4 border-0 rounded-4 text-dark" style="background-color: rgba(255, 255, 255, 0.5);">
+
+          <div class="text-center mb-4">
+            <img src="https://lh5.googleusercontent.com/d/1qik5wQ9CWfURpqBP4LI3YzMO_PHEyt6o" 
+                 
+                alt="Avatar" 
+                width="110" height="auto">
+            <h4 class="mt-2 fw-bold text-white">Iniciar Sesión</h4>
+          </div>
+<!-- class="rounded-circle mb-2" -->
+
+          <form id="myForm" onsubmit="login(this)" class="login-form">
+  <div class="mb-4">
+    <label for="username" class="form-label fw-semibold text-white">Usuario</label>
+    <div class="input-group input-group-custom">
+      <span class="input-group-text input-icon">
+        <i class="fa-solid fa-user text-dark"></i>
+      </span>
+      <input type="text" class="form-control form-control-custom" id="username" name="username" 
+             placeholder="Nombre de usuario" required>
+    </div>
+  </div>
+
+  <div class="mb-4">
+    <label for="password" class="form-label fw-semibold text-white">Contraseña</label>
+    <div class="input-group input-group-custom">
+      <span class="input-group-text input-icon">
+        <i class="fas fa-lock text-dark"></i>
+      </span>
+      <input type="password" class="form-control form-control-custom" id="password" name="password" 
+             placeholder="********" required>
+      <span class="input-group-text input-toggle" onclick="password_show_hide();">
+        <i class="fas fa-eye text-muted" id="show_eye"></i>
+        <i class="fas fa-eye-slash d-none text-muted" id="hide_eye"></i>
+      </span>
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-dark w-100 mt-3 btn-login">
+    <i class="fa-solid fa-right-to-bracket me-2"></i>Acceder
+  </button>
+</form>
+        </div>
+        <center><p class="mt-2" style="font-size:9px;">
+          By <a href="https://www.viczul.com" target="_blank" class="text-warning text-decoration-none">Victor Caracela</a>
+        </p>
+        </center>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+
+<!-- section -->
+<section id="pageB" style="display:none">
+  <div class="d-flex" id="wrapper">
+    <!-- Sidebar -->
+    <!-- Sidebar -->
+<div class="shadow-sm" id="sidebar-wrapper" style="border-right: 1px solid #e5e7eb; background-color:#e5e8e8 ;">
+  <div class="sidebar-heading text-center pt-4 pb-0 fs-5 fw-semibold text-uppercase border-bottom text-primary-emphasis">
+    <img src="https://lh5.googleusercontent.com/d/15B-wj4iw5B7RpDXQg2mrdxTAn-3kfeMa" alt="Texto alternativo" style="max-height: 100px; max-height:50px;" />
+  </div>
+
+  <div class="list-group list-group-flush my-1" id="v-pills-tab">
+    <a class="list-group-item list-group-item-action active text-dark py-1 px-2 rounded" id="v-pills-home-tab"
+      data-bs-toggle="pill" data-bs-target="#v-pills-home">
+      <i class="fa-solid fa-house me-2"></i>Inicio</a>
+
+      <a class="list-group-item list-group-item-action border-0 py-1 px-2 text-dark hover-bg-light rounded"
+      id="v-pills-graficos-tab" data-bs-toggle="pill" data-bs-target="#v-pills-graficos">
+      <i class="fa-solid fa-chart-line me-2"></i>Indicadores</a>
+
+       <a class="list-group-item list-group-item-action border-0 py-1 px-2 text-dark hover-bg-light rounded"
+      id="v-pills-turnos-tab" data-bs-toggle="pill" data-bs-target="#v-pills-turnos" 
+      onclick="cargarModuloTurnos('LITE')"> <!-- 👈 AGREGAR 'LITE' -->
+      <i class="fas fa-calendar-alt me-2"></i>Programación Turnos</a>
+
+    <a class="list-group-item list-group-item-action border-0 py-1 px-2 text-dark hover-bg-light rounded"
+      id="v-pills-profile-tab" data-bs-toggle="pill" data-bs-target="#v-pills-profile">
+      <i class="fa-solid fa-user-graduate me-2"></i>Capacitaciones</a>
+
+    <a class="list-group-item list-group-item-action border-0 py-1 px-2 text-dark hover-bg-light rounded"
+      id="v-pills-charla-tab" data-bs-toggle="pill" data-bs-target="#v-pills-charla">
+      <i class="fa-regular fa-address-card me-2"></i>Registros</a> 
+
+    <a class="list-group-item list-group-item-action border-0 py-1 px-2 text-dark hover-bg-light rounded"
+      id="v-pills-messages-tab" data-bs-toggle="pill" data-bs-target="#v-pills-messages">
+      <i class="fa-solid fa-pen-to-square me-2"></i>Inspecciones</a>
+
+    <a class="list-group-item list-group-item-action border-0 py-1 px-2 text-dark hover-bg-light rounded"
+      id="v-pills-settings-tab" data-bs-toggle="pill" data-bs-target="#v-pills-settings">
+      <i class="fa-regular fa-square-check me-2"></i>Check List</a>
+
+    <!-- <a class="list-group-item list-group-item-action border-0 py-1 px-2 text-dark hover-bg-light rounded"
+      id="v-pills-eventos-tab" data-bs-toggle="pill" data-bs-target="#v-pills-eventos">
+      <i class="fas fa-ambulance me-2"></i>Eventos</a>-->
+
+      <a class="list-group-item list-group-item-action border-0 py-1 px-2 text-dark hover-bg-light rounded"
+      id="v-pills-asignaciones-tab" data-bs-toggle="pill" data-bs-target="#v-pills-asignaciones">
+      <i class="fas fa-hard-hat me-2"></i>Asignaciones</a>
+
+      <a class="list-group-item list-group-item-action border-0 py-1 px-2 text-dark hover-bg-light rounded"
+      id="v-pills-mapa-tab" data-bs-toggle="pill" data-bs-target="#v-pills-mapa">
+      <i class="fa fa-map me-2"></i>Mapa de riesgos</a>
+
+
+
+
+    <!-- Configuración Cap -->
+    <a class="list-group-item list-group-item-action border-0 py-1 px-2 text-dark fw-bold"
+      data-bs-toggle="collapse" href="#configCollapse" role="button" aria-expanded="false" aria-controls="configCollapse">
+      <i class="fa-solid fa-gears me-2"></i>Configuración Cap
+    </a>
+    <div class="collapse ps-4" id="configCollapse">
+      <a class="border-0 py-2 px-4 text-dark hover-bg-light rounded d-block"
+        id="v-pills-examen-tab" data-bs-toggle="pill" data-bs-target="#v-pills-examen" role="tab">
+        <i class="fas fa-pen-alt me-2"></i>Examen
+      </a>
+      <a class="border-0 py-2 px-4 text-dark hover-bg-light rounded d-block"
+        id="v-pills-cursos-tab" data-bs-toggle="pill" data-bs-target="#v-pills-cursos" role="tab">
+        <i class="fas fa-chalkboard-teacher me-2"></i>Cursos
+      </a>
+      <a class="border-0 py-2 px-4 text-dark hover-bg-light rounded d-block"
+        id="v-pills-matriz-tab" data-bs-toggle="pill" data-bs-target="#v-pills-matriz" role="tab">
+        <i class="fas fa-th-large me-2"></i>Matriz
+      </a>
+      <a class="border-0 py-2 px-4 text-dark hover-bg-light rounded d-block"
+        id="v-pills-cumplimiento-tab" data-bs-toggle="pill" data-bs-target="#v-pills-cumplimiento" role="tab">
+        <i class="fas fa-clipboard-check me-2"></i>Cumplimiento
+      </a>
+       <a class="border-0 py-2 px-4 text-dark hover-bg-light rounded d-block"
+        id="v-pills-registros-tab" data-bs-toggle="pill" data-bs-target="#v-pills-registros" role="tab">
+        <i class="fas fa-box me-2"></i>Confg. Regitros
+      </a> 
+    </div>
+
+    <!-- Configuración Check -->
+     <a class="list-group-item list-group-item-action border-0 py-2 px-2 text-dark fw-bold"
+      data-bs-toggle="collapse" href="#configCollapse2" role="button" aria-expanded="false" aria-controls="configCollapse2">
+      <i class="fa-solid fa-gears me-2"></i>Configuración Check
+    </a>
+    <div class="collapse ps-4" id="configCollapse2">
+      <a class="border-0 py-2 px-4 text-dark hover-bg-light rounded d-block"
+        id="v-pills-listas-tab" data-bs-toggle="pill" data-bs-target="#v-pills-listas" role="tab">
+        <i class="fas fa-check-square me-2"></i>Listas Check
+      </a>
+      <a class="border-0 py-2 px-4 text-dark hover-bg-light rounded d-block"
+        id="v-pills-inventarioCheck-tab" data-bs-toggle="pill" data-bs-target="#v-pills-inventarioCheck" role="tab">
+        <i class="fas fa-warehouse me-2"></i>Inventario Check
+      </a>
+    </div>
+
+    <!-- Gestión EPP -->
+    <a class="list-group-item list-group-item-action border-0 py-2 px-2 text-dark fw-bold"
+      data-bs-toggle="collapse" href="#configCollapse3" role="button" aria-expanded="false" aria-controls="configCollapse3">
+      <i class="fa-solid fa-helmet-safety me-2"></i>Gestión EPP
+    </a> 
+    <div class="collapse ps-4" id="configCollapse3">
+
+      <!-- NUEVO BOTÓN MAESTRO -->
+      <a class="border-0 py-2 px-4 text-dark hover-bg-light rounded d-block"
+        id="v-pills-maestroEpp-tab" 
+        data-bs-toggle="pill" 
+        data-bs-target="#v-pills-maestroEpp" 
+        role="tab" 
+        onclick="cargarDatosMaestro()"> <!-- Esta función vive en EPPMaestro.html -->
+        <i class="fas fa-table-list me-2"></i>Maestro General EPP
+      </a>
+
+      <a class="border-0 py-2 px-4 text-dark hover-bg-light rounded d-block"
+        id="v-pills-epps-tab" data-bs-toggle="pill" data-bs-target="#v-pills-epps" role="tab">
+        <i class="fas fa-exchange-alt me-2"></i>Movimientos
+      </a>
+      <!-- <a class="border-0 py-2 px-4 text-dark hover-bg-light rounded d-block"
+        id="v-pills-stock-tab" data-bs-toggle="pill" data-bs-target="#v-pills-stock" role="tab">
+        <i class="fas fa-box me-2"></i>Stock
+      </a> -->
+      <a class="border-0 py-2 px-4 text-dark hover-bg-light rounded d-block"
+        id="v-pills-eppCheck-tab" data-bs-toggle="pill" data-bs-target="#v-pills-eppCheck" role="tab">
+        <i class="fas fa-boxes me-2"></i>Matriz EPP
+      </a>
+      <!-- <a class="border-0 py-2 px-4 text-dark hover-bg-light rounded d-block"
+        id="v-pills-eppAsignado-tab" data-bs-toggle="pill" data-bs-target="#v-pills-eppAsignado" role="tab">
+        <i class="fa-brands fa-product-hunt me-2"></i>Asignaciones
+      </a> -->
+    </div>
+
+    <!-- ✅ NUEVO MÓDULO CONTROL LABORAL -->
+    <a class="list-group-item list-group-item-action border-0 py-2 px-2 text-dark fw-bold"
+      data-bs-toggle="collapse" href="#controlLaboralCollapse" role="button" aria-expanded="false" aria-controls="controlLaboralCollapse">
+      <i class="fas fa-business-time me-2"></i>Control Laboral
+    </a>
+    <div class="collapse ps-4" id="controlLaboralCollapse">
+      <a class="border-0 py-2 px-4 text-dark hover-bg-light rounded d-block"
+        id="v-pills-hht-tab" data-bs-toggle="pill" data-bs-target="#v-pills-hht" role="tab">
+        <i class="fas fa-user-clock me-2"></i>Horas Trabajadas (HHT)
+      </a>
+      <a class="border-0 py-2 px-4 text-dark hover-bg-light rounded d-block"
+        id="v-pills-turnos-tab-admin" data-bs-toggle="pill" data-bs-target="#v-pills-turnos" role="tab"
+        onclick="cargarModuloTurnos('FULL')">
+        <i class="fas fa-calendar-alt me-2"></i>Planificación Turnos
+      </a>
+      <a class="border-0 py-2 px-4 text-dark hover-bg-light rounded d-block"
+        id="v-pills-reportes-laboral-tab" data-bs-toggle="pill" data-bs-target="#v-pills-reportes-laboral" role="tab">
+        <i class="fas fa-chart-line me-2"></i>Reportes Laborales
+      </a>
+    </div>
+
+
+    <a class="list-group-item list-group-item-action border-0 py-1 px-2 text-dark hover-bg-light rounded"
+      id="v-pills-listasG-tab" data-bs-toggle="pill" data-bs-target="#v-pills-listasG">
+      <i class="fa-solid fa-list me-2"></i>Listas</a>
+
+    <a class="list-group-item list-group-item-action border-0 py-1 px-2 text-dark hover-bg-light rounded"
+      id="v-pills-usuarios-tab" data-bs-toggle="pill" data-bs-target="#v-pills-usuarios">
+      <i class="fas fa-users me-2"></i>Usuarios</a>
+
+    <a class="list-group-item list-group-item-action bg-transparent text-dark fw-bold" onclick="logout()">
+      <i class="fas fa-power-off me-2"></i>Logout</a>
+  </div>
+  <div class="copyright"></div>
+</div>
+<!-- /#sidebar-wrapper -->
+
+    <!-- Page Content -->
+    <div id="page-content-wrapper">
+      <nav class="navbar navbar-expand-lg navbar-light bg-transparent py-1 px-1 fixed-top">
+        <div class="d-flex align-items-center">
+          <div class="morphing-menu" id="menu-toggle">
+            <svg width="16" height="16" viewBox="0 0 24 24">
+              <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z" fill="currentColor"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Avatar alineado a la derecha -->
+        <div class="d-flex align-items-center ms-auto">
+          <div class="nav-item dropdown">
+            <a class="nav-link fw-bold d-flex align-items-center" href="#" id="navbarDropdown" role="button"
+              data-bs-toggle="dropdown" aria-expanded="false">
+              <img src="" id="img" height="33px" width="33px" class="rounded-circle"
+                style="border: 3px solid grey; box-sizing: border-box;">
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+              <li><span class="dropdown-item-text" id="admin"></span></li>
+              <li><a class="dropdown-item" onclick="configurar()"><i class="fa-solid fa-gear"></i> Configurar</a></li>
+              <li><a class="dropdown-item" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+            </ul>
+          </div>
+        </div>
+
+      </nav>
+
+      <div class="container-fluid px-0">
+        <div class="row g-3 my-0">
+<!--Content-->
+          <div class="tab-content" id="v-pills-tabContent">
+          <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('home').getContent() ?>
+
+            </div>
+
+       <div class="tab-pane fade" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('Capacitaciones').getContent() ?>
+
+            </div>
+
+            <div class="tab-pane fade" id="v-pills-graficos" role="tabpanel" aria-labelledby="v-pills-graficos-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('Graficosindex').getContent() ?>
+
+            </div>
+      
+      <div class="tab-pane fade" id="v-pills-charla" role="tabpanel" aria-labelledby="v-pills-charla-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('BuscadorCharlas').getContent() ?>
+
+            </div>
+
+      <div class="tab-pane fade" id="v-pills-messages" role="tabpanel" aria-labelledby="v-pills-messages-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('IndexDesvios').getContent() ?>
+              
+              </div>
+              
+      <div class="tab-pane fade" id="v-pills-cursos" role="tabpanel" aria-labelledby="v-pills-cursos-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('Cursos').getContent() ?>
+              
+              </div>
+
+      <div class="tab-pane fade" id="v-pills-settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('IndexCheck').getContent() ?>
+              
+              </div>
+      <div class="tab-pane fade" id="v-pills-eventos" role="tabpanel" aria-labelledby="v-pills-eventos-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('Eventos').getContent() ?>
+              
+              </div>
+               <div class="tab-pane fade" id="v-pills-asignaciones" role="tabpanel" aria-labelledby="v-pills-asignaciones-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('Asiganaciones').getContent() ?>
+
+            </div>
+             <div class="tab-pane fade" id="v-pills-mapa" role="tabpanel" aria-labelledby="v-pills-mapa-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('MapaRiesgos').getContent() ?>
+
+            </div>
+
+                  <div class="tab-pane fade" id="v-pills-examen" role="tabpanel" aria-labelledby="v-pills-examen-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('Examen').getContent() ?>
+              
+              </div>
+              <div class="tab-pane fade" id="v-pills-cumplimiento" role="tabpanel" aria-labelledby="v-pills-cumplimiento-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('BuscadorCap').getContent() ?>
+              
+              </div>
+              <div class="tab-pane fade" id="v-pills-listas" role="tabpanel" aria-labelledby="v-pills-listas-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('ListaCheck').getContent() ?>
+              
+              </div>
+               <div class="tab-pane fade" id="v-pills-inventarioCheck" role="tabpanel" aria-labelledby="v-pills-inventarioCheck-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('InventarioCheck').getContent() ?>
+              
+              </div>
+               <div class="tab-pane fade" id="v-pills-epps" role="tabpanel" aria-labelledby="v-pills-epps-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('MovimEpp').getContent() ?>
+              
+              </div>
+              <div class="tab-pane fade" id="v-pills-eppCheck" role="tabpanel" aria-labelledby="v-pills-eppCheck-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('MatrizEpp').getContent() ?>
+              
+              </div>
+               <div class="tab-pane fade" id="v-pills-registros" role="tabpanel" aria-labelledby="v-pills-registros-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('RegistrosCap').getContent() ?>
+              
+              </div>
+              <!-- <div class="tab-pane fade" id="v-pills-stock" role="tabpanel" aria-labelledby="v-pills-stock-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('InventarioStock').getContent() ?>
+              
+              </div> -->
+              <!-- <div class="tab-pane fade" id="v-pills-eppAsignado" role="tabpanel" aria-labelledby="v-pills-eppAsignado-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('AsignadosEpp').getContent() ?>
+              
+              </div> -->
+              <div class="tab-pane fade" id="v-pills-listasG" role="tabpanel" aria-labelledby="v-pills-listasG-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('Listas').getContent() ?>
+              
+              </div>
+               <div class="tab-pane fade" id="v-pills-hht" role="tabpanel" aria-labelledby="v-pills-hht-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('Hht').getContent() ?>
+              </div>
+              
+              <div class="tab-pane fade" id="v-pills-turnos" role="tabpanel" aria-labelledby="v-pills-turnos-tab">
+              <?!= HtmlService.createHtmlOutputFromFile('Rol').getContent() ?>
+              </div>
+
+              <div class="tab-pane fade" id="v-pills-reportes-laboral" role="tabpanel" aria-labelledby="v-pills-reportes-laboral-tab">
+                <?!= HtmlService.createHtmlOutputFromFile('ReportesLaboral').getContent() ?>
+              </div>
+              
+               <div class="tab-pane fade" id="v-pills-usuarios" role="tabpanel" aria-labelledby="v-pills-usuarios-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('Usuarios').getContent() ?>
+              
+              </div>
+              <div class="tab-pane fade" id="v-pills-matriz" role="tabpanel" aria-labelledby="v-pills-matriz-tab">
+              
+              <?!= HtmlService.createHtmlOutputFromFile('Matriz').getContent() ?>
+              
+              </div>
+              <div class="tab-pane fade" id="v-pills-maestroEpp" role="tabpanel" aria-labelledby="v-pills-maestroEpp-tab">
+                <?!= HtmlService.createHtmlOutputFromFile('EPPMaestro').getContent() ?>
+              </div>
+              
+
+          </div>
+<!--End Content-->
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- Modal de Configuración -->
+<div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content rounded-4">
+      <div class="modal-header">
+        <div>
+          <img id="fotoPerfil" src="" alt="Foto de perfil" class="rounded-circle" width="80" height="80" style="object-fit: cover; display: none; border: 5px solid grey;">
+        </div>
+        <h5 class="modal-title" id="configModalLabel">&nbsp;Configuración del Usuario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar" onclick="limpiarFirma()"></button>
+      </div>
+      <div class="modal-body">
+        <form id="configForm">
+          <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control" id="nombreEdit" disabled>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Usuario/DNI</label>
+            <input type="text" class="form-control" id="usuarioEdit" disabled>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Cargo</label>
+            <input type="text" class="form-control" id="cargoEdit" disabled>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Empresa</label>
+            <input type="text" class="form-control" id="empresaEdit" disabled>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" id="emailEdit">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Contraseña</label>
+            <input type="text" class="form-control" id="passwordEdit">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Link a Foto</label>
+            <input type="text" class="form-control" id="linkEdit">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Accesos</label>
+            <input type="text" class="form-control" id="accesosEdit" disabled>
+          
+          </div>
+          <label class="form-label">Firma electrónica</label>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="limpiarFirma('config')">Limpiar Firma</button>
+        <div class="mb-3 text-center">
+          <canvas id="firmaCanvas" width="300" height="150" style="border:1px solid #000; touch-action: none;"></canvas>
+          <div class="mt-2">
+            <p style="margin:0;font-size:13px;">Firma actual:</p>
+            <img id="firmaExistente" src="" alt="Sin firma" style="max-width: 300px; max-height: 150px; border:1px solid #ccc;" />
+            <p style="margin:2;font-size:10px;">Al firmar declaro expresamente que autorizo el uso de mi firma electrónica para la validación y suscripción de mis reportes y capacitaciones en la gestión del Sistema SSOMA, reconociendo su validez legal y efectos vinculantes conforme a la normativa vigente.<p>
+          </div>
+        </div>
+
+        </form>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button id="btn-editarusuario" type="button" class="btn btn-primary" onclick="guardarCambios()">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Capacitaciones -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header"><h5>EVALUACIÓN</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-2">
+            
+              <div class="container-fluid fade-in-page mb-3 text-center">
+                    <select class="form-control bg-opacity-10" id="select_id" name="select_id" onchange="loadQuiz()" disabled>
+                      <option value="" selected>--Elija tema--</option>
+                      <option value="no_disponible">🔴Aún no hay cuestionario para este tema.</option>
+                      <? var temas = getAllTopics(); ?>
+                      <? for (var i = 0; i < temas.length; i++) { ?>
+                        <option value="<?= temas[i] ?>"><?= temas[i] ?></option>
+                      <? } ?>
+                    </select>
+
+
+                <!-- Recuperar Radio button viene de code.gs -->
+                <div id="getDataQuestion" class="mb-4 text-start">
+                  </div>
+
+                <!-- Pie de página del cuestionario -->
+                <div class="row">
+                  <div class="col">
+                    <button id="back" type="button" class="btn btn-primary  mx-auto" style="display:none" onclick="backClick()">
+                      <i class="fa fa-arrow-left" aria-hidden="true"></i> <span id="numbBack"></span>
+                    </button>
+                  </div>
+                  <div class="col">
+                    <button id="next" type="button" class="btn btn-primary  mx-auto" style="display:none" onclick="nextClick()">
+                      <span id="numbNext"></span> <i class="fa fa-arrow-right" aria-hidden="true"></i> 
+                    </button>
+
+               <!-- FIRMA -->
+                <div id="firmaBloque" class="text-center" style="display:none;">
+
+                  <div class="d-flex justify-content-center mb-3">
+                    <canvas id="firmaCap" width="300" height="150"
+                            style="border:1px solid #000; touch-action:none; border-radius:8px;">
+                    </canvas>
+                  </div>
+
+                  <div class="d-flex justify-content-center gap-2">
+                    <button id="submit" type="button" class="btn btn-danger" style="display:none;" onclick="submitAns()">
+                      <i class="fa fa-paper-plane" aria-hidden="true"></i> Enviar respuestas
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="limpiarFirma('cap')">
+                      Limpiar Firma
+                    </button>
+                    
+                  </div>
+                  
+                </div>
+
+
+                  </div>
+                </div>   
+              </div>
+              
+                   <div id="evaluacion" class="justify-content-center align-items-center" style="display:none;">
+                         <?!=include('Evaluacion')?>
+                    </div>
+           
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+<!-- Modal matriz-->
+<!-- Modal -->
+<div class="modal fade" id="modalDetalle" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"></h5>
+        <button class="text-left btn btn-warning btn-sm" id="btn1" onclick="window.print()" style="font-size:15px;"><i class="fa-solid fa-print"></i></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body table-responsive" id="detalle-curso">
+        Cargando...
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal PDF CAPACITACIONES-->
+<div class="modal fade" id="modalTablaCursos" tabindex="-1" aria-labelledby="modalTablaCursosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content print-container">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTablaCursosLabel">Listado de Cursos </h5>
+        <button class="text-left btn btn-warning btn-sm" id="btn6" onclick="window.print()" style="font-size:15px;"><i class="fa-solid fa-print"></i></button>
+        <button id="btnWhatsappCap" class="btn btn-success btn-sm"><i class="fa-brands fa-whatsapp"></i></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+      <div id="contenedorTablaCursos"></div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODALS CHECK List -->
+
+<!-- Modal -->
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h1 class="modal-title fs-5" id="staticBackdropLabel">Detalles del CheckList</h1>
+        <button type="button" class="btn-close" id="btnclose" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+   <?!=include('EditCheck')?>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal2 -->
+<div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content" >
+      <div class="modal-header bg-dark py-2 text-white" style="border:none; padding:3px;">
+        <h4 class="modal-title fs-5 w-100 text-center" id="exampleModalLabel"><b>Reporte de CheckList</b></h4>
+        <button type="button" class="btn-close me-2" style="filter: invert(1);"  data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="border:none; padding-top:0px;">
+      <?!=include('Check')?>
+      </div>
+    </div>
+  </div>
+</div>
+
+  
+<!-- Modal3 -->
+<div class="modal fade" id="exampleModalCheck" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title fs-5" id="exampleModalLabel">Datos analizados los últimos <span id="ndias" class="circle-bg">0</span> días</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+<?!=include('ActualCheck')?>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NFPA -->
+<div class="modal fade" id="modalMSDS" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">MATPEL - IA</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0">
+        <iframe 
+          id="iframeDetalle"
+          name="iframeDetalle"
+          src="https://script.google.com/macros/s/AKfycbzPailLfVxUx5pu6NPuUabkxYmURGfq8W9gKNGM0MneX3dDdVd8A8_-B_0EiqihCL1H/exec" 
+          width="100%" 
+          height="100%" 
+          style="border:none; height:100vh;" 
+          allowfullscreen>
+        </iframe>
+      </div>
+    </div>
+  </div>
+</div>
+<?!=include('Inspecciones')?>
+
+  <!-- LOGIN -->
+  <script>
+
+// ============================================================================
+// PREVENCIÓN DE PARPADEO - EJECUTAR INMEDIATAMENTE
+// ============================================================================
+(function() {
+  const userCache = localStorage.getItem('userName');
+  const style = document.createElement('style');
+  style.id = 'no-flicker-styles';
+  
+  // Aplicar estilos ANTES de que el DOM termine de cargar
+  style.textContent = userCache 
+    ? '#pageA{display:none!important}#pageB{display:block!important}' 
+    : '#pageA{display:block!important}#pageB{display:none!important}';
+  
+  // Insertar inmediatamente en el head (incluso si aún no existe)
+  (document.head || document.getElementsByTagName('head')[0]).appendChild(style);
+})();
+
+// ============================================================================
+// VARIABLES GLOBALES
+// ============================================================================
+const DOM = {};
+let verificationTimer = null;
+
+// ============================================================================
+// FUNCIONES PRINCIPALES
+// ============================================================================
+function initializeApp() {
+  ['pageA', 'pageB', 'admin', 'img', 'myForm', 'loading', 'wrapper', 'firmaExistente'].forEach(id => {
+    DOM[id] = document.getElementById(id === 'firmaExistente' ? 'firmaExistente' : id);
+  });
+  DOM.menuToggle = document.getElementById('menu-toggle');
+  DOM.sidebarWrapper = document.getElementById('sidebar-wrapper');
+
+  const userCache = localStorage.getItem('userName');
+  if (userCache) {
+    try {
+      const userData = JSON.parse(userCache);
+      if (!userData?.usuario) {
+        console.warn('Datos de usuario inválidos, redirigiendo al login');
+        showPage('login');
+        return;
+      }
+      updateUserInterface(userData);
+      cargarDatosDNI(userData.usuario);
+      startPeriodicCheck();
+
+      setTimeout(() => {
+        verificarAlertasAlInicio();
+      }, 10000);
+
+    } catch (error) {
+      console.error('Error al parsear cache:', error);
+      Swal.fire({
+        position: 'top',
+        icon: 'error',
+        title: 'Sesión corrupta',
+        text: 'Por favor, inicia sesión nuevamente.',
+        confirmButtonText: 'Entendido'
+      }).then(() => showPage('login'));
+    }
+  } else {
+    showPage('login');
+  }
+}
+
+function showPage(page) {
+  const style = document.getElementById('no-flicker-styles');
+  if (page === 'main') {
+    style.textContent = '#pageA{display:none!important}#pageB{display:block!important}';
+  } else {
+    style.textContent = '#pageA{display:block!important}#pageB{display:none!important}';
+  }
+}
+
+function updateUserInterface(userData) {
+  const { nombre, foto, accesos, firma } = userData;
+  if (DOM.admin) DOM.admin.textContent = nombre;
+  if (DOM.img) DOM.img.src = foto;
+  if (firma && DOM.firmaExistente) DOM.firmaExistente.src = firma;
+  filtrarSidebar(accesos);
+}
+
+function login(obj) {
+  event.preventDefault();
+  if (DOM.loading) DOM.loading.classList.remove('invisible');
+
+  google.script.run
+    .withSuccessHandler((result) => {
+      if (result.success) {
+        const [id, usuario, nombre, cargo, empresa, email, password, foto, accesos, firma, token] = result.data;
+        const userObj = { id, usuario, nombre, cargo, empresa, email, password, foto, accesos, firma, token };
+        
+        localStorage.setItem('userName', JSON.stringify(userObj));
+        DOM.myForm?.reset();
+        
+        showPage('main');
+        updateUserInterface(userObj);
+        initEPPAfterLogin(userObj);
+        
+        if (typeof startRolModule === 'function') {
+            startRolModule(userObj);
+        }
+
+        setTimeout(() => cargarDatosDNI?.(usuario), 50);
+        startPeriodicCheck();
+
+        // ✨ AÑADIR ESTO: Se activa 10 segundos después del login
+        setTimeout(() => {
+          verificarAlertasAlInicio();
+        }, 10000); 
+
+      } else if (result.blocked) {
+        showError('Tu cuenta está desactivada. Contacta al administrador.');
+      } else {
+        showError('Usuario o contraseña incorrecta');
+      }
+      if (DOM.loading) DOM.loading.classList.add('invisible');
+    })
+    .withFailureHandler((error) => {
+      showError('Error de conexión');
+      if (DOM.loading) DOM.loading.classList.add('invisible');
+    })
+    .loginData(obj);
+}
+
+
+
+function logout() {
+  Swal.fire({
+    position: 'top',
+    title: '¿Cerrar sesión?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#0d6efd',
+    cancelButtonColor: '#d33',
+    cancelButtonText: 'Cancelar',
+    confirmButtonText: 'Aceptar'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      stopPeriodicCheck();
+      localStorage.removeItem('userName');
+      showPage('login');
+      resetToHomeTab();
+      resetEPPModule();
+
+      // ✅ NUEVO: Cerrar todos los submenús colapsables abiertos del sidebar
+      document.querySelectorAll('.collapse.show').forEach(el => {
+        const collapseInstance = bootstrap.Collapse.getInstance(el) || new bootstrap.Collapse(el, { toggle: false });
+        collapseInstance.hide();
+      });
+
+      // ✅ Limpiar UI
+      if (DOM.admin) DOM.admin.textContent = '';
+      if (DOM.img) DOM.img.src = '';
+      if (DOM.firmaExistente) DOM.firmaExistente.src = '';
+    }
+  });
+}
+
+
+// ============================================================================
+// VERIFICACIÓN OPTIMIZADA (Solo cada 30 minutos)
+// ============================================================================
+function checkUserStatus() {
+  const userData = JSON.parse(localStorage.getItem('userName') || 'null');
+  if (!userData?.usuario) {
+    console.log('No hay datos de usuario, redirigiendo al login');
+    showPage('login');
+    return;
+  }
+
+  google.script.run
+    .withSuccessHandler((result) => {
+      console.log('Respuesta de checkUserStatus:', result);
+      if (result === null || typeof result !== 'object') {
+        console.warn('Respuesta del servidor inválida, manteniendo sesión');
+        return;
+      }
+      
+      // ✅ CAMBIO PRINCIPAL: Verificar si blocked es true explícitamente
+      if (result.blocked === true) {
+        console.log('Usuario bloqueado, deslogueando');
+        localStorage.removeItem('userName');
+        Swal.fire({
+          position: 'top',
+          icon: 'warning',
+          title: 'Acceso Suspendido',
+          text: 'Tu cuenta ha sido desactivada.',
+          confirmButtonText: 'Entendido',
+          allowOutsideClick: false
+        }).then(() => location.reload());
+      } else {
+        // ✅ Si blocked es false o no existe, la sesión sigue activa
+        console.log('Sesión de usuario válida, manteniendo acceso');
+        if (result.accesos && result.accesos !== userData.accesos) {
+          userData.accesos = result.accesos;
+          localStorage.setItem('userName', JSON.stringify(userData));
+          filtrarSidebar(result.accesos);
+        }
+      }
+    })
+    .withFailureHandler((error) => {
+      console.warn('Fallo en la verificación, manteniendo sesión:', error);
+      setTimeout(checkUserStatus, 5 * 60 * 1000); // Reintentar en 5 minutos
+    })
+    .loginData({ username: userData.usuario, password: userData.password, checkOnly: true });
+}
+
+function startPeriodicCheck() {
+  if (verificationTimer) clearTimeout(verificationTimer);
+  verificationTimer = setTimeout(() => {
+    if (navigator.onLine) {
+      checkUserStatus();
+    } else {
+      console.warn('Sin conexión, omitiendo verificación de estado');
+    }
+    startPeriodicCheck();
+  }, 60 * 60 * 1000); // Verificar cada 1 hora
+}
+
+function stopPeriodicCheck() {
+  if (verificationTimer) {
+    clearTimeout(verificationTimer);
+    verificationTimer = null;
+  }
+}
+
+// ============================================================================
+// UTILIDADES
+// ============================================================================
+function filtrarSidebar(accesosRaw) {
+  if (!accesosRaw) return;
+  
+  const accesos = accesosRaw.toLowerCase().split(',').map(x => x.trim());
+  const mostrarTodo = accesos.includes('todo') || accesos.includes('todos');
+  
+  document.querySelectorAll('#v-pills-tab a').forEach(el => {
+    const texto = el.textContent.trim().toLowerCase();
+    const shouldShow = ['inicio', 'logout'].includes(texto) || mostrarTodo || accesos.includes(texto);
+    el.style.display = shouldShow ? 'block' : 'none';
+  });
+}
+
+function resetToHomeTab() {
+  document.querySelectorAll('.tab-pane').forEach(tab => tab.classList.remove('show', 'active'));
+  document.querySelectorAll('#v-pills-tab a').forEach(tab => tab.classList.remove('active'));
+  
+  const homeTab = document.getElementById('v-pills-home');
+  const homeNavTab = document.getElementById('v-pills-home-tab');
+  
+  if (homeTab) homeTab.classList.add('show', 'active');
+  if (homeNavTab) homeNavTab.classList.add('active');
+}
+
+function showError(message) {
+  Swal.fire({
+    position: 'top',
+    icon: 'error',
+    title: message,
+    showConfirmButton: false,
+    timer: 2500
+  });
+}
+
+function password_show_hide() {
+  const passwordField = document.getElementById("password");
+  const showEye = document.getElementById("show_eye");
+  const hideEye = document.getElementById("hide_eye");
+  
+  if (!passwordField || !showEye || !hideEye) return;
+  
+  if (passwordField.type === "password") {
+    passwordField.type = "text";
+    showEye.style.display = "none";
+    hideEye.style.display = "block";
+  } else {
+    passwordField.type = "password";
+    showEye.style.display = "block";
+    hideEye.style.display = "none";
+  }
+  hideEye.classList.remove("d-none");
+}
+
+// ============================================================================
+// EVENT LISTENERS OPTIMIZADOS
+// ============================================================================
+function setupEventListeners() {
+  // Auto-collapse sidebar para tabs específicos
+  ['v-pills-matriz-tab', 'v-pills-inventarioCheck-tab', 'v-pills-eppCheck-tab', 'v-pills-mapa-tab']
+    .forEach(id => {
+      document.getElementById(id)?.addEventListener("click", () => {
+        if (DOM.wrapper && !DOM.wrapper.classList.contains("toggled")) {
+          DOM.wrapper.classList.add("toggled");
+        }
+      });
+    });
+
+  // Menu toggle
+  DOM.menuToggle?.addEventListener("click", () => {
+    DOM.wrapper?.classList.toggle("toggled");
+  });
+
+  // Mobile sidebar close
+  if (window.innerWidth < 768) {
+    document.addEventListener("click", (event) => {
+      const isClickInsideSidebar = DOM.sidebarWrapper?.contains(event.target);
+      const isClickOnToggle = DOM.menuToggle?.contains(event.target);
+      
+      if (!isClickInsideSidebar && !isClickOnToggle && DOM.wrapper && !DOM.wrapper.classList.contains("toggled")) {
+        DOM.wrapper.classList.add("toggled");
+      }
+    });
+  }
+
+  // Pills navigation
+  document.querySelectorAll('[data-bs-toggle="pill"]').forEach(tab => {
+    tab.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const targetSelector = this.getAttribute('data-bs-target');
+      const target = document.querySelector(targetSelector);
+      if (!target) return;
+      
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show', 'active'));
+      document.querySelectorAll('#v-pills-tab a').forEach(a => a.classList.remove('active'));
+      
+      target.classList.add('show', 'active');
+      this.classList.add('active');
+    });
+  });
+}
+
+// ============================================================================
+// INICIALIZACIÓN
+// ============================================================================
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    initializeApp();
+    setupEventListeners();
+  });
+} else {
+  initializeApp();
+  setupEventListeners();
+}
+
+    function configurar() {
+      const datos = JSON.parse(localStorage.getItem('userName'));
+      if (!datos) return;
+
+      document.getElementById('nombreEdit').value = datos.nombre || '';
+      document.getElementById('usuarioEdit').value = datos.usuario || '';
+      document.getElementById('passwordEdit').value = datos.password || '';
+      document.getElementById('cargoEdit').value = datos.cargo || '';
+      document.getElementById('empresaEdit').value = datos.empresa || '';
+      document.getElementById('emailEdit').value = datos.email || '';
+      document.getElementById('linkEdit').value = datos.foto || '';
+      document.getElementById('firmaExistente').src = datos.firma || '';
+      document.getElementById('accesosEdit').value = datos.accesos || '';
+      
+      const modal = new bootstrap.Modal(document.getElementById('configModal'));
+      modal.show();
+    }
+
+
+function guardarCambios() {
+  const btnGuardar = document.getElementById("btn-editarusuario");
+  btnGuardar.textContent = "Guardando...";
+  btnGuardar.disabled = true;
+
+  const canvas = document.getElementById('firmaCanvas');
+  const firmaBase64 = canvas.toDataURL("image/png");
+
+  // Crear canvas vacío para comparar
+  const canvasVacio = document.createElement('canvas');
+  canvasVacio.width = canvas.width;
+  canvasVacio.height = canvas.height;
+  const ctxVacio = canvasVacio.getContext('2d');
+  const firmaVacia = canvasVacio.toDataURL("image/png");
+
+  // Datos anteriores
+  const datosPrevios = JSON.parse(localStorage.getItem('userName')) || {};
+  const firmaAnterior = datosPrevios.firma || "";
+
+  // Determinar si se modificó la firma
+  const seModificoFirma = firmaBase64 !== firmaVacia;
+
+  const nuevosDatos = {
+    usuario: document.getElementById('usuarioEdit').value.trim(), // DNI/CE
+    nombre: document.getElementById('nombreEdit').value.trim(),  // NOMBRES
+    cargo: document.getElementById('cargoEdit').value.trim(),    // CARGO
+    empresa: document.getElementById('empresaEdit').value.trim(), // EMPRESA
+    email: document.getElementById('emailEdit').value.trim(),    // EMAIL
+    password: document.getElementById('passwordEdit').value.trim(), // CONTRASEÑA
+    link: document.getElementById('linkEdit').value.trim(),      // IMAGEN
+    accesos: document.getElementById('accesosEdit').value.trim(), // ACCESOS
+    firma: seModificoFirma ? firmaBase64 : firmaAnterior         // FIRMA
+  };
+
+  // Enviar a servidor
+  google.script.run.withSuccessHandler((urlFirmaSubida) => {
+    console.log('urlFirmaSubida recibido:', urlFirmaSubida);
+    // Validar que urlFirmaSubida sea una URL válida de Google Drive
+    const firmaFinal = seModificoFirma && urlFirmaSubida && urlFirmaSubida.includes('/drive/') ? urlFirmaSubida : firmaAnterior;
+
+    const userData = {
+      ...nuevosDatos,
+      foto: nuevosDatos.link, // IMAGEN
+      firma: firmaFinal       // FIRMA
+    };
+
+    localStorage.setItem('userName', JSON.stringify(userData));
+
+    document.getElementById('admin').innerHTML = nuevosDatos.nombre;
+    document.getElementById('img').src = nuevosDatos.link;
+    document.getElementById('firmaExistente').src = firmaFinal || '';
+
+    const modal = bootstrap.Modal.getInstance(document.getElementById('configModal'));
+    modal.hide();
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Actualizado correctamente',
+      timer: 1500,
+      showConfirmButton: false,
+    });
+
+    btnGuardar.textContent = "Guardar cambios";
+    btnGuardar.disabled = false;
+    limpiarFirma();
+  }).withFailureHandler((error) => {
+    console.error('Error al actualizar usuario:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error al guardar',
+      text: 'No se pudieron guardar los cambios. Intenta de nuevo.',
+      confirmButtonText: 'Entendido'
+    });
+    btnGuardar.textContent = "Guardar cambios";
+    btnGuardar.disabled = false;
+  }).actualizarUsuariologin(nuevosDatos);
+}
+
+
+///mostrar imagen de perfil
+// Al abrir el modal
+  const configModal = document.getElementById('configModal');
+  configModal.addEventListener('show.bs.modal', () => {
+    const link = document.getElementById('linkEdit').value;
+    const fotoPerfil = document.getElementById('fotoPerfil');
+    if (link && link.trim() !== '') {
+      fotoPerfil.src = link;
+      fotoPerfil.style.display = 'inline-block';
+    } else {
+      fotoPerfil.style.display = 'none';
+    }
+  });
+
+  // También puedes actualizar la foto cuando se cambia el input manualmente
+  document.getElementById('linkEdit').addEventListener('input', () => {
+    const link = document.getElementById('linkEdit').value;
+    const fotoPerfil = document.getElementById('fotoPerfil');
+    if (link && link.trim() !== '') {
+      fotoPerfil.src = link;
+      fotoPerfil.style.display = 'inline-block';
+    } else {
+      fotoPerfil.style.display = 'none';
+    }
+  });
+
+document.addEventListener('DOMContentLoaded', function () {
+  google.script.run.withSuccessHandler(function (listas) {
+    listasGlobales = listas;
+
+    // 🔁 Selects con misma lista
+    ['num', 'filtroEmpresa'].forEach(id => llenarSelectDesdeLista(id, listas.empresas));
+    ['classroom', 'filtroLugar', 'lugarCheck', 'textlugarEvent'].forEach(id => llenarSelectDesdeLista(id, listas.lugares));
+    ['gender', 'filtroBlanco'].forEach(id => llenarSelectDesdeLista(id, listas.gestiones));
+    ['clasi', 'filtroTipo', 'tipoClasificacion', 'extraClasificacion', 'texteventoEvent'].forEach(id => llenarSelectDesdeLista(id, listas.clasificaciones));
+    ['filtroResponsable', 'filtroResponsable2', 'no', 'selectTrabajador', 'textRespoEvent'].forEach(id => llenarSelectDesdeLista(id, listas.trabajadores));
+    ['procesoDesvios', 'procesoCheck', 'textprocesoEvent'].forEach(id => llenarSelectDesdeLista(id, listas.procesos));
+    ['selectArea', 'areaFirma'].forEach(id => llenarSelectDesdeLista(id, listas.areas));
+
+    // 🔁 Selects individuales
+    llenarSelectDesdeLista('address', listas.potenciales);
+    llenarSelectDesdeLista('estado', listas.riesgos);
+    //llenarSelectDesdeLista('estadoCheck2', listas.estados);
+    llenarSelectDesdeLista('selectCargo', listas.cargos);
+    llenarSelectDesdeLista('selectAcceso', listas.accesos);
+    //llenarSelectDesdeLista('selectArea', listas.areas);
+    llenarSelectDesdeLista('selectEquipo', listas.equipos);
+
+    // 🔁 Datalists
+   // ['listResp'].forEach(id => llenarDatalistDesdeLista(id, listas.trabajadores));
+    ['listTipo'].forEach(id => llenarDatalistDesdeLista(id, listas.capacitaciones));
+    ['listDesvios'].forEach(id => llenarDatalistDesdeLista(id, listas.desvios));
+    ['listCargos'].forEach(id => llenarDatalistDesdeLista(id, listas.cargos));
+    ['listTrabajador'].forEach(id => llenarDatalistDesdeLista(id, listas.trabajadores));
+    ['listEquipo'].forEach(id => llenarDatalistDesdeLista(id, listas.equipos));
+    ['listLugar'].forEach(id => llenarDatalistDesdeLista(id, listas.lugares));
+    ['listProcesoCheck'].forEach(id => llenarDatalistDesdeLista(id, listas.procesos));
+    ['checkTipo'].forEach(id => llenarDatalistDesdeLista(id, listas.lugares));
+    ['listIsp'].forEach(id => llenarDatalistDesdeLista(id, listas.trabajadores));
+    ['listCapacitadores'].forEach(id => llenarDatalistDesdeLista(id, listas.trabajadores));
+    ['listEventos'].forEach(id => llenarDatalistDesdeLista(id, listas.clasificaciones));
+
+    // ✅ Cargar datos iniciales
+    affterPageLoads(); //Check List
+    cargarDatosDesdeServidorCharla(true);
+  }).getTodasLasListas();
+});
+
+function llenarSelectDesdeLista(idSelect, opciones = []) { 
+  const select = document.getElementById(idSelect);
+  if (!select) return;
+
+  select.innerHTML = "";
+
+  // Añadir opción "-- Todas --" si aplica
+  const optionTodas = document.createElement("option");
+  optionTodas.value = "";
+  optionTodas.textContent = "-- Todas --";
+  select.appendChild(optionTodas);
+
+  opciones.forEach(op => {
+    const option = document.createElement("option");
+    option.value = op;
+    option.textContent = op;
+    select.appendChild(option);
+  });
+}
+
+
+function llenarDatalistDesdeLista(idDatalist, opciones = []) {
+  const datalist = document.getElementById(idDatalist);
+  if (!datalist) return;
+
+  datalist.innerHTML = "";
+  opciones.forEach(op => {
+    const option = document.createElement("option");
+    option.value = op;
+    datalist.appendChild(option);
+  });
+}
+
+// ✅ FUNCIÓN PARA CARGAR MÓDULO TURNOS CON DIFERENTES MODOS
+function cargarModuloTurnos(modo) {
+  // Almacenar el modo para que el módulo lo use
+  localStorage.setItem('modoTurnos', modo);
+  
+  // Si el módulo ya está cargado, solo cambiar el modo
+  const moduloTurnos = document.querySelector('#v-pills-turnos');
+  if (moduloTurnos && moduloTurnos.querySelector('.modulo-turnos-wrapper')) {
+    // Disparar evento personalizado para cambiar modo
+    const evento = new CustomEvent('cambiarModoTurnos', { detail: { modo: modo } });
+    moduloTurnos.dispatchEvent(evento);
+  }
+  
+  console.log(`Cargando módulo Turnos en modo: ${modo}`);
+}
+
+  </script>
+ <script>
+/* ============================================================================
+   1. FUNCIÓN CRÍTICA: CARGAR MÓDULO TURNOS (ACTUALIZADA)
+   ============================================================================ */
+window.cargarModuloTurnos = function(modo) { // 👈 Recibe el modo
+    console.log("🖱️ Abriendo módulo en modo:", modo);
+
+    // 1. Obtener usuario
+    const userData = JSON.parse(localStorage.getItem('userName') || '{}');
+    
+    if (!userData || !userData.usuario) {
+        console.error("❌ No hay usuario logueado.");
+        return;
+    }
+
+    // 2. GUARDAR EL MODO EN EL USUARIO TEMPORALMENTE
+    userData.modoVista = modo; // 'LITE' o 'FULL'
+
+    // 3. Iniciar
+    setTimeout(function() {
+        if (typeof startRolModule === 'function') {
+            startRolModule(userData); 
+        }
+    }, 100);
+};
+
+
+
+
+
+/* ============================================================================
+   2. GESTIÓN DE FIRMAS (CANVAS) - TUS FUNCIONES ORIGINALES
+   ============================================================================ */
+let firmaCanvas, firmaContext;
+let firmaCap, firmaCapCtx;
+let dibujando = false;
+let canvasActivo = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Inicializar canvas de Configuración
+  firmaCanvas = document.getElementById("firmaCanvas");
+  firmaContext = firmaCanvas?.getContext("2d");
+  
+  // Inicializar canvas de Capacitaciones
+  firmaCap = document.getElementById("firmaCap");
+  firmaCapCtx = firmaCap?.getContext("2d");
+
+  inicializarCanvas(firmaCanvas, firmaContext);
+  inicializarCanvas(firmaCap, firmaCapCtx);
+
+  // Detectar qué modal está abierto
+  const configModal = document.getElementById('configModal');
+  if(configModal) configModal.addEventListener('shown.bs.modal', () => canvasActivo = firmaCanvas);
+  
+  const exampleModal = document.getElementById('exampleModal');
+  if(exampleModal) exampleModal.addEventListener('shown.bs.modal', () => canvasActivo = firmaCap);
+});
+
+function inicializarCanvas(canvas, ctx) {
+  if (!canvas || !ctx) return;
+
+  const startDraw = (pos) => {
+      dibujando = true;
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+  };
+
+  const moveDraw = (pos) => {
+      if (!dibujando) return;
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+  };
+
+  const endDraw = () => dibujando = false;
+
+  // Eventos Mouse
+  canvas.addEventListener('mousedown', e => startDraw(getMousePos(canvas, e)));
+  canvas.addEventListener('mousemove', e => moveDraw(getMousePos(canvas, e)));
+  canvas.addEventListener('mouseup', endDraw);
+  canvas.addEventListener('mouseout', endDraw);
+
+  // Eventos Táctiles
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); startDraw(getTouchPos(canvas, e)); });
+  canvas.addEventListener('touchmove', e => { e.preventDefault(); moveDraw(getTouchPos(canvas, e)); });
+  canvas.addEventListener('touchend', endDraw);
+  canvas.addEventListener('touchcancel', endDraw);
+}
+
+function getMousePos(canvas, e) {
+  const rect = canvas.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+function getTouchPos(canvas, e) {
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+}
+
+function limpiarFirma(origen = 'activo') {
+  if (origen === 'config' && firmaContext) {
+    firmaContext.clearRect(0, 0, firmaCanvas.width, firmaCanvas.height);
+  } else if (origen === 'cap' && firmaCapCtx) {
+    firmaCapCtx.clearRect(0, 0, firmaCap.width, firmaCap.height);
+  } else if (canvasActivo) {
+    const ctx = canvasActivo.getContext("2d");
+    ctx.clearRect(0, 0, canvasActivo.width, canvasActivo.height);
+  }
+}
+
+/* ============================================================================
+   3. MONITOR DE CONEXIÓN Y EVENTOS UI
+   ============================================================================ */
+function setupConnectionMonitor() {
+  const statusElement = document.getElementById('connection-status');
+  if(!statusElement) return;
+  
+  function updateConnectionStatus() {
+    if (navigator.onLine) {
+      statusElement.className = 'connection-status online';
+      statusElement.innerHTML = '<i class="fa fa-wifi me-1"></i> Conectado';
+    } else {
+      statusElement.className = 'connection-status offline';
+      statusElement.innerHTML = '<i class="fa fa-wifi-slash me-1"></i> Sin conexión';
+    }
+    statusElement.classList.remove('d-none');
+    setTimeout(() => statusElement.classList.add('d-none'), 3000);
+  }
+
+  window.addEventListener('online', updateConnectionStatus);
+  window.addEventListener('offline', updateConnectionStatus);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // 1. Monitor de Red
+  setupConnectionMonitor();
+
+  // 2. Lazy Loading (si existe)
+  if(typeof setupLazyLoading === 'function') setupLazyLoading();
+
+  // 3. Accesibilidad Teclado
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && (e.target.id === 'busqueda1' || e.target.id === 'busqueda2')) {
+      e.preventDefault();
+      document.getElementById('btnBuscar')?.click();
+    }
+    if (e.key === 'Escape') {
+      const filtros = document.getElementById('filtrosBusqueda');
+      if (filtros?.classList.contains('show') && typeof bootstrap !== 'undefined') {
+        bootstrap.Collapse.getInstance(filtros)?.hide();
+      }
+    }
+  });
+
+  // 4. Efecto Click Botones
+  document.addEventListener('click', function(e) {
+    if (e.target.matches('button:not([disabled])')) {
+      e.target.style.transform = 'scale(0.98)';
+      setTimeout(() => { e.target.style.transform = ''; }, 100);
+    }
+  });
+  
+  // NOTA: Aquí NO llamamos a getTodasLasListas() porque YA se llama en el script anterior.
+  // Esto evita el conflicto de doble carga.
+});
+
+function verificarAlertasAlInicio() {
+  const userData = JSON.parse(localStorage.getItem('userName'));
+  if (!userData || !userData.usuario) return;
+
+  // Llamamos al servidor para ver si hay alertas activas
+  google.script.run
+    .withSuccessHandler(function(alertas) {
+      if (alertas && alertas.length > 0) {
+        mostrarAvisoTemporal();
+      }
+    })
+    .obtenerAlertasVencimientos(userData.usuario);
+}
+
+function mostrarAvisoTemporal() {
+  const aviso = document.getElementById('avisoGlobalEPP');
+  if (!aviso) return;
+
+  // Mostrar con una pequeña animación de entrada
+  aviso.style.display = 'flex';
+  aviso.style.animation = 'fadeInDown 0.5s ease-out';
+
+  // Cerrar automáticamente a los 5 segundos
+  setTimeout(() => {
+    aviso.style.animation = 'fadeOutUp 0.5s ease-in';
+    setTimeout(() => {
+      aviso.style.display = 'none';
+    }, 450);
+  }, 5000);
+}
+
+
+
+</script>
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script> 
+    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> -->
+    
+</body>
+
+</html>

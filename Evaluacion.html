@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  .star-rating {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .stars {
+    display: flex;
+    cursor: pointer;
+  }
+
+  .star {
+    font-size: 3rem;
+    color: #ccc;
+    transition: transform 0.2s ease, color 0.3s ease;
+    margin: 0 5px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .star:hover {
+    transform: scale(1.2);
+    color: gold;
+  }
+
+  .star.selected {
+    color: gold;
+  }
+
+  .rating-text {
+    margin-top: 8px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+  }
+</style>
+</head>
+<body>
+  
+<div class="star-rating" id="valoracion">
+  <div class="stars">
+    <i class="fa-solid fa-star star" data-value="1"></i>
+    <i class="fa-solid fa-star star" data-value="2"></i>
+    <i class="fa-solid fa-star star" data-value="3"></i>
+    <i class="fa-solid fa-star star" data-value="4"></i>
+    <i class="fa-solid fa-star star" data-value="5"></i>
+  </div>
+  <div class="rating-text" id="rating-text">¿Cómo fue tu experiencia con el curso?</div>
+  <button id="btn-valoracion" class="btn btn-success mt-3" onclick="guardarCalificacion()">Valorar</button>
+</div>
+
+  <script>
+
+  const stars = document.querySelectorAll('.star');
+  const ratingText = document.getElementById('rating-text');
+  const texts = ["Deficiente", "Regular", "Aceptable", "Bueno", "Excelente"];
+  let starRating = 0;
+
+  stars.forEach((star, index) => {
+    star.addEventListener('click', () => {
+      starRating = index + 1;
+      updateStars();
+      ratingText.textContent = texts[index];
+    });
+
+    star.addEventListener('mouseover', () => {
+      highlightStars(index + 1);
+    });
+
+    star.addEventListener('mouseout', () => {
+      updateStars();
+    });
+  });
+
+  function highlightStars(rating) {
+    stars.forEach((s, i) => {
+      s.classList.toggle('selected', i < rating);
+    });
+  }
+
+  function updateStars() {
+    stars.forEach((s, i) => {
+      s.classList.toggle('selected', i < starRating);
+    });
+  }
+
+  function guardarCalificacion() {
+    const btnGuardar = document.getElementById("btn-valoracion");
+    btnGuardar.textContent = "Gracias!!";
+    btnGuardar.disabled = true;
+    
+    if (starRating === 0) {
+      Swal.fire("Error", "Selecciona una calificación", "warning");
+      return;
+    }
+
+    const dni = JSON.parse(localStorage.getItem('userName')).usuario;
+
+    google.script.run.withSuccessHandler(success => {
+      if (success) {
+        Swal.fire("Gracias", "Tu valoración es importante para mejorar", "success");
+        const modal = bootstrap.Modal.getInstance(document.getElementById('exampleModal'));
+        modal.hide();
+        resetStarRating();
+        document.getElementById('evaluacion').style.display = 'none';
+      } else {
+        Swal.fire("Error", "No se pudo guardar la valoración", "error");
+        btnGuardar.textContent = "Valorar";
+        btnGuardar.disabled = false;
+      }
+    }).guardarCalificacionEnFila(dni, starRating);
+  }
+
+//Resetear el formulaio
+function resetStarRating() {
+  starRating = 0;
+  ratingText.textContent = "Sin calificar";
+  stars.forEach(star => star.classList.remove('selected'));
+  const btnGuardar = document.getElementById("btn-valoracion");
+  btnGuardar.textContent = "Valorar";
+  btnGuardar.disabled = false;
+}
+
+//Listener para borrar evaluacion en caso no hayan elegino ninguna opcion
+  const modal = document.getElementById('exampleModal');
+
+  modal.addEventListener('hidden.bs.modal', function () {
+    // Oculta el contenido de evaluación si quedó visible
+    document.getElementById('evaluacion').style.display = 'none';
+
+    // Opcional: limpia también el contenido de preguntas si es necesario
+    document.getElementById('getDataQuestion').innerHTML = '';
+    document.getElementById('select_id').value = ""; // Reinicia el select
+    resetStarRating();
+  });
+  </script>
+
+</body>
+</html>

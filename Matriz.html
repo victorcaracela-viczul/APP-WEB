@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"> -->
+  <style>
+    #VistaMatriz .tabla-container {
+      max-height: 600px;
+      overflow: auto;
+      position: relative;
+    }
+
+    #VistaMatriz thead th {
+      position: sticky;
+      top: 0;
+      background-color: #d6dbdf;
+      //color: white;
+      z-index: 2;
+      font-size:0.8em;
+    }
+
+    #VistaMatriz .sticky-col {
+      position: sticky;
+      left: 0;
+      background-color: #d6dbdf;
+      z-index: 1;
+      font-weight: bold;
+      font-size:0.7em;
+    }
+    /* Tamaño y estilo del checkbox */
+    input[type="checkbox"] {
+      transform: scale(1.2);
+    } */
+  </style>
+</head>
+<body>
+  <div class="d-flex align-items-center mt-3">
+  <div class="bg-purple rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: #6610f2;">
+    <i class="fas fa-th-large text-white"></i>
+  </div>
+  <div>
+    <h5 class="mb-0" style="color: #6f42c1;">Matriz de cursos</h5>
+    <small class="text-muted">Asignación por cargo</small>
+  </div>
+</div>
+
+    <!-- <h4 class="mb-3">Permisos por Cargo y Curso</h4> -->
+    <div id="VistaMatriz" class="container-fluid px-0">
+  <div class="row">
+    <!-- Contenido principal -->
+      <div class="my-2">
+        <div class="tabla-container border rounded shadow-sm" id="tabla-permisos">
+          <!-- tu tabla aquí -->
+        </div>
+      </div>
+  </div>
+</div>
+
+  <script>
+  // ===== CONSTANTES Y CONFIGURACIÓN =====
+const CONFIG = {
+  SELECTORS: {
+    tablaPermisos: '#tabla-permisos',
+    modalDetalle: '#modalDetalle',
+    detalleCurso: '#detalle-curso',
+    detalleBody: '#detalle-body',
+    buscadorDetalle: '#buscadorDetalle',
+    exportButtons: '.export-btn'
+  },
+  CLASSES: {
+    table: 'table table-hover table-bordered',
+    stickyCol: 'sticky-col',
+    printContainer: 'print-container'
+  },
+  STYLES: {
+    headerBg: 'rgba(200,200,200,0.9)',
+    blueColor: 'blue'
+  },
+  OFFSETS: {
+    filaBase: 13,
+    columnaBase: 5
+  },
+  EXCEL: {
+    filename: 'Reporte_Permisos',
+    sheetNames: {
+      matriz: 'Matriz de Permisos',
+      detalle: 'Detalle del Curso'
+    }
+  }
+};
+
+// ===== ESTADO GLOBAL =====
+let estadoApp = {
+  actualizandoCheckbox: false,
+  datosActuales: null, // Para almacenar los datos actuales
+  cursoActual: null    // Para almacenar el curso actual del modal
+};
+
+// ===== EXPORTACIÓN A EXCEL =====
+const excelExporter = {
+  /**
+   * Exporta la matriz de permisos a Excel
+   */
+  exportarMatriz() {
+    if (!estadoApp.datosActuales) {
+      alert('No hay datos disponibles para exportar');
+      return;
+    }
+
+    const { cursos, cargos, matriz, resumen } = estadoApp.datosActuales;
+    
+    // Crear datos para Excel
+    const excelData = [];
+    
+    // Encabezados
+    const headers = ['Cargo', ...cursos];
+    excelData.push(headers);
+    
+    // Fila de resumen
+    const resumenRow = ['RESUMEN', ...resumen.map(r => `${r.aprobados}/${r.asignados}`)];
+    excelData.push(resumenRow);
+    
+    // Separador
+    excelData.push(['']);
+    
+    // Datos de la matriz
+    cargos.forEach((cargo, i) => {
+      const row = [cargo];
+      cursos.forEach((_, j) => {
+        row.push(matriz[i][j] ? 'SÍ' : 'NO');
+      });
+      excelData.push(row);
+    });
+
+    this.crearArchivoExcel(excelData, `${CONFIG.EXCEL.filename}_Matriz`, CONFIG.EXCEL.sheetNames.matriz);
+  },
+
+  /**
+   * Exporta el detalle del curso a Excel
+   */
+  exportarDetalle() {
+    if (!estadoApp.cursoActual) {
+      alert('No hay detalle de curso disponible para exportar');
+      return;
+    }
+
+    const tabla = document.querySelector(`${CONFIG.SELECTORS.detalleBody}`);
+    if (!tabla) return;
+
+    const filas = tabla.querySelectorAll('tr');
+    const excelData = [];
+    
+    // Encabezados
+    excelData.push(['ID/DNI', 'Nombre', 'Cargo', 'Empresa', 'Puntaje', 'Estatus', 'Fecha']);
+    
+    // Información del curso
+    excelData.push(['']);
+    excelData.push([`Curso: ${estadoApp.cursoActual}`]);
+    excelData.push([`Fecha de exportación: ${new Date().toLocaleDateString()}`]);
+    excelData.push(['']);
+    
+    // Datos de las filas
+    filas.forEach(fila => {
+      if (fila.style.display !== 'none') { // Solo filas visibles
+        const celdas = fila.querySelectorAll('td');
+        const rowData = [];
+        celdas.forEach((celda, index) => {
+          if (index < 7) { // Solo las primeras 7 columnas (sin firma)
+            // Extraer texto del badge si es la columna de estatus
+            if (index === 5) {
+              const badge = celda.querySelector('.badge');
+              rowData.push(badge ? badge.textContent.trim() : celda.textContent.trim());
+            } else {
+              rowData.push(celda.textContent.trim());
+            }
+          }
+        });
+        excelData.push(rowData);
+      }
+    });
+
+    this.crearArchivoExcel(excelData, `${CONFIG.EXCEL.filename}_${estadoApp.cursoActual}`, CONFIG.EXCEL.sheetNames.detalle);
+  },
+
+  /**
+   * Crea y descarga el archivo Excel
+   */
+  crearArchivoExcel(data, filename, sheetName) {
+    try {
+      // Crear workbook
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      
+      // Configurar ancho de columnas
+      const colWidths = data[0].map((_, colIndex) => {
+        const maxLength = Math.max(
+          ...data.map(row => String(row[colIndex] || '').length)
+        );
+        return { wch: Math.min(Math.max(maxLength + 2, 10), 50) };
+      });
+      ws['!cols'] = colWidths;
+      
+      // Agregar hoja al workbook
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      
+      // Descargar archivo
+      const fechaHora = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      XLSX.writeFile(wb, `${filename}_${fechaHora}.xlsx`);
+      
+    } catch (error) {
+      console.error('Error al exportar a Excel:', error);
+      alert('Error al generar el archivo Excel. Verifique que la librería XLSX esté cargada.');
+    }
+  },
+
+  /**
+   * Verifica si XLSX está disponible
+   */
+  verificarXLSX() {
+    if (typeof XLSX === 'undefined') {
+      console.warn('Librería XLSX no encontrada. Cargando desde CDN...');
+      this.cargarXLSX();
+      return false;
+    }
+    return true;
+  },
+
+  /**
+   * Carga la librería XLSX dinámicamente
+   */
+  cargarXLSX() {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload = () => {
+      console.log('Librería XLSX cargada correctamente');
+    };
+    script.onerror = () => {
+      alert('Error al cargar la librería de Excel. Verifique su conexión a internet.');
+    };
+    document.head.appendChild(script);
+  }
+};
+const utils = {
+  /**
+   * Crea un elemento DOM con atributos opcionales
+   */
+  createElement(tag, attributes = {}, content = '') {
+    const element = document.createElement(tag);
+    Object.entries(attributes).forEach(([key, value]) => {
+      if (key === 'className') {
+        element.className = value;
+      } else {
+        element.setAttribute(key, value);
+      }
+    });
+    if (content) element.innerHTML = content;
+    return element;
+  },
+
+  /**
+   * Selector de elementos con validación
+   */
+  getElement(selector) {
+    const element = document.querySelector(selector);
+    if (!element) {
+      console.warn(`Elemento no encontrado: ${selector}`);
+    }
+    return element;
+  },
+
+  /**
+   * Debounce para optimizar eventos frecuentes
+   */
+  debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+};
+
+// ===== CONSTRUCCIÓN DE TABLA =====
+const tablaBuilder = {
+  /**
+   * Construye el encabezado de la tabla
+   */
+  construirEncabezado(cursos, resumen) {
+    const headerCells = cursos.map((curso, index) => {
+      const info = resumen[index];
+      return `
+        <th style='background-color: ${CONFIG.STYLES.headerBg}; cursor: pointer;' 
+            onclick="mostrarDetalle('${curso}')"
+            title="Click para ver detalles">
+          ${curso}<br>
+          <small style="color: ${CONFIG.STYLES.blueColor};">
+            ${info.aprobados}/${info.asignados} 
+            <i class="fa-solid fa-user-shield"></i>
+          </small>
+        </th>
+      `;
+    }).join('');
+
+    return `
+      <thead>
+        <tr>
+          <th class='${CONFIG.CLASSES.stickyCol}'>Cargo</th>
+          ${headerCells}
+        </tr>
+      </thead>
+    `;
+  },
+
+  /**
+   * Construye el cuerpo de la tabla
+   */
+  construirCuerpo(cargos, cursos, matriz) {
+    const rows = cargos.map((cargo, cargoIndex) => {
+      const cells = cursos.map((_, cursoIndex) => {
+        const isChecked = matriz[cargoIndex][cursoIndex] === true;
+        const filaSheet = CONFIG.OFFSETS.filaBase + cargoIndex;
+        const colSheet = CONFIG.OFFSETS.columnaBase + cursoIndex;
+        
+        return `
+          <td>
+            <input type="checkbox" 
+                   ${isChecked ? 'checked' : ''}
+                   data-fila="${filaSheet}"
+                   data-columna="${colSheet}"
+                   onchange="actualizarCheckbox(${filaSheet}, ${colSheet}, this.checked)">
+          </td>
+        `;
+      }).join('');
+
+      return `
+        <tr>
+          <td class="${CONFIG.CLASSES.stickyCol}" 
+              style='background-color: ${CONFIG.STYLES.headerBg};'>
+            ${cargo}
+          </td>
+          ${cells}
+        </tr>
+      `;
+    }).join('');
+
+    return `<tbody>${rows}</tbody>`;
+  },
+
+  /**
+   * Construye la tabla completa
+   */
+  construir({ cursos, cargos, matriz, resumen }) {
+    // Guardar datos actuales para exportación
+    estadoApp.datosActuales = { cursos, cargos, matriz, resumen };
+    
+    const container = utils.getElement(CONFIG.SELECTORS.tablaPermisos);
+    if (!container) return;
+
+    // Crear contenedor con botón de exportar
+    const wrapperDiv = document.createElement('div');
+    
+    // Botón de exportar
+    const exportButton = utils.createElement('button', {
+      className: 'btn btn-success btn-sm mb-0 export-btn',
+      onclick: 'excelExporter.exportarMatriz()'
+    }, '<i class="fa-solid fa-file-excel"></i> Exportar a Excel');
+    
+    const table = utils.createElement('table', {
+      className: CONFIG.CLASSES.table
+    });
+
+    const thead = this.construirEncabezado(cursos, resumen);
+    const tbody = this.construirCuerpo(cargos, cursos, matriz);
+    
+    table.innerHTML = thead + tbody;
+    
+    wrapperDiv.appendChild(exportButton);
+    wrapperDiv.appendChild(table);
+    
+    container.innerHTML = '';
+    container.appendChild(wrapperDiv);
+  }
+};
+
+// ===== GESTIÓN DE CHECKBOXES =====
+const checkboxManager = {
+  /**
+   * Actualiza el estado de un checkbox
+   */
+  async actualizar(fila, columna, valor) {
+    if (estadoApp.actualizandoCheckbox) return;
+    
+    estadoApp.actualizandoCheckbox = true;
+    const checkbox = event.target;
+    const estadoOriginal = checkbox.checked;
+    
+    try {
+      checkbox.disabled = true;
+      
+      const resultado = await this.llamarActualizacion(fila, columna, valor);
+      this.actualizarResumen(resultado);
+      await this.recargarDatos();
+      
+    } catch (error) {
+      console.error('Error al actualizar checkbox:', error);
+      // Revertir estado en caso de error
+      checkbox.checked = !estadoOriginal;
+    } finally {
+      checkbox.disabled = false;
+      estadoApp.actualizandoCheckbox = false;
+    }
+  },
+
+  /**
+   * Promisifica la llamada a Google Apps Script
+   */
+  llamarActualizacion(fila, columna, valor) {
+    return new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(reject)
+        .actualizarAsignadosPorCurso(fila, columna, valor);
+    });
+  },
+
+  /**
+   * Recarga los datos del usuario
+   */
+  async recargarDatos() {
+    const userData = JSON.parse(localStorage.getItem('userName') || '{}');
+    if (!userData.usuario) return;
+
+    return new Promise((resolve, reject) => {
+      loadingStartG?.(); // Función externa opcional
+      google.script.run
+        .withSuccessHandler((result) => {
+          mostrarResultados?.(result); // Función externa opcional
+          resolve(result);
+        })
+        .withFailureHandler(reject)
+        .obtenerDatosPorDNI(userData.usuario);
+    });
+  },
+
+  /**
+   * Actualiza el resumen de un curso
+   */
+  actualizarResumen(info) {
+    if (!info || !info.curso) return;
+
+    const { curso, asignados, aprobados } = info;
+    const headers = document.querySelectorAll('th');
+
+    headers.forEach(header => {
+      if (header.textContent.includes(curso)) {
+        const smallElement = header.querySelector('small');
+        if (smallElement) {
+          smallElement.innerHTML = `
+            ${aprobados}/${asignados} 
+            <i class="fa-solid fa-user-shield"></i>
+          `;
+        }
+      }
+    });
+  }
+};
+
+// ===== MODAL DE DETALLES =====
+const modalDetalle = {
+  /**
+   * Templates HTML
+   */
+  templates: {
+    loading: '<p class="text-center">Buscando información...</p>',
+    
+    getAcordeon() {
+      return `
+        <div class="accordion" id="accordionRegistro">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingRegistro">
+              <button class="accordion-button py-0" type="button" 
+                      data-bs-toggle="collapse" 
+                      data-bs-target="#collapseRegistro" 
+                      aria-expanded="true" 
+                      aria-controls="collapseRegistro">
+                ➕
+              </button>
+            </h2>
+            <div id="collapseRegistro" class="accordion-collapse collapse" 
+                 aria-labelledby="headingRegistro" 
+                 data-bs-parent="#accordionRegistro">
+              <div class="accordion-body">
+                ${modalDetalle.getFormularioRegistro()}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    },
+
+    tablaDetalle: (curso) => `
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6>Tema: ${curso}</h6>
+        <button class="btn btn-outline-success btn-sm export-btn" 
+                onclick="excelExporter.exportarDetalle()">
+          <i class="fa-solid fa-file-excel"></i> Exportar Detalle
+        </button>
+      </div>
+      <input type="text" 
+             id="buscadorDetalle" 
+             class="form-control mb-2" 
+             placeholder="Buscar por nombre, DNI, cargo...">
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>ID/DNI</th>
+            <th>Nombre</th>
+            <th>Cargo</th>
+            <th>Empresa</th>
+            <th>Puntaje</th>
+            <th>Estatus</th>
+            <th>Fecha</th>
+            <th>Firma</th>
+          </tr>
+        </thead>
+        <tbody id="detalle-body"></tbody>
+      </table>
+    `
+  },
+
+  /**
+   * Formulario de registro (extraído para mejor mantenibilidad)
+   */
+  getFormularioRegistro() {
+    return `
+      <div class="row mb-2" style="font-size:11px;">
+        <div class="col-md-2 d-flex align-items-center justify-content-center">
+          <img src="https://lh5.googleusercontent.com/d/1db5DNfVhPvQvj0NEnVS64MmltUx_9Nk-" 
+               alt="Logo" style="height: 40px;">
+        </div>
+        <div class="col-md-8 d-flex align-items-center justify-content-center">
+          <h5 class="mb-2 text-center">
+            <strong>REGISTRO DE INDUCCIÓN, CAPACITACIÓN, ENTRENAMIENTO y SIMULACROS DE EMERGENCIA</strong>
+          </h5>
+        </div>
+        <div class="col-md-2">
+          <table class="table table-bordered table-sm my-0 text-center">
+            <tbody>
+              <tr>
+                <td rowspan="3">
+                  Cód: CCCC-SGI-F-23<br>
+                  Versión: 00<br>
+                  Fecha: 15/05/2025
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="mb-3 border p-2 bg-light">
+        <strong>1. Datos del Empleador Principal:</strong>
+        <div class="row mt-2">
+          <div class="col">
+            <label>Razón Social</label>
+            <input class="form-control form-control-sm" placeholder="SIG EIRL">
+          </div>
+          <div class="col">
+            <label>N° RUC</label>
+            <input class="form-control form-control-sm" placeholder="123456789">
+          </div>
+          <div class="col">
+            <label>Domicilio</label>
+            <input class="form-control form-control-sm" placeholder="Carrtera interior Km56">
+          </div>
+          <div class="col">
+            <label>Actividad Económica</label>
+            <input class="form-control form-control-sm" placeholder="Ingeniería y Construcción">
+          </div>
+          <div class="col">
+            <label>N° de Trabajadores</label>
+            <input class="form-control form-control-sm" placeholder="0000">
+          </div>
+          <div class="col">
+            <label>Responsable del registro</label>
+            <input class="form-control form-control-sm" placeholder="SIG EIRL">
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
+  /**
+   * Muestra el modal con detalles del curso
+   */
+  async mostrar(curso) {
+    try {
+      // Guardar curso actual
+      estadoApp.cursoActual = curso;
+      
+      // Activar modal
+      new bootstrap.Modal(utils.getElement(CONFIG.SELECTORS.modalDetalle)).show();
+      
+      const container = utils.getElement(CONFIG.SELECTORS.detalleCurso);
+      if (!container) return;
+
+      // Mostrar estado de carga
+      container.innerHTML = this.templates.loading;
+
+      // Obtener datos
+      const datos = await this.obtenerDatos(curso);
+      
+      // Renderizar contenido
+      this.renderizarContenido(container, curso, datos);
+      
+      // Configurar funcionalidades
+      this.configurarBuscador();
+      
+    } catch (error) {
+      console.error('Error al mostrar detalle:', error);
+      const container = utils.getElement(CONFIG.SELECTORS.detalleCurso);
+      if (container) {
+        container.innerHTML = '<p class="text-center text-danger">Error al cargar los datos</p>';
+      }
+    }
+  },
+
+  /**
+   * Obtiene los datos del curso
+   */
+  obtenerDatos(curso) {
+    return new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(reject)
+        .obtenerDetalleCurso(curso);
+    });
+  },
+
+  /**
+   * Renderiza el contenido completo
+   */
+  renderizarContenido(container, curso, datos) {
+    const filas = datos.map(row => `
+      <tr>
+        <td>${row.dni || ''}</td>
+        <td>${row.nombre || ''}</td>
+        <td>${row.cargo || ''}</td>
+        <td>${row.empresa || ''}</td>
+        <td>${row.puntaje || ''}</td>
+        <td>
+          <span class="badge ${this.getEstatusBadgeClass(row.estatus)}">
+            ${row.estatus || ''}
+          </span>
+        </td>
+        <td>${row.fecha || ''}</td>
+        <td></td>
+      </tr>
+    `).join('');
+
+    container.innerHTML = `
+      <div class="${CONFIG.CLASSES.printContainer}">
+        ${this.templates.getAcordeon()}
+        ${this.templates.tablaDetalle(curso)}
+      </div>
+    `;
+
+    // Insertar filas en la tabla
+    const tbody = utils.getElement(CONFIG.SELECTORS.detalleBody);
+    if (tbody) {
+      tbody.innerHTML = filas;
+    }
+  },
+
+  /**
+   * Obtiene la clase CSS para el badge del estatus
+   */
+  getEstatusBadgeClass(estatus) {
+    const estatusLower = (estatus || '').toLowerCase();
+    if (estatusLower.includes('aprobado')) return 'bg-success';
+    if (estatusLower.includes('reprobado')) return 'bg-danger';
+    if (estatusLower.includes('pendiente')) return 'bg-warning';
+    return 'bg-secondary';
+  },
+
+  /**
+   * Configura el buscador con debounce
+   */
+  configurarBuscador() {
+    const input = utils.getElement(CONFIG.SELECTORS.buscadorDetalle);
+    if (!input) return;
+
+    const filtrarTabla = utils.debounce((filtro) => {
+      const filas = document.querySelectorAll(`${CONFIG.SELECTORS.detalleBody} tr`);
+      const filtroLower = filtro.toLowerCase();
+      
+      filas.forEach(fila => {
+        const textoFila = fila.textContent.toLowerCase();
+        fila.style.display = textoFila.includes(filtroLower) ? '' : 'none';
+      });
+    }, 300);
+
+    input.addEventListener('input', (e) => {
+      filtrarTabla(e.target.value);
+    });
+  }
+};
+
+// ===== FUNCIONES GLOBALES (COMPATIBILIDAD) =====
+function construirTabla(data) {
+  tablaBuilder.construir(data);
+}
+
+function actualizarCheckbox(fila, columna, valor) {
+  checkboxManager.actualizar(fila, columna, valor);
+}
+
+function mostrarDetalle(curso) {
+  modalDetalle.mostrar(curso);
+}
+
+function actualizarResumenCurso(info) {
+  checkboxManager.actualizarResumen(info);
+}
+
+// ===== INICIALIZACIÓN =====
+function inicializarApp() {
+  // Verificar y cargar XLSX si es necesario
+  excelExporter.verificarXLSX();
+  
+  google.script.run
+    .withSuccessHandler(construirTabla)
+    .withFailureHandler((error) => {
+      console.error('Error al inicializar:', error);
+    })
+    .obtenerMatrizPermisos();
+}
+
+// Auto-inicialización cuando el DOM esté listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', inicializarApp);
+} else {
+  inicializarApp();
+}
+
+ </script>
+</body>
+</html>

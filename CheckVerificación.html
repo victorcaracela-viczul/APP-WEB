@@ -1,0 +1,387 @@
+<body>
+
+  <div class="d-flex align-items-center mt-3">
+    <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3"
+      style="width: 40px; height: 40px;">
+      <i class="fas fa-list-check text-white"></i>
+    </div>
+    <div>
+      <h5 class="mb-0 text-success">Lista de verificación</h5>
+      <small class="text-muted">Items de chequeo por cada Herramienta</small>
+    </div>
+  </div>
+
+  <div class="container-fluid my-1 px-0" id="listaCheckExtraId">
+    <div id="mensajeFaltantesExtra" class="alert alert-warning p-2" style="display: none;"></div>
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+      <div class="d-flex align-items-center gap-1">
+        <button onclick="abrirFormularioCheckExtra()" class="btn btn-secondary btn-sm">Nuevo Checklist</button>
+        <button class="btn btn-success btn-sm" onclick="descargarExcelExtra()">
+          <i class="fa-solid fa-file-excel"></i>
+        </button>
+      </div>
+      <div>
+        <input type="text" id="buscadorCheckExtra" class="form-control" placeholder="Buscar..." style="max-width: 250px;">
+      </div>
+    </div>
+
+    <div id="loadingListasCheckExtra" class="text-center my-4" style="display: none;">
+      <div class="spinner-border text-primary" role="status"><span class="visually-hidden">...</span></div>
+    </div>
+
+    <div class="table-responsive" style="max-height: 500px;">
+      <table class="table table-sm table-hover small-table">
+        <thead class="table-light sticky-top">
+          <tr id="encabezadosCheckExtra"></tr>
+        </thead>
+        <tbody id="cuerpoCheckExtra"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <dialog id="modalCheckExtra" class="border-0 rounded-3 shadow p-2" style="width: 95%; max-width: 900px;">
+    <div class="modal-content border-0">
+      <div class="modal-header py-2 bg-light">
+        <h5 class="modal-title w-100 text-center" id="modal-tituloListExtra">Gestión Checklist</h5>
+        <button type="button" class="btn-close" onclick="cerrarModalCheckExtra()"></button>
+      </div>
+      
+      <div class="modal-body">
+        <form id="formularioCheckExtra" method="dialog">
+           </form>
+
+        <div id="mensaje-error-CheckExtra" class="text-danger mt-2 fw-bold" style="display:none;"></div>
+      </div>
+
+      <div class="modal-footer justify-content-between">
+        <div class="d-flex align-items-center">
+          <button type="button" class="btn btn-success btn-sm me-2" onclick="agregarCampoCExtra()">+ Agregar Fila</button>
+          <span class="text-muted small" id="contadorItemsExtra">0 ítems</span>
+        </div>
+        <div>
+          <button id="btn-guardar-CheckExtra" type="button" onclick="guardarCambiosCheckExtra()" class="btn btn-primary">Guardar Todo</button>
+          <button type="button" onclick="cerrarModalCheckExtra()" class="btn btn-secondary">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    let datosGlobalesCheckExtra = [];
+    let headersCheckExtra = [];
+    let opcionesInventarioExtra = [];
+
+    // INIT
+    document.addEventListener("DOMContentLoaded", () => {
+      cargarDatosCheckExtra();
+      mostrarEquiposSinChecklistExtra();
+      
+      // Cargar opciones para el select de equipos
+      google.script.run.withSuccessHandler(ops => {
+        opcionesInventarioExtra = ops;
+      }).obtenerOpcionesInventarioExtra();
+
+      // Buscador
+      document.getElementById("buscadorCheckExtra").addEventListener("input", function() {
+         const txt = this.value.toLowerCase();
+         const filt = datosGlobalesCheckExtra.filter(row => row.some(cell => String(cell).toLowerCase().includes(txt)));
+         mostrarFilasCheckExtra(filt);
+      });
+    });
+
+    // CARGAR DATOS
+    function cargarDatosCheckExtra() {
+      document.getElementById("loadingListasCheckExtra").style.display = "block";
+      google.script.run.withSuccessHandler(res => {
+        headersCheckExtra = res.headersCheck; // [Num, Herramienta, Categoria, Pregunta, Opciones]
+        datosGlobalesCheckExtra = res.filas;
+        
+        document.getElementById("encabezadosCheckExtra").innerHTML = 
+          headersCheckExtra.map(h => `<th>${h}</th>`).join("") + "<th>Acción</th>";
+        
+        mostrarFilasCheckExtra(datosGlobalesCheckExtra);
+        document.getElementById("loadingListasCheckExtra").style.display = "none";
+      }).obtenerDatosChecklistExtra();
+    }
+
+    // --- RENDERIZADO DE TABLA CON ESTILO DE BOTONES TIPO IMAGEN ---
+    function mostrarFilasCheckExtra(data) {
+      const tbody = document.getElementById("cuerpoCheckExtra");
+      tbody.innerHTML = "";
+      data.forEach((fila, i) => {
+        const tr = document.createElement("tr");
+        fila.forEach(celda => {
+          const td = document.createElement("td");
+          td.textContent = celda;
+          tr.appendChild(td);
+        });
+        
+        // Botones estilo imagen (Cyan y Rojo con iconos blancos)
+        const tdAccion = document.createElement("td");
+        tdAccion.className = "text-center";
+        tdAccion.innerHTML = `
+          <button class="btn btn-sm btn-info text-white me-1" style="border-radius: 6px;" onclick="abrirFormularioCheckExtra(${i})" title="Editar">
+             <i class="fas fa-pencil-alt"></i>
+          </button>
+          <button class="btn btn-sm btn-danger" style="border-radius: 6px;" onclick="eliminarRegistroCheckExtra(${i})" title="Eliminar">
+             <i class="fas fa-trash-alt"></i>
+          </button>
+        `;
+        tr.appendChild(tdAccion);
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- FORMULARIO MODAL ---
+    
+    function abrirFormularioCheckExtra(index = null) {
+      const modal = document.getElementById("modalCheckExtra");
+      const form = document.getElementById("formularioCheckExtra");
+      const isNuevo = index === null;
+      
+      document.getElementById("modal-tituloListExtra").textContent = isNuevo ? "Crear Nuevo Checklist" : "Editar Checklist";
+
+      // HTML Base del Formulario
+      let html = ``;
+      
+      // 1. Selector de EQUIPO
+      if(isNuevo) {
+         html += `
+         <div class="row mb-3 align-items-end bg-light p-2 rounded">
+            <div class="col-md-2">
+               <label class="form-label small fw-bold">ID (Auto)</label>
+               <input type="text" class="form-control form-control-sm" value="Auto" disabled>
+            </div>
+            <div class="col-md-10">
+               <label class="form-label small fw-bold">Seleccionar Equipo</label>
+               <select id="selectEquipoExtra" class="form-select">
+                  <option value="">-- Seleccione --</option>
+                  ${opcionesInventarioExtra.map(op => `<option value="${op}">${op}</option>`).join("")}
+               </select>
+            </div>
+         </div>`;
+      } else {
+         const fila = datosGlobalesCheckExtra[index];
+         html += `
+         <div class="row mb-3 bg-light p-2 rounded">
+            <div class="col-md-2">
+               <label class="form-label small fw-bold">ID</label>
+               <input type="text" class="form-control form-control-sm" value="${fila[0]}" disabled>
+            </div>
+            <div class="col-md-10">
+               <label class="form-label small fw-bold">Equipo</label>
+               <input type="text" id="selectEquipoExtra" class="form-control fw-bold" value="${fila[1]}" readonly>
+            </div>
+         </div>`;
+      }
+
+      // 2. Encabezados de Items
+      html += `
+      <div class="row g-1 mb-1 fw-bold small text-muted text-center">
+         <div class="col-3">Categoría</div>
+         <div class="col-5">Pregunta / Ítem</div>
+         <div class="col-3">Tipo Respuesta</div>
+         <div class="col-1"></div>
+      </div>
+      <div id="contenedorItemsExtra" style="max-height: 400px; overflow-y: auto;">
+         <div class="text-center text-muted py-3"><i class="fas fa-spinner fa-spin"></i> Cargando ítems...</div>
+      </div>`;
+
+      form.innerHTML = html;
+      form.dataset.index = index; 
+      modal.showModal();
+
+      // Cargar Items
+      const equipo = isNuevo ? "" : datosGlobalesCheckExtra[index][1];
+      
+      if(isNuevo) {
+         document.getElementById("contenedorItemsExtra").innerHTML = ""; 
+         agregarCampoCExtra(); // Agregar uno vacío
+      } else {
+         google.script.run.withSuccessHandler(renderItemsExtra).obtenerItemsPorEquipoExtra(equipo);
+      }
+    }
+
+    // Renderizar lista de objetos
+    function renderItemsExtra(items) {
+       const container = document.getElementById("contenedorItemsExtra");
+       if(!items || items.length === 0) {
+          container.innerHTML = `<div class="text-muted text-center small my-2">Sin ítems asignados.</div>`;
+          return;
+       }
+       container.innerHTML = "";
+       items.forEach(it => agregarCampoCExtra(it));
+       actualizarContadorExtra();
+    }
+
+    // --- AGREGAR CAMPO CON SELECT (BINARIO/TEXTO/ESCALA) ---
+    function agregarCampoCExtra(data = null) {
+       const container = document.getElementById("contenedorItemsExtra");
+       
+       const valId = data ? data.id : "";
+       const valCat = data ? data.categoria : "General";
+       const valItem = data ? data.item : "";
+       const valOpt = data ? data.opciones : "BINARIO"; // Default
+
+       const div = document.createElement("div");
+       div.className = "row g-1 mb-2 align-items-center item-row-extra";
+       div.innerHTML = `
+          <input type="hidden" class="item-id" value="${valId}">
+          <div class="col-3">
+             <input type="text" class="form-control form-control-sm item-cat" placeholder="Cat" value="${valCat}">
+          </div>
+          <div class="col-5">
+             <input type="text" class="form-control form-control-sm item-preg" placeholder="Pregunta" value="${valItem}">
+          </div>
+          <div class="col-3">
+             <select class="form-select form-select-sm item-opt">
+                <option value="BINARIO" ${valOpt === 'BINARIO' ? 'selected' : ''}>BINARIO</option>
+                <option value="TEXTO" ${valOpt === 'TEXTO' ? 'selected' : ''}>TEXTO</option>
+                <option value="ESCALA" ${valOpt === 'ESCALA' ? 'selected' : ''}>ESCALA</option>
+             </select>
+          </div>
+          <div class="col-1 text-center">
+             <button type="button" class="btn btn-outline-danger btn-sm border-0 py-0" onclick="this.closest('.row').remove(); actualizarContadorExtra()">✕</button>
+          </div>
+       `;
+       container.appendChild(div);
+       actualizarContadorExtra();
+    }
+
+    function actualizarContadorExtra() {
+       const n = document.querySelectorAll(".item-row-extra").length;
+       document.getElementById("contadorItemsExtra").innerText = n + " ítems";
+    }
+
+    function cerrarModalCheckExtra() {
+       document.getElementById("modalCheckExtra").close();
+    }
+
+    // --- GUARDAR ---
+    function guardarCambiosCheckExtra() {
+       const btn = document.getElementById("btn-guardar-CheckExtra");
+       const equipoInput = document.getElementById("selectEquipoExtra");
+       const errorDiv = document.getElementById("mensaje-error-CheckExtra");
+       
+       const equipo = equipoInput.value.trim();
+       if(!equipo) {
+          mostrarErrorExtra("Selecciona un equipo.");
+          return;
+       }
+
+       // Recolectar datos
+       const filas = document.querySelectorAll(".item-row-extra");
+       const itemsParaGuardar = [];
+       
+       filas.forEach(row => {
+          const id = row.querySelector(".item-id").value;
+          const cat = row.querySelector(".item-cat").value.trim();
+          const preg = row.querySelector(".item-preg").value.trim();
+          const opt = row.querySelector(".item-opt").value; // Ahora es un select
+
+          if(preg) { 
+             itemsParaGuardar.push({
+                id: id ? Number(id) : null,
+                categoria: cat || "General",
+                item: preg,
+                opciones: opt // Guardamos BINARIO, TEXTO o ESCALA
+             });
+          }
+       });
+
+       if(itemsParaGuardar.length === 0) {
+          mostrarErrorExtra("Debe haber al menos 1 pregunta válida.");
+          return;
+       }
+
+       // Enviar al server
+       btn.textContent = "Guardando...";
+       btn.disabled = true;
+       errorDiv.style.display = "none";
+
+       const formIndex = document.getElementById("formularioCheckExtra").dataset.index;
+       
+       if(formIndex === "null") {
+           const datosMasivos = itemsParaGuardar.map(obj => [null, equipo, obj.categoria, obj.item, obj.opciones]);
+           
+           google.script.run.withSuccessHandler(() => {
+              finGuardadoExtra();
+           }).agregarChecklistExtra(datosMasivos);
+           
+       } else {
+           google.script.run.withSuccessHandler(res => {
+              finGuardadoExtra();
+           }).actualizarChecklistPorEquipoExtra(equipo, JSON.stringify(itemsParaGuardar));
+       }
+    }
+
+    function finGuardadoExtra() {
+       Swal.fire("Éxito", "Checklist guardado correctamente", "success");
+       cerrarModalCheckExtra();
+       cargarDatosCheckExtra();
+       mostrarEquiposSinChecklistExtra();
+       document.getElementById("btn-guardar-CheckExtra").textContent = "Guardar Todo";
+       document.getElementById("btn-guardar-CheckExtra").disabled = false;
+    }
+
+    function mostrarErrorExtra(msg) {
+       const div = document.getElementById("mensaje-error-CheckExtra");
+       div.textContent = msg;
+       div.style.display = "block";
+    }
+
+    function eliminarRegistroCheckExtra(index) {
+       const num = datosGlobalesCheckExtra[index][0];
+       Swal.fire({
+          title: "¿Borrar?", text: `Se eliminará la fila ID ${num}`, icon: "warning", showCancelButton: true
+       }).then(r => {
+          if(r.isConfirmed) {
+             google.script.run.withSuccessHandler(() => {
+                cargarDatosCheckExtra();
+                mostrarEquiposSinChecklistExtra();
+             }).eliminarChecklistExtra(index);
+          }
+       });
+    }
+
+    function mostrarEquiposSinChecklistExtra() {
+       google.script.run.withSuccessHandler(lista => {
+          const div = document.getElementById("mensajeFaltantesExtra");
+          if(lista && lista.length > 0) {
+             div.style.display = "block";
+             div.innerHTML = `<strong>Faltan lista para:</strong> ${lista.join(", ")}`;
+          } else {
+             div.style.display = "none";
+          }
+       }).obtenerEquiposSinChecklistExtra();
+    }
+
+    // --- FUNCIÓN DESCARGAR EXCEL ---
+    function descargarExcelExtra() {
+      if(!datosGlobalesCheckExtra || datosGlobalesCheckExtra.length === 0) {
+         Swal.fire("Atención", "No hay datos para exportar", "info");
+         return;
+      }
+
+      // 1. Mapear datos a formato Objeto para headers correctos
+      const datosExcel = datosGlobalesCheckExtra.map(fila => ({
+         "ID": fila[0],
+         "Herramienta / Equipo": fila[1],
+         "Categoría": fila[2],
+         "Pregunta / Ítem": fila[3],
+         "Tipo Respuesta": fila[4]
+      }));
+
+      // 2. Crear Worksheet
+      const ws = XLSX.utils.json_to_sheet(datosExcel);
+      
+      // 3. Crear Workbook y añadir hoja
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Checklist");
+
+      // 4. Descargar
+      XLSX.writeFile(wb, "Reporte_Checklist_Extra.xlsx");
+    }
+  </script>
+</body>

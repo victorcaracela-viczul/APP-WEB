@@ -1,0 +1,4688 @@
+<div id="rol-module-wrapper">
+<style>
+/* ================================================================
+   ROL MODULE - CSS LIMPIO Y ORDENADO
+   100% encapsulado bajo #rol-module-wrapper
+   
+   ÍNDICE:
+   ├─ PARTE 1: Variables, Base, Scrollbars
+   ├─ PARTE 2: Sidebar (Personal)
+   ├─ PARTE 3: Top Bar + Botones (con fix touch targets)
+   ├─ PARTE 4: Tabla Principal (con fix sticky header/footer)
+   ├─ PARTE 5: Shift Cards + Zonas Especiales
+   ├─ PARTE 6: Compliance Panel + Heatmap
+   ├─ PARTE 7: Modales + Context Menu + Drag&Drop
+   ├─ PARTE 8: LITE Mode (celular trabajador)
+   └─ PARTE 9: ADMIN Mobile + Media Queries
+   ================================================================ */
+
+
+/* ═══════════════════════════════════════════════════════════════
+   PARTE 1: VARIABLES + BASE + SCROLLBARS
+   ═══════════════════════════════════════════════════════════════ */
+
+#rol-module-wrapper {
+    --bg-app: #f8fafc;
+    --bg-panel: #ffffff;
+    --primary: #2563eb;
+    --primary-dark: #1e40af;
+    --secondary: #0ea5e9;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border: #94a3b8;
+    --border-thick: #475569;
+    --header-bg: #1e293b;
+    --header-text: #ffffff;
+    --shift-day: #f59e0b;
+    --shift-night: #6366f1;
+    --shift-8h: #ea580c;
+    --abs-vac: #10b981;
+    --abs-med: #3b82f6;
+    --abs-per: #6b7280;
+    --abs-fal: #ef4444;
+    --abs-otr: #a8a29e;
+    --holiday-bg: #fee2e2;
+    --holiday-text: #991b1b;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --w-zone: 85px;
+    --w-shift: 105px;
+    --w-col-week: 80px;
+    --w-col-month: 35px;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --radius: 6px;
+}
+
+#rol-module-wrapper * {
+    box-sizing: border-box;
+    outline: none;
+}
+
+#rol-module-wrapper {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    background: var(--bg-app);
+    color: var(--text-main);
+    overflow: hidden;
+    font-size: 13px;
+    position: relative;
+}
+
+/* Scrollbars */
+#rol-module-wrapper ::-webkit-scrollbar { width: 8px; height: 8px; }
+#rol-module-wrapper ::-webkit-scrollbar-track { background: transparent; }
+#rol-module-wrapper ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+#rol-module-wrapper ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   PARTE 2: SIDEBAR (Panel de Personal)
+   ═══════════════════════════════════════════════════════════════ */
+
+#rol-module-wrapper .sidebar {
+    width: 220px;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    box-shadow: 4px 0 15px -3px rgba(0,0,0,0.05);
+    transition: width 0.3s ease;
+}
+
+#rol-module-wrapper .sidebar.collapsed {
+    width: 0;
+    overflow: hidden;
+    border: none;
+}
+
+#rol-module-wrapper .sidebar-header {
+    padding: 10px;
+    background: white;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ✅ FIX: Botón ◀ cerrar sidebar - área táctil expandida */
+#rol-module-wrapper .sidebar-header button {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    padding: 8px !important;
+    font-size: 1.2rem !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    color: var(--text-main) !important;
+    transition: all 0.15s ease !important;
+    -webkit-tap-highlight-color: rgba(37, 99, 235, 0.2);
+    touch-action: manipulation;
+}
+#rol-module-wrapper .sidebar-header button:hover {
+    background: #e2e8f0 !important;
+    color: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+#rol-module-wrapper .sidebar-header button:active {
+    transform: scale(0.9) !important;
+    background: var(--primary) !important;
+    color: white !important;
+}
+
+#rol-module-wrapper .sidebar h3 {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    letter-spacing: 0.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+#rol-module-wrapper #search-box {
+    width: 100%;
+    padding: 8px 12px;
+    margin-top: 10px;
+    background: #f1f5f9;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-main);
+    transition: all 0.2s;
+    font-family: inherit;
+}
+#rol-module-wrapper #search-box:focus {
+    background: white;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+#rol-module-wrapper .staff-item {
+    padding: 6px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    transition: all 0.15s;
+}
+#rol-module-wrapper .staff-item:hover { background: #f8fafc; padding-left: 18px; }
+
+#rol-module-wrapper .avatar-circle {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.65rem;
+    border: 1px solid white;
+    box-shadow: var(--shadow-sm);
+}
+
+#rol-module-wrapper .staff-number {
+    font-weight: 800;
+    color: var(--primary);
+    font-size: 0.8rem;
+    min-width: 20px;
+}
+
+#rol-module-wrapper .staff-name {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+/* ✅ FIX: Botón Ausencia más grande */
+#rol-module-wrapper .btn-absence {
+    width: 32px; height: 32px;
+    background: white;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.2s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(37, 99, 235, 0.2);
+}
+#rol-module-wrapper .btn-absence:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   PARTE 3: TOP BAR + BOTONES (con fix touch targets 44px)
+   ═══════════════════════════════════════════════════════════════ */
+
+#rol-module-wrapper .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+#rol-module-wrapper .top-bar {
+    background: white;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    z-index: 25;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-height: 56px;
+}
+
+#rol-module-wrapper .control-group {
+    display: flex;
+    gap: 3px;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 8px;
+}
+
+/* ✅ BOTONES - Touch targets mínimo 40px, feedback visual claro */
+#rol-module-wrapper .nav-btn {
+    background: transparent;
+    border: none;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(37, 99, 235, 0.2);
+    touch-action: manipulation;
+    transition: all 0.15s ease;
+}
+#rol-module-wrapper .nav-btn:hover {
+    background: #e2e8f0 !important;
+    color: var(--text-main) !important;
+    box-shadow: var(--shadow-sm);
+    transform: scale(1.02);
+}
+#rol-module-wrapper .nav-btn:active {
+    transform: scale(0.95) !important;
+    background: #cbd5e1 !important;
+    transition: transform 0.05s !important;
+}
+#rol-module-wrapper .nav-btn.active {
+    background: var(--primary) !important;
+    color: white !important;
+    font-weight: 800 !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35) !important;
+}
+
+/* Botón HOY - destacado */
+#rol-module-wrapper .btn-today {
+    color: var(--primary) !important;
+    font-weight: 900 !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.5px;
+}
+#rol-module-wrapper .btn-today:hover {
+    background: #eff6ff !important;
+    color: var(--primary-dark) !important;
+}
+#rol-module-wrapper .btn-today:active {
+    background: var(--primary) !important;
+    color: white !important;
+}
+
+/* ✅ FIX: Botón 👥 abrir sidebar - área expandida */
+#rol-module-wrapper #btn-open-sidebar {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    padding: 8px 12px !important;
+    font-size: 1.1rem !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: white !important;
+    border: 2px solid var(--primary) !important;
+    color: var(--primary) !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15) !important;
+    transition: all 0.15s ease !important;
+    -webkit-tap-highlight-color: rgba(37, 99, 235, 0.2);
+    touch-action: manipulation;
+}
+#rol-module-wrapper #btn-open-sidebar:hover {
+    background: var(--primary) !important;
+    color: white !important;
+}
+#rol-module-wrapper #btn-open-sidebar:active {
+    transform: scale(0.9) !important;
+}
+
+#rol-module-wrapper .grid-wrapper {
+    flex: 1;
+    overflow: auto !important;
+    position: relative !important;
+    background: white;
+    display: block !important;
+    flex-direction: column;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PARTE 4: TABLA PRINCIPAL (con fix sticky header/footer)
+   ═══════════════════════════════════════════════════════════════ */
+
+#rol-module-wrapper table {
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+    width: 100%;
+}
+
+/* ✅ FIX STICKY: thead completo pegado arriba */
+#rol-module-wrapper thead {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 30 !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* Cada th: sticky top */
+#rol-module-wrapper thead th {
+    background-clip: padding-box;
+}
+
+/* Fila 1: MESES */
+#rol-module-wrapper thead tr:first-child th {
+    top: 0 !important;
+    z-index: 31 !important;
+}
+
+#rol-module-wrapper .th-month {
+    background-color: #1e293b !important;
+    color: white;
+    border-right: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    height: 28px;
+    vertical-align: middle;
+}
+
+/* ✅ FIX STICKY: Fila 2: DÍAS - top = altura de th-month (28px) */
+#rol-module-wrapper thead tr:nth-child(2) .th-day {
+    position: sticky !important;
+    top: 28px !important;
+    z-index: 30 !important;
+}
+
+#rol-module-wrapper .th-day {
+    bbackground-color: #f8fafc !important;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    height: 32px;
+    vertical-align: middle;
+    text-transform: uppercase;
+}
+#rol-module-wrapper .th-day.is-holiday {
+    background-color: #fee2e2 !important;
+    color: var(--holiday-text);
+    border-bottom-color: #fca5a5;
+}
+
+/* ✅ FIX STICKY: Celdas esquina ZONA+TURNO en header
+   Sticky en 2 direcciones: top + left, z-index máximo */
+#rol-module-wrapper .fix-area {
+    position: sticky !important;
+    left: 0 !important;
+    top: 0 !important;
+    z-index: 60 !important;
+    width: var(--w-zone);
+    background: var(--header-bg);
+    color: white;
+    font-weight: 700;
+    font-size: 0.7rem;
+    border-right: 1px solid #334155;
+}
+
+#rol-module-wrapper .fix-sub {
+    position: sticky !important;
+    left: var(--w-zone) !important;
+    top: 0 !important;
+    z-index: 55 !important;
+    width: var(--w-shift);
+    background: #334155;
+    color: white;
+    font-weight: 600;
+    font-size: 0.7rem;
+    border-right: 1px solid #334155;
+}
+
+/* Columnas fijas en CUERPO */
+#rol-module-wrapper .col-area {
+    position: sticky !important;
+    left: 0 !important;
+    width: var(--w-zone);
+    min-width: var(--w-zone);
+    z-index: 50 !important;
+    background-color: var(--header-bg) !important;
+    color: white !important;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-right: 1px solid var(--border);
+    font-size: 0.65rem;
+    letter-spacing: 0.5px;
+    text-align: center;
+    vertical-align: middle;
+    height: auto !important;
+    background-clip: padding-box;
+}
+
+#rol-module-wrapper .col-sub {
+    position: sticky !important;
+    left: var(--w-zone) !important;
+    width: var(--w-shift);
+    min-width: var(--w-shift);
+    background: #f1f5f9 !important;
+    color: var(--text-main);
+    z-index: 45 !important;
+    border-bottom: 1px solid var(--border);
+    border-right: 2px solid var(--border-thick) !important;
+    font-size: 0.65rem;
+    display: table-cell !important;
+    vertical-align: middle;
+    padding: 0 !important;
+    height: auto;
+}
+
+#rol-module-wrapper .col-sub.type-day {
+    background-color: #fffbeb !important;
+    border-left: 3px solid var(--shift-day) !important;
+    color: #92400e !important;
+}
+
+#rol-module-wrapper .col-sub.type-night {
+    background-color: #eef2ff !important;
+    border-left: 3px solid var(--shift-night) !important;
+    color: #3730a3 !important;
+}
+
+/* Celdas de Datos */
+#rol-module-wrapper td {
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    min-height: 45px;
+    padding: 2px;
+    vertical-align: top;
+    background: white;
+    transition: background 0.2s;
+}
+#rol-module-wrapper td.drag-over {
+    background: #eff6ff;
+    border: 2px dashed var(--primary);
+}
+
+#rol-module-wrapper .border-right-thick { border-right: 2px solid var(--border-thick) !important; }
+#rol-module-wrapper .border-bottom-thick td,
+#rol-module-wrapper .border-bottom-thick .col-area,
+#rol-module-wrapper .border-bottom-thick .col-sub { border-bottom: 2px solid var(--border-thick) !important; }
+
+/* Shift Cell Container (columna turno) */
+#rol-module-wrapper .shift-cell-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px 0 8px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   PARTE 5: SHIFT CARDS + ZONAS ESPECIALES
+   ═══════════════════════════════════════════════════════════════ */
+
+#rol-module-wrapper .shift-card {
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    font-weight: 700;
+    margin: 1px;
+    height: 34px;
+    font-size: 0.65rem;
+    line-height: 1;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+#rol-module-wrapper .shift-card:hover {
+    z-index: 100;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+}
+
+#rol-module-wrapper .shift-card.day { background: var(--shift-day); color: white; border: 1px solid #d97706; }
+#rol-module-wrapper .shift-card.night { background: var(--shift-night); color: white; border: 1px solid #4f46e5; }
+#rol-module-wrapper .shift-card.short { background: var(--shift-8h); color: white; border: 1px solid #c2410c; }
+#rol-module-wrapper .shift-card.abs-vac { background: var(--abs-vac); color: white; }
+#rol-module-wrapper .shift-card.abs-med { background: var(--abs-med); color: white; }
+#rol-module-wrapper .shift-card.abs-per { background: var(--abs-per); color: white; }
+#rol-module-wrapper .shift-card.abs-fal { background: var(--abs-fal); color: white; }
+#rol-module-wrapper .shift-card.abs-otr { background: var(--abs-otr); color: white; }
+
+#rol-module-wrapper .card-code {
+    font-size: 0.7rem;
+    opacity: 0.9;
+    position: absolute;
+    top: 1px; left: 3px;
+    font-weight: 800;
+}
+#rol-module-wrapper .card-name {
+    font-size: 0.6rem;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 95%;
+    letter-spacing: -0.2px;
+}
+
+#rol-module-wrapper .btn-remove-card {
+    position: absolute;
+    top: -5px; right: -5px;
+    width: 16px; height: 16px;
+    background: var(--danger);
+    color: white;
+    border-radius: 50%;
+    font-size: 10px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    z-index: 101;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+#rol-module-wrapper .shift-card:hover .btn-remove-card { display: flex; }
+
+/* Zonas Especiales */
+#rol-module-wrapper .zone-absence .col-area { background-color: #be185d !important; border-bottom: 1px solid #db2777; }
+#rol-module-wrapper .zone-absence .col-sub { background-color: #fdf2f8 !important; color: #9d174d; border-bottom: 1px solid white; }
+#rol-module-wrapper .zone-absence td { background-color: #fff1f2; }
+
+#rol-module-wrapper .zone-avail .col-area { background-color: #475569 !important; border-bottom: 1px solid #64748b; }
+#rol-module-wrapper .zone-avail .col-sub { background-color: #f1f5f9 !important; color: #475569; border-bottom: 1px solid white; }
+#rol-module-wrapper .zone-avail td { background-color: #f8fafc; }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   FOOTER - ✅ FIX STICKY: bottom + background sólido
+   ═══════════════════════════════════════════════════════════════ */
+
+#rol-module-wrapper tfoot {
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 35 !important;
+    background: white;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+#rol-module-wrapper tfoot td,
+#rol-module-wrapper tfoot th {
+    background-color: #ffffff !important;
+    background-clip: padding-box;
+}
+
+#rol-module-wrapper .footer-label {
+    position: sticky !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    z-index: 50 !important;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 8px;
+    text-align: right;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    letter-spacing: 0.5px;
+}
+
+#rol-module-wrapper .footer-cell {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-align: center;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+/* Background sólido para que no se transparente al scroll */
+#rol-module-wrapper .row-cant-personal .footer-label { background: #0ea5e9 !important; color: white !important; }
+#rol-module-wrapper .row-cant-personal .footer-cell,
+#rol-module-wrapper .row-cant-personal td { background: #f0f9ff !important; color: #0369a1; }
+#rol-module-wrapper .row-hh .footer-label { background: #10b981 !important; color: white !important; }
+#rol-module-wrapper .row-hh .footer-cell,
+#rol-module-wrapper .row-hh td { background: #f0fdf4 !important; color: #15803d; }
+
+/* ═══════════════════════════════════════════════════════════════
+   PARTE 6: COMPLIANCE PANEL + FILTROS + HEATMAP
+   ═══════════════════════════════════════════════════════════════ */
+
+#rol-module-wrapper #compliance-panel {
+    display: flex;
+    background: #f8fafc;
+    border-top: 2px solid var(--border);
+    width: fit-content;
+    min-width: 100%;
+    box-sizing: border-box;
+    padding-left: 0;
+}
+
+#rol-module-wrapper .comp-spacer {
+    width: calc(var(--w-zone) + var(--w-shift)) !important;
+    min-width: calc(var(--w-zone) + var(--w-shift)) !important;
+    background: #f8fafc;
+    border-right: 1px solid var(--border-thick);
+    flex-shrink: 0;
+    position: sticky;
+    left: 0;
+    z-index: 45;
+}
+
+#rol-module-wrapper .comp-week-block {
+    border-right: 2px solid var(--border-thick);
+    background: white;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+#rol-module-wrapper .comp-week-block:last-child { border-right: none; }
+
+#rol-module-wrapper .comp-header {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+    background: #f1f5f9;
+    text-align: center;
+    letter-spacing: 0.5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#rol-module-wrapper .dt-head {
+    display: flex;
+    background: #fafafa;
+    border-bottom: 1px solid #cfd8dc;
+    font-size: 0.65rem;
+    font-weight: bold;
+    color: #555;
+}
+#rol-module-wrapper .dt-head > div {
+    border-right: 1px solid #eee;
+    padding: 4px 2px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#rol-module-wrapper .dt-row {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.7rem;
+    padding: 2px 0;
+}
+#rol-module-wrapper .dt-row:hover { background: #f8fafc; }
+#rol-module-wrapper .dt-row > div {
+    padding: 2px 4px;
+    min-height: 22px;
+    display: flex;
+    align-items: center;
+}
+
+#rol-module-wrapper .c-name { flex: 1; font-weight: 600; color: var(--text-main); min-width: 100px; padding-left: 8px !important; }
+#rol-module-wrapper .c-hh { width: 50px; font-weight: 800; color: var(--text-muted); flex-direction: column; justify-content: center; }
+#rol-module-wrapper .c-n { width: 30px; font-weight: 800; color: var(--shift-night); justify-content: center; }
+#rol-module-wrapper .c-a { width: 30px; font-weight: 800; color: var(--danger); justify-content: center; }
+#rol-module-wrapper .c-t,
+#rol-module-wrapper .c-d,
+#rol-module-wrapper .c-aus { flex: 2; flex-wrap: wrap; gap: 2px; justify-content: flex-start !important; }
+
+#rol-module-wrapper .chip { padding: 1px 4px; border-radius: 3px; font-size: 0.6rem; font-weight: 700; white-space: nowrap; display: inline-block; margin: 1px; }
+#rol-module-wrapper .chip-work { background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; }
+#rol-module-wrapper .chip-rest { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
+#rol-module-wrapper .chip-vac { background: var(--abs-vac); color: white; }
+#rol-module-wrapper .chip-med { background: var(--abs-med); color: white; }
+#rol-module-wrapper .chip-per { background: var(--abs-per); color: white; }
+#rol-module-wrapper .chip-fal { background: var(--abs-fal); color: white; }
+#rol-module-wrapper .chip-otr { background: var(--abs-otr); color: white; }
+
+#rol-module-wrapper .prog-bar { height: 4px; background: #e2e8f0; width: 90%; margin: 2px auto 0; border-radius: 2px; }
+#rol-module-wrapper .prog-fill { height: 100%; transition: width 0.3s ease; }
+
+/* Filtros Horizontales */
+#rol-module-wrapper .filter-bar-container {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+#rol-module-wrapper .filter-tab {
+    min-height: 40px;
+    padding: 8px 16px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    text-transform: uppercase;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+#rol-module-wrapper .filter-tab:hover { background: #f8fafc; color: var(--primary); }
+#rol-module-wrapper .filter-tab:active { transform: scale(0.97); background: #eff6ff; }
+#rol-module-wrapper .filter-tab.active { color: var(--primary); border-bottom-color: var(--primary); background: #eff6ff; }
+
+#rol-module-wrapper .tab-count {
+    background: rgba(0,0,0,0.05);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.6rem;
+}
+
+/* Heatmap */
+#rol-module-wrapper .heatmap-wrapper {
+    background: #0f172a;
+    color: white;
+    padding: 15px;
+    width: 100%;
+    box-sizing: border-box;
+    border-top: none;
+    display: flex;
+    flex-direction: column;
+    box-shadow: inset 0 10px 15px -3px rgba(0,0,0,0.3);
+    margin-bottom: 20px;
+}
+
+#rol-module-wrapper .hm-title {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 5px;
+}
+
+#rol-module-wrapper .tile-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding-bottom: 5px; }
+
+#rol-module-wrapper .tile {
+    aspect-ratio: 1;
+    background: #1e293b;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+#rol-module-wrapper .tile:hover { transform: scale(1.1); z-index: 10; border-color: white; }
+
+#rol-module-wrapper .tile-num { font-size: 0.9rem; font-weight: 800; line-height: 1; }
+#rol-module-wrapper .tile-label { font-size: 0.55rem; color: rgba(255,255,255,0.6); margin-top: 2px; font-weight: 600; text-transform: uppercase; }
+
+#rol-module-wrapper .t-empty { background: #1e293b; color: #475569; }
+#rol-module-wrapper .t-ok { background: #10b981; color: #022c22; box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
+#rol-module-wrapper .t-warn { background: #f59e0b; color: #451a03; }
+#rol-module-wrapper .t-danger { background: #ef4444; color: #450a0a; box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+#rol-module-wrapper .tile.is-current {
+    border: 2px solid #ffffff !important;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+    transform: scale(1.15);
+    z-index: 20;
+    position: relative;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   PARTE 7: MODALES + CONTEXT MENU + DRAG&DROP + ANIMACIONES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Modales */
+#rol-module-wrapper .modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+#rol-module-wrapper .modal-box {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 340px;
+    border: 1px solid var(--border);
+}
+
+#rol-module-wrapper .form-group { text-align: left; margin-bottom: 12px; }
+#rol-module-wrapper .form-group label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; }
+#rol-module-wrapper .form-group input,
+#rol-module-wrapper .form-group select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; font-family: 'Inter', sans-serif; transition: 0.2s; }
+#rol-module-wrapper .form-group input:focus,
+#rol-module-wrapper .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+#rol-module-wrapper .form-row { display: flex; gap: 10px; }
+
+/* Toast */
+#rol-module-wrapper #toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    display: none;
+    z-index: 2000;
+    font-weight: 600;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Status Dots */
+#rol-module-wrapper .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+#rol-module-wrapper .status-ok { background-color: var(--success); box-shadow: 0 0 0 2px #dcfce7; }
+#rol-module-wrapper .status-error { background-color: var(--danger); box-shadow: 0 0 0 2px #fee2e2; animation: rol-pulse 2s infinite; }
+
+/* Edit Controls */
+#rol-module-wrapper .edit-controls { display: none; gap: 4px; justify-content: center; margin-top: 4px; }
+#rol-module-wrapper .mini-btn { border: none; color: white; border-radius: 4px; font-size: 0.65rem; cursor: pointer; padding: 3px 8px; font-weight: bold; }
+#rol-module-wrapper .grid-wrapper.edit-mode .edit-controls { display: flex; }
+
+/* Icon Grid */
+#rol-module-wrapper .icon-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px; }
+#rol-module-wrapper .icon-opt { font-size: 1.5rem; padding: 10px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: 0.2s; background: #f8fafc; }
+#rol-module-wrapper .icon-opt:hover { background: white; border-color: var(--primary); transform: scale(1.1); }
+
+/* Checkbox List (Modal) */
+#rol-module-wrapper .checkbox-list { max-height: 150px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 6px; padding: 5px; background: #f8fafc; margin-top: 5px; }
+#rol-module-wrapper .checkbox-item { display: flex; align-items: center; padding: 6px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+#rol-module-wrapper .checkbox-item:hover { background: white; }
+#rol-module-wrapper .checkbox-item input { margin-right: 8px; transform: scale(1.2); }
+
+#rol-module-wrapper .type-btn { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-weight: bold; background: white; }
+#rol-module-wrapper .type-btn.selected { border: 2px solid var(--primary); background: #eff6ff; color: var(--primary); }
+
+/* Context Menu */
+#rol-module-wrapper .custom-context-menu {
+    display: none;
+    position: fixed;
+    z-index: 3000;
+    width: 180px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    padding: 5px 0;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+}
+#rol-module-wrapper .ctx-item {
+    padding: 10px 15px;
+    font-size: 0.8rem;
+    color: var(--text-main);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.1s;
+    font-weight: 600;
+}
+#rol-module-wrapper .ctx-item:hover { background: #f1f5f9; color: var(--primary); }
+#rol-module-wrapper .ctx-item.danger:hover { background: #fee2e2; color: #ef4444; }
+
+/* Celda Bloqueada */
+#rol-module-wrapper td.cell-blocked {
+    background-image: repeating-linear-gradient(45deg, #f1f5f9, #f1f5f9 10px, #e2e8f0 10px, #e2e8f0 20px) !important;
+    background-color: #f1f5f9 !important;
+    color: #94a3b8;
+    vertical-align: middle;
+    text-align: center;
+    cursor: context-menu;
+    position: relative;
+}
+#rol-module-wrapper td.cell-blocked::after {
+    content: "🔒";
+    font-size: 1.4rem;
+    opacity: 0.7;
+    display: block;
+    animation: rol-lockPulse 2s ease-in-out infinite;
+}
+#rol-module-wrapper td.cell-blocked:hover::after { opacity: 1; transform: scale(1.15); }
+
+/* Drag & Drop Effects */
+body.is-dragging #rol-module-wrapper td[data-key] { opacity: 0.7; filter: grayscale(100%); transition: opacity 0.2s; }
+body.is-dragging #rol-module-wrapper td.highlight-assigned-cell {
+    opacity: 1 !important;
+    filter: none !important;
+    background-color: #fff !important;
+    border: 2px solid #00c2ff !important;
+    box-shadow: 0 0 10px rgba(0, 194, 255, 0.8) !important;
+    z-index: 50;
+    transform: scale(1.05);
+}
+
+#rol-module-wrapper .dimmed-row,
+#rol-module-wrapper .dimmed-row td,
+#rol-module-wrapper .dimmed-row .col-area,
+#rol-module-wrapper .dimmed-row .col-sub {
+    background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.05), rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px) !important;
+    background-color: #f1f5f9 !important;
+    opacity: 0.6 !important;
+    filter: grayscale(100%) !important;
+    color: #cbd5e1 !important;
+    pointer-events: none !important;
+    border-color: #e2e8f0 !important;
+}
+#rol-module-wrapper .dimmed-row .col-area { position: relative; }
+#rol-module-wrapper .dimmed-row .col-area::after {
+    content: "⛔";
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2rem;
+    opacity: 1;
+    filter: none;
+    z-index: 100;
+}
+
+/* Reordenar Turnos */
+#rol-module-wrapper .grid-wrapper.edit-mode .col-sub { cursor: grab; }
+#rol-module-wrapper .grid-wrapper.edit-mode .col-sub:active { cursor: grabbing; }
+#rol-module-wrapper .col-sub.dragging-sub { opacity: 0.5; background: #e2e8f0 !important; border: 2px dashed #94a3b8; }
+#rol-module-wrapper .col-sub.drop-target-top { border-top: 3px solid var(--primary) !important; }
+#rol-module-wrapper .col-sub.drop-target-bottom { border-bottom: 3px solid var(--primary) !important; }
+
+/* Highlight de Trabajador */
+#rol-module-wrapper .shift-card.highlight-active {
+    box-shadow: 0 0 0 3px #1f2937 !important;
+    transform: scale(1.05);
+    z-index: 10;
+    position: relative;
+    animation: rol-highlightPulse 1.5s ease-in-out infinite;
+}
+#rol-module-wrapper .staff-item.highlight-active {
+    background: linear-gradient(90deg, #dbeafe 0%, #eff6ff 100%) !important;
+    border-left: 4px solid #1f2937 !important;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+    transform: translateX(2px);
+}
+
+/* Master Config */
+#rol-module-wrapper .master-list-container { background: white; border: 1px solid #e2e8f0; border-radius: 8px; overflow-x: hidden; overflow-y: auto; }
+#rol-module-wrapper .modern-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #f1f5f9; transition: background 0.1s; }
+#rol-module-wrapper .modern-row:last-child { border-bottom: none; }
+#rol-module-wrapper .modern-row:hover { background: #f8fafc; }
+#rol-module-wrapper .row-identity { display: flex; align-items: center; gap: 12px; flex: 1; overflow: hidden; }
+#rol-module-wrapper .color-trigger-wrapper { position: relative; width: 20px; height: 20px; flex-shrink: 0; cursor: pointer; }
+#rol-module-wrapper .color-dot { width: 100%; height: 100%; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #cbd5e1; }
+#rol-module-wrapper .color-input-hidden { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+#rol-module-wrapper .row-icon { width: 32px; height: 32px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; }
+#rol-module-wrapper .row-icon:hover { background: white; border-color: #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+#rol-module-wrapper .row-info { display: flex; flex-direction: column; overflow: hidden; }
+#rol-module-wrapper .row-title { font-size: 0.8rem; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#rol-module-wrapper .row-subtitle { font-size: 0.65rem; color: #94a3b8; font-weight: 500; }
+#rol-module-wrapper .row-controls { display: flex; align-items: center; gap: 15px; }
+#rol-module-wrapper .toggle-group { display: flex; gap: 4px; }
+#rol-module-wrapper .chip-toggle { padding: 4px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 700; cursor: pointer; border: 1px solid #e2e8f0; background: white; color: #94a3b8; display: flex; align-items: center; gap: 4px; user-select: none; }
+#rol-module-wrapper .chip-toggle:hover { background: #f8fafc; border-color: #cbd5e1; }
+#rol-module-wrapper .chip-toggle.active-day { background: #fffbeb; color: #b45309; border-color: #fcd34d; }
+#rol-module-wrapper .chip-toggle.active-afternoon { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
+#rol-module-wrapper .chip-toggle.active-night { background: #f5f3ff; color: #6d28d9; border-color: #c4b5fd; }
+#rol-module-wrapper .minimal-select { border: 1px solid transparent; background: #f1f5f9; padding: 4px 2px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; color: #475569; cursor: pointer; }
+#rol-module-wrapper .minimal-select:hover { background: #e2e8f0; color: #1e293b; }
+#rol-module-wrapper .modern-header { display: flex; padding: 10px 15px; background: #f1f5f9; border-bottom: 2px solid #cbd5e1; font-size: 0.65rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+#rol-module-wrapper .mh-col-1 { flex: 1; }
+#rol-module-wrapper .mh-col-2 { width: 160px; text-align: center; }
+#rol-module-wrapper .mh-col-3 { width: 140px; text-align: center; }
+#rol-module-wrapper .rules-column { display: flex; flex-direction: column; gap: 4px; width: 140px; border-left: 1px solid #f1f5f9; padding-left: 10px; }
+#rol-module-wrapper .rule-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.65rem; color: #64748b; }
+
+/* Animaciones */
+@keyframes rol-pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+@keyframes rol-lockPulse {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 0.9; transform: scale(1.05); }
+}
+@keyframes rol-highlightPulse {
+    0%, 100% { box-shadow: 0 0 0 3px #1f2937; }
+    50% { box-shadow: 0 0 0 5px #60a5fa; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PARTE 8: MODO LITE (vista trabajador - solo lectura)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Ocultar TODO lo administrativo */
+body.lite-mode #rol-module-wrapper .sidebar,
+body.lite-mode #rol-module-wrapper #btn-open-sidebar,
+body.lite-mode #rol-module-wrapper .btn-edit,
+body.lite-mode #rol-module-wrapper button[onclick="openMasterConfig()"],
+body.lite-mode #rol-module-wrapper button[title="Limpiar Todo"],
+body.lite-mode #rol-module-wrapper #save-status-indicator,
+body.lite-mode #rol-module-wrapper #add-area-zone,
+body.lite-mode #rol-module-wrapper #compliance-panel,
+body.lite-mode #rol-module-wrapper .edit-controls,
+body.lite-mode #rol-module-wrapper .filter-bar-container,
+body.lite-mode #rol-module-wrapper #search-box,
+body.lite-mode #rol-module-wrapper .row-cant-personal,
+body.lite-mode #rol-module-wrapper .row-hh,
+body.lite-mode #rol-module-wrapper .btn-remove-card {
+    display: none !important;
+}
+
+/* Top Bar → Header corporativo */
+body.lite-mode #rol-module-wrapper .top-bar {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 4px 8px !important;
+    height: auto !important;
+    min-height: 28px !important;
+    background: #1e293b !important;
+    border-bottom: 2px solid #f59e0b !important;
+    gap: 0 !important;
+}
+
+body.lite-mode #rol-module-wrapper .top-bar > * {
+    display: none !important;
+}
+
+body.lite-mode #rol-module-wrapper .top-bar::before {
+    content: "ADECCO SERMEDI  ·  ROL DE TURNOS";
+    display: block !important;
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 2px 0;
+}
+
+/* Columna ZONA */
+body.lite-mode #rol-module-wrapper .fix-area,
+body.lite-mode #rol-module-wrapper .col-area {
+    display: table-cell !important;
+    width: 35px !important;
+    min-width: 35px !important;
+    max-width: 35px !important;
+    font-size: 0.42rem !important;
+    padding: 1px !important;
+    white-space: normal;
+    line-height: 1.1;
+    overflow: hidden;
+    text-align: center;
+    vertical-align: middle;
+    word-break: break-all;
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.3px;
+    border-right: 2px solid #f59e0b !important;
+}
+
+/* Columna TURNO */
+body.lite-mode #rol-module-wrapper .fix-sub,
+body.lite-mode #rol-module-wrapper .col-sub {
+    left: 35px !important;
+    width: 50px !important;
+    min-width: 50px !important;
+    max-width: 50px !important;
+    font-size: 0.4rem !important;
+    white-space: normal;
+    line-height: 1;
+    padding: 0px 1px !important;
+    text-align: center;
+    z-index: 50 !important;
+    word-break: break-word;
+}
+
+/* ✅ FIX: Contenedor turno → centrado */
+body.lite-mode #rol-module-wrapper .col-sub .shift-cell-container {
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 0 2px !important;
+    width: 100% !important;
+}
+
+/* ✅ FIX: Texto turno → centrado */
+body.lite-mode #rol-module-wrapper .col-sub .shift-cell-container span {
+    font-size: 0.4rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.3px;
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+}
+
+/* ✅ FIX: Ocultar badge icono (☀️/🌙/💊) completamente */
+body.lite-mode #rol-module-wrapper .col-sub .shift-cell-container > div:last-child {
+    display: none !important;
+}
+
+/* Ocultar badges con estilos inline (zona ausencias) */
+body.lite-mode #rol-module-wrapper .col-sub div[style*="border-radius"] {
+    display: none !important;
+}
+body.lite-mode #rol-module-wrapper .col-sub > div > div:last-child {
+    display: none !important;
+}
+
+body.lite-mode #rol-module-wrapper .col-sub .edit-controls {
+    display: none !important;
+}
+
+/* Encabezados compactos */
+body.lite-mode #rol-module-wrapper .th-month {
+    height: 14px;
+    font-size: 0.4rem;
+    padding: 0 1px;
+    letter-spacing: 0.3px;
+}
+
+body.lite-mode #rol-module-wrapper .th-day {
+    height: 20px;
+    font-size: 0.45rem;
+    padding: 1px;
+    letter-spacing: -0.3px;
+    font-weight: 700;
+}
+
+/* ✅ FIX STICKY: días se pegan debajo del mes (14px) */
+body.lite-mode #rol-module-wrapper thead tr:nth-child(2) .th-day {
+    top: 14px !important;
+}
+
+/* Celdas compactas */
+body.lite-mode #rol-module-wrapper td {
+    height: 30px;
+    min-height: 30px;
+    padding: 1px;
+}
+
+/* Shift cards */
+body.lite-mode #rol-module-wrapper .shift-card {
+    height: 100%;
+    margin: 0;
+    border-radius: 2px;
+    font-size: 0.45rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
+    pointer-events: auto;
+    min-height: 26px;
+}
+body.lite-mode #rol-module-wrapper .shift-card .card-code { font-size: 0.45rem; top: 0; left: 1px; }
+body.lite-mode #rol-module-wrapper .shift-card .card-name { font-size: 0.4rem; margin-top: 0; letter-spacing: -0.3px; }
+
+/* Toast centrado */
+body.lite-mode #rol-module-wrapper #toast {
+    bottom: 50%;
+    transform: translate(-50%, 50%);
+    width: 80%;
+    font-size: 0.85rem;
+    padding: 10px;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid #475569;
+    white-space: pre-line;
+    text-align: center;
+}
+
+/* Mi turno (dorado) */
+body.lite-mode #rol-module-wrapper .shift-card.my-shift {
+    border: 2px solid #FFD700 !important;
+    background-color: #fffbeb !important;
+    color: #000 !important;
+    font-weight: 900 !important;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.6) !important;
+    z-index: 100;
+    transform: scale(1.03);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   PARTE 9: MEDIA QUERIES RESPONSIVAS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* --- LITE: Landscape --- */
+@media screen and (orientation: landscape) and (max-height: 600px) {
+
+    body.lite-mode #rol-module-wrapper .top-bar {
+        min-height: 22px !important;
+        padding: 2px 6px !important;
+    }
+    body.lite-mode #rol-module-wrapper .top-bar::before {
+        font-size: 0.55rem;
+        letter-spacing: 1px;
+    }
+    body.lite-mode #rol-module-wrapper td { height: 24px; min-height: 24px; }
+    body.lite-mode #rol-module-wrapper .th-day { font-size: 0.38rem; height: 16px; }
+    body.lite-mode #rol-module-wrapper .th-month { height: 12px; font-size: 0.35rem; }
+
+    /* ✅ FIX STICKY: landscape lite */
+    body.lite-mode #rol-module-wrapper thead tr:nth-child(2) .th-day {
+        top: 12px !important;
+    }
+
+    body.lite-mode #rol-module-wrapper .shift-card { min-height: 20px; font-size: 0.4rem; }
+    body.lite-mode #rol-module-wrapper .shift-card .card-name { font-size: 0.35rem; }
+
+    body.lite-mode #rol-module-wrapper .col-area,
+    body.lite-mode #rol-module-wrapper .fix-area {
+        width: 25px !important;
+        min-width: 25px !important;
+        font-size: 0.36rem !important;
+    }
+    body.lite-mode #rol-module-wrapper .col-sub,
+    body.lite-mode #rol-module-wrapper .fix-sub {
+        left: 25px !important;
+        width: 42px !important;
+        min-width: 42px !important;
+        font-size: 0.35rem !important;
+    }
+    body.lite-mode #rol-module-wrapper .col-sub .shift-cell-container span {
+        font-size: 0.35rem !important;
+    }
+}
+
+/* --- LITE: Portrait extra pequeño (<380px) --- */
+@media screen and (max-width: 380px) {
+    body.lite-mode #rol-module-wrapper .col-area,
+    body.lite-mode #rol-module-wrapper .fix-area {
+        width: 24px !important;
+        min-width: 24px !important;
+        font-size: 0.36rem !important;
+    }
+    body.lite-mode #rol-module-wrapper .col-sub,
+    body.lite-mode #rol-module-wrapper .fix-sub {
+        left: 24px !important;
+        width: 42px !important;
+        min-width: 42px !important;
+        font-size: 0.35rem !important;
+    }
+    body.lite-mode #rol-module-wrapper .col-sub .shift-cell-container span {
+        font-size: 0.35rem !important;
+    }
+    body.lite-mode #rol-module-wrapper td { height: 26px; }
+    body.lite-mode #rol-module-wrapper .shift-card .card-name { display: none; }
+}
+
+/* --- ADMIN: Móvil (<768px) --- */
+@media screen and (max-width: 768px) {
+
+    body:not(.lite-mode) #rol-module-wrapper { flex-direction: column; }
+
+    body:not(.lite-mode) #rol-module-wrapper .top-bar {
+        padding: 6px 8px !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        height: auto;
+        justify-content: center !important;
+    }
+
+    body:not(.lite-mode) #rol-module-wrapper .control-group {
+        transform: none !important;
+        padding: 3px !important;
+        gap: 3px !important;
+    }
+
+    /* ✅ Botones 44px en móvil */
+    body:not(.lite-mode) #rol-module-wrapper .nav-btn {
+        min-width: 44px !important;
+        min-height: 44px !important;
+        padding: 6px 10px !important;
+        font-size: 0.75rem !important;
+        font-weight: 700 !important;
+        border-radius: 8px !important;
+    }
+
+    /* Flechas más grandes */
+    body:not(.lite-mode) #rol-module-wrapper .control-group .nav-btn:first-child {
+        font-size: 1.1rem !important;
+        min-width: 48px !important;
+    }
+
+    /* Botón HOY en móvil */
+    body:not(.lite-mode) #rol-module-wrapper .nav-btn.btn-today {
+        font-size: 0.8rem !important;
+        min-width: 50px !important;
+        background: #eff6ff !important;
+        border: 1px solid var(--primary) !important;
+    }
+
+    body:not(.lite-mode) #rol-module-wrapper .nav-btn.active {
+        background: var(--primary) !important;
+        color: white !important;
+        box-shadow: 0 2px 10px rgba(37, 99, 235, 0.4) !important;
+        font-weight: 800 !important;
+    }
+
+    body:not(.lite-mode) #rol-module-wrapper #date-display {
+        font-size: 0.75rem !important;
+        min-width: 100px !important;
+    }
+
+    /* Sidebar overlay en móvil */
+    body:not(.lite-mode) #rol-module-wrapper .sidebar {
+        position: fixed;
+        top: 0; left: 0;
+        height: 100vh; width: 240px;
+        z-index: 200;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+    }
+    body:not(.lite-mode) #rol-module-wrapper .sidebar:not(.collapsed) { transform: translateX(0); }
+    body:not(.lite-mode) #rol-module-wrapper .sidebar.collapsed { transform: translateX(-100%); }
+    body:not(.lite-mode) #rol-module-wrapper #btn-open-sidebar {
+        display: block !important;
+        min-width: 48px !important;
+        min-height: 48px !important;
+        font-size: 1.3rem !important;
+    }
+
+    /* Columnas compactas */
+    body:not(.lite-mode) #rol-module-wrapper .col-area,
+    body:not(.lite-mode) #rol-module-wrapper .fix-area {
+        width: 45px !important;
+        min-width: 45px !important;
+        font-size: 0.5rem !important;
+        padding: 2px !important;
+        word-break: break-all;
+    }
+    body:not(.lite-mode) #rol-module-wrapper .col-sub,
+    body:not(.lite-mode) #rol-module-wrapper .fix-sub {
+        left: 45px !important;
+        width: 65px !important;
+        min-width: 65px !important;
+        font-size: 0.55rem !important;
+        padding: 1px !important;
+    }
+
+    body:not(.lite-mode) #rol-module-wrapper td { min-height: 36px; padding: 1px; }
+    body:not(.lite-mode) #rol-module-wrapper .shift-card { height: 30px; font-size: 0.55rem; }
+    body:not(.lite-mode) #rol-module-wrapper .th-day { font-size: 0.55rem; height: 26px; }
+    body:not(.lite-mode) #rol-module-wrapper .th-month { height: 22px; font-size: 0.55rem; }
+
+    /* ✅ FIX STICKY: admin mobile */
+    body:not(.lite-mode) #rol-module-wrapper thead tr:nth-child(2) .th-day {
+        top: 22px !important;
+    }
+
+    body:not(.lite-mode) #rol-module-wrapper .col-sub .shift-cell-container > div:last-child { display: none; }
+
+    body:not(.lite-mode) #rol-module-wrapper .filter-bar-container {
+        padding: 0 4px;
+        -webkit-overflow-scrolling: touch;
+    }
+    body:not(.lite-mode) #rol-module-wrapper .filter-tab {
+        min-height: 44px !important;
+        padding: 8px 12px !important;
+        font-size: 0.65rem !important;
+    }
+
+    body:not(.lite-mode) #rol-module-wrapper #compliance-panel {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Último grupo (Config/Zonas/Limpiar) - solo iconos */
+    body:not(.lite-mode) #rol-module-wrapper .top-bar > div:last-child .nav-btn {
+        font-size: 1rem !important;
+        padding: 6px 8px !important;
+        min-width: 44px !important;
+    }
+}
+
+/* --- Tablet (769px - 1024px) --- */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+    #rol-module-wrapper .nav-btn {
+        min-width: 42px;
+        min-height: 42px;
+        padding: 8px 12px;
+    }
+    #rol-module-wrapper .sidebar-header button {
+        min-width: 40px !important;
+        min-height: 40px !important;
+    }
+}
+
+</style>
+<!-- MODAL CONFIGURACIÓN MAESTRA -->
+<div id="modal-master-config" class="modal-overlay">
+    <div class="modal-box" style="width: 700px;">
+        <h3 style="margin:0 0 15px 0; color:var(--text-main); border-bottom:1px solid var(--border); padding-bottom:10px;">
+            ⚙️ Configuración de Cargos (MOF)
+        </h3>
+        
+        <div id="panel-roles">
+            <div class="master-form-container" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius:6px; padding:10px; margin-bottom:10px; text-align:left;">
+                <div class="master-section-title" style="color: #1e40af; font-weight:800; font-size:0.7rem;">🔒 SINCRONIZACIÓN AUTOMÁTICA</div>
+                <p style="font-size: 0.8rem; color: #1e3a8a; margin: 5px 0;">
+                    Estos son los cargos detectados. Define sus <b>Permisos de Turno</b> y <b>Reglas de Horario</b>.
+                </p>
+            </div>
+            <div class="master-list-container" id="roles-list-render" style="max-height: 400px; overflow-y: auto; padding-right:5px;"></div>
+        </div>
+
+        <button onclick="saveMasterConfigAndClose()" style="margin-top:20px; width:100%; padding:12px; background:var(--success); color:white; border:none; border-radius:6px; font-weight:800; cursor:pointer;">💾 GUARDAR CAMBIOS</button>
+        <button onclick="closeMasterConfig()" style="margin-top:10px; width:100%; padding:10px; background:transparent; color:var(--text-muted); border:none; cursor:pointer;">Cancelar</button>
+    </div>
+</div>
+
+<!-- MODAL SELECCIÓN DE TURNO (MULTICARGO) -->
+<div id="modal-overlay" class="modal-overlay">
+    <div class="modal-box" style="width: 400px; text-align:left;">
+        <h3 style="margin:0 0 15px 0; color:var(--text-main); text-align:center;">Crear Grupo de Turno</h3>
+        
+        <div class="form-group">
+            <label>1. Nombre del Turno (Ej: ADMINISTRATIVO)</label>
+            <input type="text" id="custom-shift-name" placeholder="Escribe el nombre...">
+        </div>
+
+        <div class="form-group">
+            <label>2. Horario</label>
+            <div style="display:flex; gap:10px;">
+                <button class="type-btn selected" id="btn-day" onclick="setShiftType('DIA')">☀️ DÍA</button>
+                <button class="type-btn" id="btn-night" onclick="setShiftType('NOCHE')">🌙 NOCHE</button>
+            </div>
+            <input type="hidden" id="new-shift-type" value="DIA">
+        </div>
+
+        <div class="form-group">
+            <label>3. ¿Quiénes pueden entrar? (Marca varios)</label>
+            <div id="multi-role-list" class="checkbox-list"></div>
+            <div style="text-align:right; font-size:0.7rem; margin-top:3px;">
+                <span style="cursor:pointer; color:blue;" onclick="checkAllRoles(true)">Todos</span> | 
+                <span style="cursor:pointer; color:red;" onclick="checkAllRoles(false)">Ninguno</span>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button onclick="closeModal()" style="flex:1; padding:10px; border:1px solid #ccc; background:white; border-radius:6px;">Cancelar</button>
+            <button onclick="saveMultiShift()" style="flex:1; padding:10px; border:none; background:var(--primary); color:white; border-radius:6px; font-weight:bold;">Crear</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL SELECTOR DE ICONOS -->
+<div id="modal-icon" class="modal-overlay">
+    <div class="modal-box">
+        <h3 style="margin:0; color:var(--text-main)">Seleccionar Icono</h3>
+        <div class="icon-grid">
+            <div class="icon-opt" onclick="saveIcon('☀️')">☀️</div>
+            <div class="icon-opt" onclick="saveIcon('🌙')">🌙</div>
+            <div class="icon-opt" onclick="saveIcon('👨‍⚕️')">👨‍⚕️</div>
+            <div class="icon-opt" onclick="saveIcon('👩‍⚕️')">👩‍⚕️</div>
+            <div class="icon-opt" onclick="saveIcon('🚑')">🚑</div>
+            <div class="icon-opt" onclick="saveIcon('🏥')">🏥</div>
+            <div class="icon-opt" onclick="saveIcon('💊')">💊</div>
+            <div class="icon-opt" onclick="saveIcon('💻')">💻</div>
+            <div class="icon-opt" onclick="saveIcon('📁')">📁</div>
+            <div class="icon-opt" onclick="saveIcon('📊')">📊</div>
+            <div class="icon-opt" onclick="saveIcon('🏢')">🏢</div>
+            <div class="icon-opt" onclick="saveIcon('🚌')">🚌</div>
+            <div class="icon-opt" onclick="saveIcon('🚗')">🚗</div>
+            <div class="icon-opt" onclick="saveIcon('✈️')">✈️</div>
+            <div class="icon-opt" onclick="saveIcon('⛽')">⛽</div>
+            <div class="icon-opt" onclick="saveIcon('⚡')">⚡</div>
+            <div class="icon-opt" onclick="saveIcon('🔧')">🔧</div>
+            <div class="icon-opt" onclick="saveIcon('👷')">👷</div>
+            <div class="icon-opt" onclick="saveIcon('❌')">❌</div>
+            <div class="icon-opt" onclick="saveIcon('⚠️')">⚠️</div>
+            <div class="icon-opt" onclick="saveIcon('')">🚫</div>
+        </div>
+        <button onclick="closeIconModal()" style="margin-top:15px; border:none; color:var(--text-muted); background:none; cursor:pointer; font-weight:600;">Cancelar</button>
+    </div>
+</div>
+
+<!-- MODAL AUSENCIA -->
+<div id="modal-absence" class="modal-overlay">
+    <div class="modal-box">
+        <h3 style="margin:0 0 15px 0; color:var(--danger)">Registrar Ausencia</h3>
+        <div id="absence-emp-name" style="font-weight:bold; margin-bottom:15px; color:var(--text-muted);"></div>
+        <div class="form-group">
+            <label>Tipo de Ausencia</label>
+            <select id="abs-type">
+                <option value="sub_vac">✈️ VACACIONES</option>
+                <option value="sub_med">💊 DESCANSO MÉDICO</option>
+                <option value="sub_per">⚖️ LICENCIA SIN GOCE</option>
+                <option value="sub_fal">❌ FALTA</option>
+                <option value="sub_otr">📝 OTROS</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Descripción</label>
+            <input type="text" id="abs-desc" placeholder="Opcional...">
+        </div>
+        <div class="form-row">
+            <div class="form-group" style="flex:1">
+                <label>Desde</label>
+                <input type="date" id="abs-start">
+            </div>
+            <div class="form-group" style="flex:1">
+                <label>Hasta</label>
+                <input type="date" id="abs-end">
+            </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:20px;">
+            <button onclick="closeAbsenceModal()" style="padding:8px 15px; border:1px solid var(--border); background:white; cursor:pointer; border-radius:4px; color:var(--text-muted);">Cancelar</button>
+            <button onclick="saveAbsence()" style="padding:8px 15px; border:none; background:var(--danger); color:white; cursor:pointer; border-radius:4px; font-weight:600;">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- SIDEBAR Y CONTENIDO PRINCIPAL -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <div style="display:flex; align-items:center; gap:5px;">
+            <h3>PERSONAL</h3>
+            <span class="tab-count" id="total-staff-count" style="font-size:0.6rem; background:#f1f5f9; padding:1px 5px; border-radius:4px;">0</span>
+        </div>
+        <button onclick="toggleSidebar()" style="background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:1rem; line-height:1;" title="Ocultar Panel">◀</button>
+    </div>
+
+    <div style="padding: 0 10px 10px 10px; border-bottom:1px solid var(--border);">
+        <input type="text" id="search-box" placeholder="🔍 Buscar..." onkeyup="handleSearch(this.value)" ondrop="return false;" ondragover="return false;">
+    </div>
+
+    <div id="staff-list" style="overflow-y:auto; flex:1;"></div>
+</div>
+
+<div class="main-content">
+    <div class="top-bar">
+        <button id="btn-open-sidebar" onclick="toggleSidebar()" style="display:none; margin-right:10px; background:white; border:1px solid var(--border); border-radius:4px; cursor:pointer; padding:5px 10px;">👥</button>
+
+        <div style="display:flex; gap:15px; align-items:center;">
+            <div class="control-group">
+                <button class="nav-btn" onclick="moveDate(-1)">❮</button>
+                <button class="nav-btn btn-today" onclick="goToToday()">HOY</button>
+                <button class="nav-btn" onclick="moveDate(1)">❯</button>
+            </div>
+            <span id="date-display" style="font-weight:700; color:var(--text-main); min-width:140px; text-align:center; font-size:0.9rem;">---</span>
+        </div>
+
+        <div class="control-group">
+            <button class="nav-btn" id="btn-view-7" onclick="changeView(7)">Semana</button>
+            <button class="nav-btn active" id="btn-view-14" onclick="changeView(14)">2 Semanas</button>
+            <button class="nav-btn" id="btn-view-28" onclick="changeView(28)">Mes</button>
+        </div>
+
+        <div style="display:flex; gap:5px;">
+            <button class="nav-btn" onclick="openMasterConfig()" title="Configuración Maestra">🛠️ Config</button>
+            <button class="nav-btn btn-edit" onclick="toggleEditMode(this)" title="Editar Estructura">✏️ Zonas</button>
+            <button class="nav-btn" style="color:var(--danger);" onclick="clearView()" title="Limpiar Todo">🗑️</button>
+        </div>
+    </div>
+
+    <div id="horizontal-filters" class="filter-bar-container"></div>
+
+    <div class="grid-wrapper" id="grid-wrapper">
+        <table id="main-table">
+            <thead id="main-head"></thead>
+            <tbody id="table-body"></tbody>
+            <tfoot id="table-footer"></tfoot>
+        </table>
+        
+        <div id="compliance-panel"></div>
+        
+        <div id="add-area-zone" style="padding:20px; text-align:center; display:none;">
+            <button class="nav-btn" style="background:var(--success); color:white;" onclick="addNewArea()">➕ Zona</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast">Alerta</div>
+
+<div id="ctx-menu" class="custom-context-menu">
+    <div class="ctx-item danger" id="ctx-btn-lock" onclick="toggleCellLock()">
+        <span>🚫</span> Bloquear Turno
+    </div>
+</div>
+<script>
+// ==========================================
+// 📦 VARIABLES GLOBALES
+// ==========================================
+let currentDepartmentFilter = 'ALL';
+let daysToShow = 14; 
+let currentDate = new Date();
+let tempAreaIdForModal = null;
+let editingSubId = null; // ✅ CORREGIDO: Variable declarada
+let currentWeekColWidth = 80; 
+let currentMonthColWidth = 38;
+let db = {}; 
+let tempAbsenceEmpId = null;
+let currentSearchTerm = "";
+let editingRoleIndex = null;
+let editingMode = '';
+let tempIconAreaId = null;
+let tempIconSubId = null;
+let collapsedZones = { 'zone_abs': false, 'zone_avail': false };
+let isSaving = false;
+let unsavedChanges = false;
+let saveTimeout = null;
+let lastSaveTime = null;
+let currentCtxCellKey = null;
+let activeHighlightId = null;
+let draggedSubData = null;
+let userManualViewSelection = false;
+
+const holidaysPE = {
+    '1-1': 'Año Nuevo', 
+    '5-1': 'Día del Trabajo', 
+    '7-28': 'Fiestas Patrias', 
+    '12-25': 'Navidad'
+};
+
+let employees = []; 
+let mofRolesRaw = []; 
+let isRolLoaded = false;
+
+let masterConfig = {
+    shiftTypes: [
+        {id: 's1', name: 'DIA', type: 'DIA', icon: '☀️', color: '#fbbf24'},
+        {id: 's2', name: 'NOCHE', type: 'NOCHE', icon: '🌙', color: '#7c3aed'}
+    ],
+    roles: []
+};
+
+let structure = [
+    { 
+        id: 'a1', 
+        name: 'CERRO VERDE', 
+        subs: [
+            {id:'s1', name:'DIA', icon:'☀️'}, 
+            {id:'s2', name:'NOCHE', icon:'🌙'}
+        ] 
+    },
+    { 
+        id: 'a2', 
+        name: 'C1', 
+        subs: [
+            {id:'s6', name:'DIA', icon:'☀️'}
+        ] 
+    },
+    { 
+        id: 'zone_abs', 
+        name: 'AUSENCIAS', 
+        isSystem: true, 
+        subs: [
+            {id:'sub_vac', name:'VACACIONES', icon:'✈️'},
+            {id:'sub_med', name:'DESCANSO MEDICO', icon:'💊'},
+            {id:'sub_per', name:'LICENCIA SIN GOCE', icon:'⚖️'},
+            {id:'sub_fal', name:'FALTA', icon:'❌'},
+            {id:'sub_otr', name:'OTROS', icon:'📝'}
+        ] 
+    },
+    { 
+        id: 'zone_avail', 
+        name: 'DISPONIBLE', 
+        isSystem: true, 
+        isComputed: true, 
+        subs: [
+            {id:'sub_free', name:'LIBRES', icon:'🏠'},   
+            {id:'sub_post', name:'SALIENTES', icon:'🛌'} 
+        ] 
+    }
+];
+
+// ==========================================
+// 🚀 FUNCIÓN DE INICIO DEL MÓDULO
+// ==========================================
+// --- VARIABLES GLOBALES NUEVAS ---
+let isLiteMode = false;       // Interruptor para modo móvil/lectura
+let userCargoGlobal = "";     // Cargo del usuario (para filtrar)
+let currentUserIdGlobal = ""; // ID del usuario (para resaltarlo a él mismo)
+
+// --- FUNCIÓN MODIFICADA ---
+function startRolModule(usuario) {
+    console.log("🚀 Iniciando Módulo...", usuario);
+
+    // 1. LEER EL MODO QUE ENVIÓ EL BOTÓN
+    let modoSolicitado = usuario.modoVista || 'LITE'; 
+
+    if (modoSolicitado === 'FULL') {
+        // --- MODO JEFE / PLANIFICADOR ---
+        // Aquí activamos todo y quitamos filtros
+        isLiteMode = false;           
+        userCargoGlobal = "ALL";      // <--- CLAVE: Ver a todos
+        currentDepartmentFilter = 'ALL'; 
+        daysToShow = 14;              
+        
+        document.body.classList.remove('lite-mode');
+        const gw = document.getElementById('grid-wrapper');
+        if(gw) gw.classList.remove('lite-mode');
+
+    } else {
+        // --- MODO USUARIO / LECTURA ---
+        // Aquí restringimos la vista
+        isLiteMode = true;            
+        userCargoGlobal = usuario.cargo; // <--- CLAVE: Solo ver mi cargo
+        currentUserIdGlobal = usuario.id;
+        window.LOGGED_USER_ID = usuario.id;
+        
+        currentDepartmentFilter = userCargoGlobal; 
+        daysToShow = 7;               
+        
+        document.body.classList.add('lite-mode');
+        const gw = document.getElementById('grid-wrapper');
+        if(gw) gw.classList.add('lite-mode');
+    }
+
+    // Si ya estaba cargado, recargamos la tabla con la nueva configuración
+    if (isRolLoaded) {
+        // Si pasamos de LITE a FULL, necesitamos recargar datos del servidor 
+        // porque en LITE solo teníamos a los empleados de un cargo.
+        if (modoSolicitado === 'FULL' && employees.length < 10) {
+             isRolLoaded = false; // Forzar recarga para traer a todos
+        } else {
+            // Si solo cambiamos de vista visual, redibujamos rápido
+            renderStaffSidebar();
+            calculateColumnWidth();
+            renderTable();
+            return;
+        }
+    }
+
+    if(typeof loadingStartG === 'function') loadingStartG(); 
+    
+    google.script.run
+        .withSuccessHandler(function(data) {
+            employees = data.employees || [];
+            mofRolesRaw = data.mof || [];
+            
+            // FILTRO CLAVE:
+            // Solo filtramos la lista si estamos en LITE.
+            // Si estamos en FULL, dejamos pasar a TODOS.
+            if (isLiteMode && userCargoGlobal !== "") {
+                employees = employees.filter(e => e.jobTitle === userCargoGlobal);
+            }
+
+            initLogic(); 
+            isRolLoaded = true;
+            
+            if (isLiteMode && currentUserIdGlobal) {
+                setTimeout(() => toggleWorkerHighlight(currentUserIdGlobal), 1000);
+            }
+
+            if(typeof loadingEndG === 'function') loadingEndG();
+        })
+        .withFailureHandler(function(e) {
+            alert("Error: " + e);
+            if(typeof loadingEndG === 'function') loadingEndG();
+        })
+        .getRolInitialData();
+}
+
+
+// Nueva función auxiliar para cambiar entre modos sin recargar todo
+function aplicarModoVista(usuario) {
+    const modoSolicitado = usuario.modoVistaSolicitado; // 'LITE' o 'FULL'
+
+    if (modoSolicitado === 'FULL') {
+        // MODO ADMINISTRADOR / PLANIFICACIÓN
+        isLiteMode = false;
+        currentDepartmentFilter = 'ALL'; // Ver todos
+        document.body.classList.remove('lite-mode');
+        const gw = document.getElementById('grid-wrapper');
+        if(gw) gw.classList.remove('lite-mode');
+        daysToShow = 14; // Vista por defecto en PC
+    } else {
+        // MODO USUARIO / PROGRAMACIÓN (Por defecto o si es 'LITE')
+        isLiteMode = true;
+        currentDepartmentFilter = userCargoGlobal; // Ver solo mi cargo
+        document.body.classList.add('lite-mode');
+        const gw = document.getElementById('grid-wrapper');
+        if(gw) gw.classList.add('lite-mode');
+        daysToShow = 7; // Vista por defecto en Móvil
+    }
+    
+    // Si la tabla ya existe, redibujarla con el nuevo modo
+    if (isRolLoaded) {
+        calculateColumnWidth();
+        renderStaffSidebar(); // Actualizar lista de empleados (filtrada o no)
+        renderTable();
+    }
+}
+
+
+
+// ==========================================
+// 🔧 LÓGICA DE INICIALIZACIÓN
+// ==========================================
+function initLogic() {
+    console.log("✅ Datos maestros recibidos. Iniciando lógica del planificador...");
+    
+    if (typeof updateSaveStatus === 'function') {
+        updateSaveStatus("🔄 Cargando DB...", "blue");
+    }
+    if (typeof showToast === 'function') {
+        showToast("☁️ Conectando con Google Drive...");
+    }
+    
+    syncRolesWithMOF();
+    
+    google.script.run
+        .withSuccessHandler(function(dataString) {
+            try {
+                if (dataString && dataString.trim() !== '') {
+                    let parsed = JSON.parse(dataString);
+                    
+                    if (parsed.db) {
+                        db = parsed.db;
+                        console.log(`✅ ${Object.keys(db).length} registros de turnos cargados`);
+                    } else {
+                        db = {};
+                    }
+
+                    if (parsed.structure) {
+                        structure = parsed.structure;
+                        console.log(`✅ ${structure.length} zonas cargadas`);
+                    }
+                    
+                    if (parsed.masterConfig) {
+                        if (parsed.masterConfig.shiftTypes) {
+                            masterConfig.shiftTypes = parsed.masterConfig.shiftTypes;
+                        }
+                        if (parsed.masterConfig.roles) {
+                            restoreRoleCustomization(parsed.masterConfig.roles);
+                        }
+                    }
+                    
+                    if (parsed.currentFilter) {
+                        currentDepartmentFilter = parsed.currentFilter;
+                    }
+                    
+                    if (parsed.metadata) {
+                        console.log("📊 Metadata:", parsed.metadata);
+                        let lastSaved = new Date(parsed.metadata.lastSaved);
+                        showToast(`✅ Datos del ${lastSaved.toLocaleDateString()} cargados`);
+                    } else {
+                        showToast("✅ Datos cargados correctamente");
+                    }
+                    
+                    if (typeof updateSaveStatus === 'function') {
+                        updateSaveStatus("✅ Datos cargados", "green");
+                    }
+                    
+                } else {
+                    console.log("ℹ️ No hay datos guardados, iniciando limpio");
+                    db = {}; 
+                    showToast("ℹ️ Nuevo planificador iniciado");
+                    if (typeof updateSaveStatus === 'function') {
+                        updateSaveStatus("📝 Nuevo documento", "orange");
+                    }
+                }
+                
+            } catch (parseError) {
+                console.error("❌ Error parseando datos JSON:", parseError);
+                db = {}; 
+                showToast("⚠️ Error en datos guardados, iniciando limpio");
+                if (typeof updateSaveStatus === 'function') {
+                    updateSaveStatus("⚠️ Datos corruptos", "orange");
+                }
+            }
+            
+            finishInitialization();
+        })
+        .withFailureHandler(function(error) {
+            console.error("❌ Error cargando datos desde Drive:", error);
+            db = {};
+            showToast("❌ Error de conexión - Modo offline");
+            if (typeof updateSaveStatus === 'function') {
+                updateSaveStatus("❌ Sin conexión", "red");
+            }
+            
+            finishInitialization();
+        })
+        .loadPlannerFromDrive();
+}
+
+function finishInitialization() {
+    alignDateToMonday(); 
+    calculateColumnWidth(); 
+    applyMasterConfigStyles();
+    
+    renderTable(); 
+    renderStaffSidebar(); 
+    analyzeWorkLoad();
+    
+    window.addEventListener('resize', () => { 
+        calculateColumnWidth(); 
+        renderTable(); 
+        analyzeWorkLoad(); 
+    });
+    
+    setInterval(() => {
+        if (unsavedChanges && !isSaving) {
+            console.log("🔄 Guardado automático programado");
+            pushToCloud();
+        }
+    }, 300000);
+    
+    console.log("✅ Inicialización completa");
+    updateSaveStatus("✅ Sistema listo", "green");
+}
+
+// ==========================================
+// 🔄 SINCRONIZACIÓN CON MOF
+// ==========================================
+function syncRolesWithMOF() {
+    let uniqueCargos = [];
+    let seen = new Set();
+
+    mofRolesRaw.forEach(item => {
+        let cargoName = item.name; 
+        if (cargoName && !seen.has(cargoName)) {
+            uniqueCargos.push(item);
+            seen.add(cargoName);
+        }
+    });
+
+    uniqueCargos.sort((a, b) => a.name.localeCompare(b.name));
+
+    let newRolesConfig = [];
+    
+    uniqueCargos.forEach(mofItem => {
+        let existing = masterConfig.roles.find(r => r.name === mofItem.name);
+        
+        if (existing) {
+            existing.department = mofItem.department; 
+            newRolesConfig.push(existing);
+        } else {
+            newRolesConfig.push({
+                id: 'role_' + mofItem.name.replace(/[^a-z0-9]/gi, '_'),
+                name: mofItem.name,
+                department: mofItem.department,
+                icon: '👔', 
+                color: '#64748b'
+            });
+        }
+    });
+    
+    masterConfig.roles = newRolesConfig;
+}
+
+function restoreRoleCustomization(savedRoles) {
+    masterConfig.roles.forEach(currentRole => {
+        let saved = savedRoles.find(s => s.name === currentRole.name);
+        
+        if (saved) {
+            if (saved.color) currentRole.color = saved.color;
+            if (saved.icon) currentRole.icon = saved.icon;
+
+            if (saved.allowedTypes && Array.isArray(saved.allowedTypes)) {
+                currentRole.allowedTypes = saved.allowedTypes;
+            }
+
+            if (saved.defaultHours) {
+                currentRole.defaultHours = saved.defaultHours;
+            }
+
+            if (saved.weeklyTarget) {
+                currentRole.weeklyTarget = saved.weeklyTarget;
+            }
+        }
+    });
+    
+    console.log("✅ Configuración de cargos restaurada correctamente.");
+}
+
+// ==========================================
+// 🎨 FILTROS Y PESTAÑAS
+// ==========================================
+function applyMasterConfigStyles() {
+    const container = document.getElementById('horizontal-filters');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    let totalEmployees = employees.length;
+    let roleCounts = {};
+    masterConfig.roles.forEach(r => {
+        roleCounts[r.name] = employees.filter(e => e.jobTitle === r.name).length;
+    });
+
+    let allActive = (currentDepartmentFilter === 'ALL') ? 'active' : '';
+    container.innerHTML += `
+        <div class="filter-tab ${allActive}" onclick="selectFilter('ALL')">
+            <span>👥 TODOS</span>
+            <span class="tab-count">${totalEmployees}</span>
+        </div>
+    `;
+
+    masterConfig.roles.forEach(role => {
+        let count = roleCounts[role.name] || 0;
+        if (count >= 0) {
+            let isActive = (currentDepartmentFilter === role.name) ? 'active' : '';
+            let style = isActive ? `color:${role.color}; border-bottom-color:${role.color}; background:${role.color}10;` : '';
+            
+            container.innerHTML += `
+                <div class="filter-tab ${isActive}" style="${style}" onclick="selectFilter('${role.name}')">
+                    <span>${role.icon} ${role.name}</span>
+                    <span class="tab-count">${count}</span>
+                </div>
+            `;
+        }
+    });
+}
+
+function selectFilter(deptName) {
+    currentDepartmentFilter = deptName;
+    
+    const menu = document.getElementById('filter-dropdown-options');
+    if(menu) menu.classList.remove('open');
+
+    applyMasterConfigStyles();
+    renderStaffSidebar();
+    renderTable();
+}
+
+// ==========================================
+// 🛠️ CONFIGURACIÓN MAESTRA (UI)
+// ==========================================
+function renderMasterConfigUI() {
+    const roleList = document.getElementById('roles-list-render');
+    if(!roleList) return;
+    
+    roleList.innerHTML = '';
+    
+    const modalBox = document.querySelector('#modal-master-config .modal-box');
+    if(modalBox) modalBox.style.width = "700px"; 
+
+    if(masterConfig.roles.length === 0) {
+        roleList.innerHTML = '<div style="padding:30px; text-align:center; color:#94a3b8;">No se encontraron cargos.</div>';
+        return;
+    }
+
+    roleList.innerHTML += `
+        <div class="modern-header">
+            <div class="mh-col-1">👤 Identidad & Estilo</div>
+            <div class="mh-col-2">🚦 Permisos Turno</div>
+            <div class="mh-col-3">⚖️ Reglas Jornada</div>
+        </div>
+    `;
+
+    masterConfig.roles.forEach((role, index) => {
+        if (!role.allowedTypes) role.allowedTypes = ['DIA', 'TARDE', 'NOCHE'];
+        if (!role.defaultHours) role.defaultHours = 12;
+        if (!role.weeklyTarget) role.weeklyTarget = 48;
+
+        const isDay = role.allowedTypes.includes('DIA');
+        const isAfternoon = role.allowedTypes.includes('TARDE');
+        const isNight = role.allowedTypes.includes('NOCHE');
+
+        const classDay = isDay ? 'active-day' : '';
+        const classAfternoon = isAfternoon ? 'active-afternoon' : '';
+        const classNight = isNight ? 'active-night' : '';
+
+        roleList.innerHTML += `
+            <div class="modern-row">
+                <div class="row-identity">
+                    <div class="color-trigger-wrapper" title="Color del Cargo">
+                        <div class="color-dot" style="background-color: ${role.color};"></div>
+                        <input type="color" class="color-input-hidden" value="${role.color}" onchange="updateRoleColor(${index}, this.value)">
+                    </div>
+                    <div class="row-icon" onclick="openIconSelectorForRole(${index})" title="Cambiar Icono">${role.icon}</div>
+                    <div class="row-info">
+                        <div class="row-title" title="${role.name}">${role.name}</div>
+                        <div class="row-subtitle">${role.department || 'GENERAL'}</div>
+                    </div>
+                </div>
+
+                <div class="toggle-group" style="width: 160px; justify-content:center;">
+                    <div class="chip-toggle ${classDay}" onclick="toggleRolePermission(${index}, 'DIA')" title="Habilitar Día">☀️</div>
+                    <div class="chip-toggle ${classAfternoon}" onclick="toggleRolePermission(${index}, 'TARDE')" title="Habilitar Tarde">🌇</div>
+                    <div class="chip-toggle ${classNight}" onclick="toggleRolePermission(${index}, 'NOCHE')" title="Habilitar Noche">🌙</div>
+                </div>
+
+                <div class="rules-column">
+                    <div class="rule-row">
+                        <span>⏱️ Diario:</span>
+                        <select class="minimal-select" onchange="updateRoleHours(${index}, this.value)">
+                            <option value="8" ${role.defaultHours == 8 ? 'selected' : ''}>08h</option>
+                            <option value="10" ${role.defaultHours == 10 ? 'selected' : ''}>10h</option>
+                            <option value="12" ${role.defaultHours == 12 ? 'selected' : ''}>12h</option>
+                        </select>
+                    </div>
+
+                    <div class="rule-row" style="margin-top:4px;">
+                        <span>🚫 Límite:</span>
+                        <div style="display:flex; align-items:center; gap:2px;">
+                            <input type="number" 
+                                   class="minimal-select" 
+                                   style="width: 50px; text-align:center; padding: 4px 2px;" 
+                                   value="${role.weeklyTarget || 48}" 
+                                   onchange="updateRoleTarget(${index}, this.value)"
+                                   min="1" max="168">
+                            <span style="font-size:0.6rem; color:#64748b;">Hrs</span>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+    });
+}
+
+function updateRoleTarget(index, value) {
+    let val = parseInt(value);
+    if (isNaN(val) || val <= 0) val = 48;
+    masterConfig.roles[index].weeklyTarget = val;
+}
+
+function updateRoleHours(index, value) {
+    masterConfig.roles[index].defaultHours = parseInt(value);
+}
+
+function toggleRolePermission(roleIndex, type) {
+    let role = masterConfig.roles[roleIndex];
+    if (!role.allowedTypes) role.allowedTypes = [];
+    
+    if (role.allowedTypes.includes(type)) {
+        role.allowedTypes = role.allowedTypes.filter(t => t !== type);
+    } else {
+        role.allowedTypes.push(type);
+    }
+    
+    renderMasterConfigUI();
+}
+
+function openMasterConfig() { 
+    renderMasterConfigUI(); 
+    document.getElementById('modal-master-config').style.display = 'flex'; 
+}
+
+function closeMasterConfig() { 
+    document.getElementById('modal-master-config').style.display = 'none'; 
+}
+
+function updateRoleColor(idx, val) { 
+    masterConfig.roles[idx].color = val;
+    applyMasterConfigStyles(); 
+    renderStaffSidebar(); 
+}
+
+function saveMasterConfigAndClose() { 
+    saveDataLocal(); 
+    applyMasterConfigStyles(); 
+    closeMasterConfig(); 
+    showToast("✅ Configuración Guardada"); 
+}
+
+// ==========================================
+// 💾 FUNCIONES DE GUARDADO
+// ==========================================
+function saveDataLocal() {
+    unsavedChanges = true;
+    updateSaveStatus("📝 Guardando en breve...", "orange");
+
+    if (saveTimeout) clearTimeout(saveTimeout);
+    
+    saveTimeout = setTimeout(() => {
+        pushToCloud();
+    }, 4000); 
+}
+
+function saveNow() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    pushToCloud();
+}
+
+function pushToCloud() {
+    if(isSaving) {
+        console.log("⚠️ Ya hay un guardado en proceso...");
+        return;
+    }
+    
+    isSaving = true;
+    updateSaveStatus("☁️ Guardando...", "blue");
+
+    let cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 90); 
+    
+    let optimizedDB = {};
+    
+    Object.keys(db).forEach(key => {
+        let datePart = key.split('_')[0]; 
+        let parts = datePart.split('-');
+        let entryDate = new Date(parts[0], parts[1]-1, parts[2]);
+        
+        if (entryDate >= cutoffDate) {
+            optimizedDB[key] = db[key];
+        }
+    });
+
+    let lightPayload = JSON.stringify({
+        db: optimizedDB,
+        structure: structure,      
+        masterConfig: masterConfig, 
+        metadata: {
+            version: "4.3_turbo",
+            lastSaved: new Date().toISOString(),
+            totalRecords: Object.keys(optimizedDB).length
+        }
+    });
+
+    google.script.run
+        .withSuccessHandler(function(response) {
+            isSaving = false;
+            unsavedChanges = false;
+            updateSaveStatus("✅ Guardado", "green");
+            showToast("💾 " + response);
+        })
+        .withFailureHandler(function(error) {
+            isSaving = false;
+            updateSaveStatus("❌ Error", "red");
+            showToast("❌ Error: " + error.message);
+        })
+        .savePlannerToDrive(lightPayload);
+}
+
+function updateSaveStatus(message, color) {
+    let indicator = document.getElementById('save-status-indicator');
+    if (!indicator) {
+        let topBar = document.querySelector('.top-bar');
+        indicator = document.createElement('div');
+        indicator.id = 'save-status-indicator';
+        indicator.style.cssText = `
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            margin-right: 15px; 
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.3s;
+            cursor: pointer;
+            user-select: none;
+        `;
+        indicator.onclick = () => {
+            if (unsavedChanges && !isSaving) {
+                pushToCloud();
+            }
+        };
+        indicator.title = "Click para forzar guardado";
+        topBar.insertBefore(indicator, topBar.lastElementChild);
+    }
+    
+    indicator.innerText = message;
+    
+    const colors = {
+        red: '#ef4444',
+        green: '#15803d', 
+        blue: '#2563eb',
+        orange: '#f59e0b'
+    };
+    
+    indicator.style.color = colors[color] || '#6b7280';
+    indicator.style.backgroundColor = color === 'green' ? '#f0fdf4' : 
+                                    color === 'red' ? '#fef2f2' : 
+                                    color === 'blue' ? '#eff6ff' : '#fffbeb';
+}
+
+// ==========================================
+// 🧮 FUNCIONES AUXILIARES DE FECHA
+// ==========================================
+function getLocalISO(date) {
+    const y = date.getFullYear(); 
+    const m = String(date.getMonth() + 1).padStart(2, '0'); 
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function getMondayLocal(d) {
+    let date = new Date(d); 
+    let day = date.getDay(); 
+    let diff = date.getDate() - day + (day == 0 ? -6 : 1);
+    return getLocalISO(new Date(date.setDate(diff)));
+}
+
+function getWeekNumber(d) {
+    var date = new Date(d.getTime());
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+    var week1 = new Date(date.getFullYear(), 0, 4);
+    return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+}
+
+function formatShortName(fullName) {
+    if (!fullName) return "";
+    let parts = fullName.trim().split(/\s+/); 
+    let firstInitial = parts[0].charAt(0).toUpperCase() + '.'; 
+    let lastName = (parts.length > 1) ? parts[1] : '';
+    if (lastName.length > 4) { lastName = lastName.substring(0, 4) + '.'; }
+    return `${firstInitial} ${lastName}`;
+}
+
+function groupDates(dates) {
+    if(dates.length === 0) return '';
+    let sorted = dates.map(d => new Date(d.split('-')[0], d.split('-')[1]-1, d.split('-')[2])).sort((a,b) => a - b);
+    let groups = []; 
+    let start = sorted[0]; 
+    let prev = sorted[0];
+    
+    for(let i=1; i<sorted.length; i++) {
+        let curr = sorted[i]; 
+        let diffDays = (curr - prev) / (1000 * 60 * 60 * 24);
+        if(diffDays > 1) { 
+            groups.push(formatRange(start, prev)); 
+            start = curr; 
+        }
+        prev = curr;
+    }
+    groups.push(formatRange(start, prev));
+    return groups.join(', ');
+}
+
+function formatRange(d1, d2) { 
+    if(d1.getTime() === d2.getTime()) return `${d1.getDate()}`; 
+    return `${d1.getDate()} al ${d2.getDate()}`; 
+}
+// ==========================================
+// 📐 CÁLCULO DE ANCHOS DE COLUMNA
+// ==========================================
+
+function calculateColumnWidth() {
+    const wrapper = document.getElementById('grid-wrapper'); 
+    const table = document.getElementById('main-table');
+    if (!wrapper || !table) return;
+
+    const isLite = document.body.classList.contains('lite-mode');
+    const isMobile = window.innerWidth <= 768;
+    const isLandscape = window.innerWidth > window.innerHeight;
+
+    let fixedWidth;
+    if (isLite) {
+        if (isLandscape && window.innerHeight <= 600) {
+            fixedWidth = 60;   // landscape: zona(22) + turno(38)
+        } else if (window.innerWidth <= 380) {
+            fixedWidth = 58;   // muy pequeño: zona(20) + turno(38)
+        } else {
+            fixedWidth = 85;   // portrait normal: zona(35) + turno(50)
+        }
+    } else if (isMobile) {
+        fixedWidth = 110;  // admin móvil: zona(45) + turno(65)
+    } else {
+        fixedWidth = 190;  // PC: zona(85) + turno(105)
+    }
+
+    const availableWidth = wrapper.clientWidth - fixedWidth - 10;
+
+    if (daysToShow === 7) {
+        currentWeekColWidth = Math.floor(availableWidth / 7);
+        if (currentWeekColWidth < 35) currentWeekColWidth = 35;
+        document.documentElement.style.setProperty('--w-col-week', currentWeekColWidth + 'px');
+        table.style.width = "100%";
+    } else if (daysToShow === 14) {
+        let calc = Math.floor(availableWidth / 14);
+        if (calc < 28) calc = 28;
+        currentWeekColWidth = calc;
+        document.documentElement.style.setProperty('--w-col-week', currentWeekColWidth + 'px');
+        table.style.width = "100%";
+    } else {
+        let calcMonth = Math.floor(availableWidth / 28);
+        if (calcMonth < 20) calcMonth = 20;
+        currentMonthColWidth = calcMonth;
+        currentWeekColWidth = 80;
+        document.documentElement.style.setProperty('--w-col-month', currentMonthColWidth + 'px');
+        document.documentElement.style.setProperty('--w-col-week', '80px');
+        let totalWidth = fixedWidth + (calcMonth * 28) + 20;
+        table.style.width = totalWidth + "px";
+    }
+}
+
+function changeView(days, isAutomatic) {
+    if (!isAutomatic) {
+        userManualViewSelection = true;
+    }
+    daysToShow = days; 
+    document.querySelectorAll('#rol-module-wrapper .control-group .nav-btn').forEach(b => b.classList.remove('active'));
+    let btn = document.getElementById('btn-view-' + days);
+    if (btn) btn.classList.add('active'); 
+    calculateColumnWidth(); 
+    renderTable(); 
+    analyzeWorkLoad();
+}
+
+function toggleZone(zoneId) { 
+    collapsedZones[zoneId] = !collapsedZones[zoneId]; 
+    renderTable(); 
+}
+
+function workedNightYesterday(empId, todayIso) {
+    let today = new Date(todayIso.split('-')[0], todayIso.split('-')[1]-1, todayIso.split('-')[2]);
+    let yesterday = new Date(today); 
+    yesterday.setDate(yesterday.getDate() - 1);
+    let yIso = getLocalISO(yesterday); 
+    
+    let workedNight = false;
+    Object.keys(db).forEach(k => {
+        if(k.startsWith(yIso)) {
+            let shift = db[k].find(x => x.empId === empId && x.type === 'WORK');
+            if(shift) {
+                let subId = k.split('_')[1];
+                if(isNightShift(subId)) {
+                    workedNight = true;
+                }
+            }
+        }
+    });
+    
+    return workedNight;
+}
+
+// ==========================================
+// 🗓️ RENDERIZADO DE TABLA PRINCIPAL
+// ==========================================
+function renderTable() {
+    if (!db) db = {};
+    const thead = document.getElementById('main-head'); 
+    const tbody = document.getElementById('table-body'); 
+    const tfoot = document.getElementById('table-footer');
+    
+    let tempDate = new Date(currentDate); 
+    let dates = []; 
+    let monthsData = []; 
+    let currentMonth = { name: '', count: 0 };
+
+    // 1. HEADER Y FECHAS
+    for(let i=0; i<daysToShow; i++) {
+        let iso = getLocalISO(tempDate); 
+        let dKey = (tempDate.getMonth()+1) + '-' + tempDate.getDate(); 
+        let isHoliday = holidaysPE[dKey];
+        let monthName = tempDate.toLocaleDateString('es-ES', { month: 'long' }).toUpperCase();
+        
+        if (monthName !== currentMonth.name) { 
+            if(currentMonth.name !== '') monthsData.push({...currentMonth}); 
+            currentMonth = { name: monthName, count: 1 }; 
+        } else { 
+            currentMonth.count++; 
+        }
+        
+        dates.push({ 
+            iso: iso, 
+            display: daysToShow === 28 ? 
+                `${tempDate.toLocaleDateString('es-ES', {weekday:'short'}).toUpperCase().slice(0,2)} ${String(tempDate.getDate()).padStart(2,'0')}` : 
+                tempDate.toLocaleDateString('es-ES', {weekday:'short', day:'numeric'}), 
+            isHoliday: isHoliday, 
+            holidayName: holidaysPE[dKey], 
+            dayOfWeek: tempDate.getDay() 
+        });
+        
+        tempDate.setDate(tempDate.getDate()+1);
+    }
+    monthsData.push({...currentMonth});
+
+    let htmlHead = `<tr><th class="fix-area" rowspan="2">ZONA</th><th class="fix-sub" rowspan="2">TURNO</th>`;
+    monthsData.forEach(m => { 
+        let displayName = (m.count <= 2) ? m.name.charAt(0) : m.name; 
+        htmlHead += `<th class="th-month" colspan="${m.count}">${displayName}</th>`; 
+    });
+    htmlHead += `</tr><tr>`;
+    
+    let widthVar = daysToShow === 28 ? 'var(--w-col-month)' : 'var(--w-col-week)';
+    dates.forEach(d => { 
+        let bg = (!d.isHoliday && (d.dayOfWeek===0 || d.dayOfWeek===6)) ? '#f9f9f9' : (d.isHoliday ? 'var(--holiday-bg)' : ''); 
+        let content = d.display; 
+        if(d.isHoliday && daysToShow !== 28) content += `<span class="holiday-name">${d.holidayName}</span>`; 
+        htmlHead += `<th class="th-day ${d.isHoliday?'is-holiday':''} ${d.dayOfWeek===0?'border-right-thick':''}" style="background:${bg}; width:${widthVar}; min-width:${widthVar};">${content}</th>`; 
+    });
+    htmlHead += `</tr>`; 
+    thead.innerHTML = htmlHead;
+    
+    let finalDate = new Date(currentDate); 
+    finalDate.setDate(finalDate.getDate() + daysToShow - 1);
+    document.getElementById('date-display').innerText = `${currentDate.getDate()}/${currentDate.getMonth()+1} - ${finalDate.getDate()}/${finalDate.getMonth()+1}`;
+
+    tbody.innerHTML = ''; 
+    tfoot.innerHTML = '';
+
+    // 2. CUERPO DE LA TABLA (LÓGICA CORREGIDA)
+    structure.forEach((area, idx) => {
+        let isAbsenceZone = (area.id === 'zone_abs'); 
+        let isAvailZone = (area.id === 'zone_avail');
+        let rowClass = isAbsenceZone ? 'zone-absence' : (isAvailZone ? 'zone-avail' : '');
+        let isCollapsed = collapsedZones[area.id] || false;
+
+        // --- PASO A: PRE-CALCULAR SUBS VISIBLES ---
+        // Esto evita que la columna ZONA desaparezca si la primera fila se oculta
+        let visibleSubs = area.subs.filter(sub => {
+            if (isLiteMode) {
+                if (isAvailZone || sub.id.includes('free') || sub.id.includes('post')) return false;
+                if (isAbsenceZone) {
+                    let hayDatos = dates.some(d => {
+                        let k = `${d.iso}_${sub.id}`;
+                        return db[k] && db[k].length > 0 && db[k].some(r => employees.find(e => e.id === r.empId));
+                    });
+                    if (!hayDatos) return false;
+                }
+            }
+            if (currentDepartmentFilter !== 'ALL' && !isAbsenceZone && !isAvailZone) {
+                if (sub.allowedRoles && sub.allowedRoles.length > 0 && !sub.allowedRoles.includes(currentDepartmentFilter)) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        if (visibleSubs.length === 0) return;
+
+        // --- PASO B: RENDERIZAR LAS FILAS ---
+        visibleSubs.forEach((sub, visibleIndex) => {
+            const tr = document.createElement('tr'); 
+            tr.className = rowClass;
+            
+            if (visibleIndex === visibleSubs.length - 1 || isCollapsed) { 
+                tr.classList.add('border-bottom-thick'); 
+            }
+
+            // --- COLUMNA ZONA (SOLO EN LA PRIMERA FILA VISIBLE) ---
+            if (visibleIndex === 0) {
+                const tdArea = document.createElement('td'); 
+                tdArea.className = 'col-area'; 
+                tdArea.rowSpan = isCollapsed ? 1 : visibleSubs.length; 
+
+                if (isLiteMode) {
+                    tdArea.style.pointerEvents = "none"; 
+                } else {
+                    tdArea.ondblclick = () => toggleZone(area.id); 
+                    tdArea.style.cursor = "pointer"; 
+                    tdArea.title = "Doble clic para Minimizar/Maximizar";
+                }
+                
+                let controlsHTML = '';
+                if (!isLiteMode && !isAbsenceZone && !isAvailZone) {
+                    let displayStyle = document.getElementById('grid-wrapper').classList.contains('edit-mode') ? 'flex' : 'none';
+                    controlsHTML = `<div class="edit-controls" style="display:${displayStyle}; gap:2px; justify-content:center; margin-top:4px;"><button class="mini-btn" style="background:rgba(255,255,255,0.2)" onclick="event.stopPropagation(); openModal('${area.id}')">+</button><button class="mini-btn" style="background:#ef4444" onclick="event.stopPropagation(); delArea('${area.id}')">x</button></div>`;
+                }
+                tdArea.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; flex-direction:column; height:100%;"><span>${area.name}</span>${controlsHTML}</div>`;
+                tr.appendChild(tdArea);
+            }
+
+            if(isCollapsed && visibleIndex === 0) {
+                const tdPlaceholder = document.createElement('td'); 
+                tdPlaceholder.colSpan = dates.length + 1; 
+                tdPlaceholder.innerHTML = `<i>Zona contraída</i>`; 
+                if(!isLiteMode) tdPlaceholder.ondblclick = () => toggleZone(area.id);
+                tr.appendChild(tdPlaceholder); 
+                tbody.appendChild(tr); 
+                return; 
+            }
+            if(isCollapsed) return; 
+
+            // --- COLUMNA TURNO ---
+            const tdSub = document.createElement('td'); 
+            tdSub.className = 'col-sub';
+            
+            if (!isAbsenceZone && !isAvailZone) {
+                let isNightCheck = isNightShift(sub.id);
+                tdSub.classList.add(isNightCheck ? 'type-night' : 'type-day');
+                
+                if (!isLiteMode) { 
+                    tdSub.draggable = true;
+                    tdSub.ondragstart = (e) => handleSubDragStart(e, area.id, area.subs.indexOf(sub)); 
+                    tdSub.ondragover = (e) => handleSubDragOver(e, area.id);
+                    tdSub.ondragleave = (e) => handleSubDragLeave(e);
+                    tdSub.ondrop = (e) => handleSubDrop(e, area.id, area.subs.indexOf(sub));
+                }
+            }
+
+            const badgeStyle = `width: 20px; height: 20px; background: #fff; border: 1px solid #cbd5e1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); flex-shrink: 0; margin-right: 2px;`;
+            
+            if (!isAbsenceZone && !isAvailZone) {
+                let timeIcon = (sub.shiftType === 'NOCHE' || sub.name.toUpperCase().includes('NOCHE')) ? '🌙' : ((sub.shiftType === 'TARDE') ? '🌇' : '☀️');
+                let labelColor = (timeIcon === '🌙') ? '#7c3aed' : ((timeIcon === '🌇') ? '#ea580c' : '#334155');
+                
+                let deleteBtnHTML = (!isLiteMode && document.getElementById('grid-wrapper').classList.contains('edit-mode')) ? 
+                    `<div class="edit-controls" style="margin-right:4px;"><button class="mini-btn" style="background:#ef4444; padding:0 4px;" onclick="delSub('${area.id}', '${sub.id}')">x</button></div>` : '';
+
+                tdSub.innerHTML = `
+                    <div class="shift-cell-container" ${!isLiteMode ? `ondblclick="event.stopPropagation(); editShift('${area.id}', '${sub.id}')"` : ''} style="cursor:${isLiteMode?'default':'pointer'}">
+                        ${deleteBtnHTML}
+                        <span style="font-size:0.75rem; font-weight:800; color:${labelColor}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; padding-left:4px;">${sub.name}</span>
+                        <div style="${badgeStyle}">${timeIcon}</div>
+                    </div>`;
+            } else {
+                let labelColor = '#64748b'; 
+                if (['sub_vac', 'sub_med', 'sub_fal'].includes(sub.id)) labelColor = '#ef4444';
+                tdSub.innerHTML = `<div style="display:flex; align-items:center; justify-content:space-between; width:100%; height:100%; padding:0 4px 0 8px;"><span style="font-weight:800; font-size:0.7rem; color:${labelColor}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1;">${sub.name}</span><div style="${badgeStyle}; border-color:${labelColor}; color:${labelColor}; opacity:0.8; margin-right:0;">${sub.icon || ''}</div></div>`;
+            }
+            tr.appendChild(tdSub);
+
+            // --- CELDAS DE DÍAS ---
+            dates.forEach(d => {
+                const td = document.createElement('td'); 
+                const cellKey = `${d.iso}_${sub.id}`; 
+                td.dataset.key = cellKey;
+                if (d.dayOfWeek === 0) td.classList.add('border-right-thick');
+
+                let isLocked = (db[cellKey] && db[cellKey].length > 0 && db[cellKey][0].type === 'LOCKED');
+                if (isLocked) td.classList.add('cell-blocked');
+
+                if (!isLiteMode && !isAbsenceZone && !isAvailZone) {
+                    td.addEventListener('contextmenu', (e) => { e.preventDefault(); openContextMenu(e, cellKey, isLocked); });
+                    if(!isLocked) {
+                        td.addEventListener('dragover', e => { e.preventDefault(); td.classList.add('drag-over'); });
+                        td.addEventListener('dragleave', () => td.classList.remove('drag-over'));
+                        td.addEventListener('drop', handleDrop);
+                    }
+                }
+
+                if(!isLocked && db[cellKey]) {
+                    db[cellKey].forEach((data, index) => renderCard(td, data, cellKey, index, sub.name));
+                }
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+    });
+
+    // FOOTER
+    let trCant = document.createElement('tr'); trCant.className = 'row-cant-personal'; trCant.innerHTML = `<td class="footer-label" colspan="2">CANT PERSONAL</td>`;
+    let trHH = document.createElement('tr'); trHH.className = 'row-hh'; trHH.innerHTML = `<td class="footer-label" colspan="2">TAREO / HH</td>`;
+    dates.forEach(d => {
+        let dailyCount = 0; let dailyHours = 0;
+        Object.keys(db).forEach(key => { if(key.startsWith(d.iso)) db[key].forEach(item => { if(item.hours > 0) { dailyCount++; dailyHours += item.hours; } }); });
+        let bs = (d.dayOfWeek === 0) ? 'border-right: 2px solid #cbd5e1 !important;' : '';
+        trCant.innerHTML += `<td class="footer-cell" style="${bs}">${dailyCount || ''}</td>`;
+        trHH.innerHTML += `<td class="footer-cell" style="${bs}">${dailyHours || ''}</td>`;
+    });
+    tfoot.appendChild(trCant); tfoot.appendChild(trHH);
+}
+
+/* ================================================================
+   🔧 FIX STICKY HEADER + FOOTER
+   
+   PROBLEMA: Al hacer scroll vertical, ZONA/TURNO se quedan
+   pegados pero FEBRERO y los días (LU 09, MA 10...) se van.
+   En el footer, los números se mueven al scroll horizontal.
+   
+   CAUSA: display:flex en grid-wrapper + iframe de Apps Script
+   pueden romper position:sticky del thead/tfoot.
+   
+   SOLUCIÓN: JavaScript que fuerza el comportamiento sticky
+   reposicionando las filas del header/footer con scroll events.
+   
+   ═══════════════════════════════════════════════════════════
+   INSTRUCCIONES:
+   
+   1. PEGAR esta función DESPUÉS de renderTable() y ANTES
+      de las funciones de drag & drop.
+   
+   2. LLAMAR initStickyFix() al final de renderTable():
+      Buscar el cierre de renderTable, y ANTES del } final,
+      agregar:   initStickyFix();
+   
+   3. También llamar en window.onresize:
+      initStickyFix();
+   ═══════════════════════════════════════════════════════════
+   ================================================================ */
+
+function initStickyFix() {
+    const gridWrapper = document.getElementById('grid-wrapper');
+    const table = document.getElementById('main-table');
+    if (!gridWrapper || !table) return;
+
+    const thead = table.querySelector('thead');
+    const tfoot = table.querySelector('tfoot');
+    if (!thead) return;
+
+    // ── PASO 1: Quitar display:flex del grid-wrapper ──
+    // flex puede romper sticky en ciertos contextos
+    gridWrapper.style.display = 'block';
+    gridWrapper.style.overflow = 'auto';
+    gridWrapper.style.position = 'relative';
+    gridWrapper.style.webkitOverflowScrolling = 'touch';
+
+    // ── PASO 2: Forzar sticky en CADA celda del thead ──
+    const theadRows = thead.querySelectorAll('tr');
+    let topOffset = 0;
+
+    theadRows.forEach(function(tr, rowIndex) {
+        const cells = tr.querySelectorAll('th, td');
+        const rowHeight = tr.offsetHeight || 28;
+
+        cells.forEach(function(cell) {
+            cell.style.position = 'sticky';
+            cell.style.top = topOffset + 'px';
+            cell.style.zIndex = (40 - rowIndex).toString();
+
+            // Asegurar background sólido (sino se ve transparente)
+            if (!cell.style.backgroundColor && !cell.classList.contains('fix-area') && !cell.classList.contains('fix-sub')) {
+                const computed = window.getComputedStyle(cell);
+                const bg = computed.backgroundColor;
+                if (bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent') {
+                    // Asignar background según la clase
+                    if (cell.classList.contains('th-month')) {
+                        cell.style.backgroundColor = '#1e293b';
+                    } else if (cell.classList.contains('th-day')) {
+                        cell.style.backgroundColor = '#f8fafc';
+                    } else {
+                        cell.style.backgroundColor = '#ffffff';
+                    }
+                }
+            }
+        });
+
+        // Las celdas esquina (fix-area, fix-sub) necesitan z-index extra
+        const fixArea = tr.querySelector('.fix-area');
+        const fixSub = tr.querySelector('.fix-sub');
+        if (fixArea) {
+            fixArea.style.position = 'sticky';
+            fixArea.style.top = '0px';
+            fixArea.style.left = '0px';
+            fixArea.style.zIndex = '60';
+        }
+        if (fixSub) {
+            fixSub.style.position = 'sticky';
+            fixSub.style.top = '0px';
+            // left se define por CSS con var(--w-zone)
+            fixSub.style.zIndex = '55';
+        }
+
+        // Solo avanzar topOffset si NO tiene rowspan (para no contar doble)
+        if (rowIndex === 0) {
+            topOffset += rowHeight;
+        }
+    });
+
+    // ── PASO 3: Forzar sticky en CADA celda del tfoot ──
+    if (tfoot) {
+        const tfootRows = tfoot.querySelectorAll('tr');
+        tfootRows.forEach(function(tr) {
+            const cells = tr.querySelectorAll('td, th');
+            cells.forEach(function(cell) {
+                cell.style.position = 'sticky';
+                cell.style.bottom = '0px';
+                cell.style.zIndex = '35';
+
+                // Background sólido obligatorio
+                const computed = window.getComputedStyle(cell);
+                const bg = computed.backgroundColor;
+                if (bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent') {
+                    cell.style.backgroundColor = '#ffffff';
+                }
+            });
+
+            // Footer labels: sticky left + bottom
+            const labels = tr.querySelectorAll('.footer-label');
+            labels.forEach(function(label) {
+                label.style.position = 'sticky';
+                label.style.left = '0px';
+                label.style.bottom = '0px';
+                label.style.zIndex = '50';
+            });
+        });
+
+        // Filas específicas: background por clase
+        const cantRow = tfoot.querySelector('.row-cant-personal');
+        if (cantRow) {
+            cantRow.querySelectorAll('td, th').forEach(function(cell) {
+                if (cell.classList.contains('footer-label')) {
+                    cell.style.backgroundColor = '#0ea5e9';
+                } else {
+                    cell.style.backgroundColor = '#f0f9ff';
+                }
+            });
+        }
+
+        const hhRow = tfoot.querySelector('.row-hh');
+        if (hhRow) {
+            hhRow.querySelectorAll('td, th').forEach(function(cell) {
+                if (cell.classList.contains('footer-label')) {
+                    cell.style.backgroundColor = '#10b981';
+                } else {
+                    cell.style.backgroundColor = '#f0fdf4';
+                }
+            });
+        }
+    }
+
+    // ── PASO 4: Compliance panel sync (si existe) ──
+    const compPanel = document.getElementById('compliance-panel');
+    if (compPanel && gridWrapper.contains(compPanel)) {
+        // Mover compliance-panel fuera del grid-wrapper
+        // para que no interfiera con el scroll de la tabla
+        gridWrapper.parentNode.insertBefore(compPanel, gridWrapper.nextSibling);
+        compPanel.style.overflowX = 'auto';
+
+        // Sincronizar scroll horizontal
+        gridWrapper.addEventListener('scroll', function() {
+            compPanel.scrollLeft = gridWrapper.scrollLeft;
+        }, { passive: true });
+
+        compPanel.addEventListener('scroll', function() {
+            gridWrapper.scrollLeft = compPanel.scrollLeft;
+        }, { passive: true });
+    }
+
+    console.log('✅ Sticky fix applied: thead rows=' + (thead.querySelectorAll('tr').length) + 
+                ', topOffset=' + topOffset + 'px');
+}
+
+// ==========================================
+// 🎴 RENDERIZADO DE TARJETAS
+// ==========================================
+function renderCard(td, data, cellKey, index, subName) {
+    let emp = employees.find(e => e.id === data.empId); 
+    if(!emp) return;
+    
+    if(currentDepartmentFilter !== 'ALL' && emp.jobTitle !== currentDepartmentFilter) {
+        return;
+    }
+    
+    let displayName = "";
+    if (daysToShow === 7) { 
+        displayName = `${emp.num} ${emp.name}`; 
+    } else if (daysToShow === 14) { 
+        displayName = `${emp.num} ${formatShortName(emp.name)}`; 
+    } else { 
+        displayName = `${emp.num}`; 
+    }
+
+    let div = document.createElement('div'); 
+    let cssClass = 'day'; 
+    let displayCode = ''; 
+
+    div.dataset.empId = emp.id;
+    
+    if(currentSearchTerm) { 
+        let match = emp.name.toLowerCase().includes(currentSearchTerm) || emp.num.toString().includes(currentSearchTerm); 
+        if(!match) div.style.opacity = '0.1'; 
+    }
+    
+    let cellParts = cellKey.split('_');
+    let subId = cellParts[1];
+    let isNight = isNightShift(subId);
+
+    if (data.type === 'AVAILABILITY') {
+         cssClass = 'short';
+         displayCode = data.code;
+         if (data.code === 'L') { 
+             div.style.background = '#dcfce7'; 
+             div.style.color = '#14532d'; 
+             div.style.border = '1px solid #bbf7d0'; 
+         } else { 
+             div.style.background = '#f1f5f9'; 
+             div.style.color = '#334155'; 
+             div.style.border = '1px solid #cbd5e1'; 
+         }
+    }
+    else if (data.type === 'ABSENCE') {
+        if(data.code.startsWith('V')) cssClass = 'abs-vac'; 
+        else if(data.code.startsWith('DM')) cssClass = 'abs-med';
+        else if(data.code.startsWith('Permiso')) cssClass = 'abs-per'; 
+        else if(data.code.startsWith('F')) cssClass = 'abs-fal';
+        else cssClass = 'abs-otr';
+    } else {
+        if(isNight) { 
+            cssClass = 'night'; 
+        } else { 
+            cssClass = (data.hours !== 12) ? 'short' : 'day'; 
+            displayCode = (data.hours !== 12) ? data.hours : ''; 
+        }
+    }
+    
+        // 1. ASIGNAR CLASE BASE
+    div.className = `shift-card ${cssClass}`;
+
+    // =========================================================
+    // 🌟 NUEVO: MARCAR SI ES MI TURNO (Borde Dorado)
+    // =========================================================
+    // Si estamos en celular, hay un usuario logueado y el ID coincide:
+    if (isLiteMode && window.LOGGED_USER_ID && String(data.empId) === String(window.LOGGED_USER_ID)) {
+        div.classList.add('my-shift'); 
+    }
+    // =========================================================
+
+    // 2. GENERAR CONTENIDO HTML
+    let codeHtml = displayCode ? `<span class="card-code">${displayCode}</span>` : '';
+    
+    // Construimos el tooltip o mensaje de detalle
+    let detalleTurno = `${subName} (${data.hours}h)`;
+    if (data.isExtra) detalleTurno += ' [EXTRA]';
+    if (data.type === 'ABSENCE') detalleTurno = `Ausencia: ${data.code}`;
+
+    div.innerHTML = `${codeHtml}<span class="card-name">${displayName}</span><span class="btn-remove-card" onclick="removeCard(event, '${cellKey}', ${index})">×</span>`;
+    div.title = detalleTurno;
+    
+    // 3. GESTIÓN DE EVENTOS (MÓVIL vs PC)
+    if (isLiteMode) {
+        // --- MODO VISOR (MÓVIL) ---
+        div.style.cursor = "default"; 
+        
+        // Ocultar la X de eliminar visualmente
+        let btnRemove = div.querySelector('.btn-remove-card');
+        if(btnRemove) btnRemove.style.display = 'none'; 
+        
+        // Al tocar, solo muestra información (Toast)
+        div.onclick = (e) => {
+            e.stopPropagation();
+            showToast(`📅 ${detalleTurno}`);
+        };
+        
+        // Desactivar edición
+        div.ondblclick = null;
+        div.draggable = false;
+
+    } else {
+        // --- MODO ADMIN (PC) ---
+        div.ondblclick = (e) => {
+            if(data.type === 'ABSENCE' || data.type === 'AVAILABILITY') return;
+            e.stopPropagation();
+            let input = prompt("Modificar Horas:", data.hours);
+            if(input !== null && !isNaN(input)) { 
+                data.hours = parseFloat(input); 
+                renderTable(); 
+                analyzeWorkLoad(); 
+                saveDataLocal(); 
+            }
+        };
+        
+        div.onclick = (e) => {
+            if(e.target.classList.contains('btn-remove-card')) return;
+            if(data.type !== 'ABSENCE' && data.type !== 'AVAILABILITY' && !isNight) { 
+                data.hours = (data.hours===12?8:12); 
+                renderTable(); 
+                analyzeWorkLoad(); 
+                saveDataLocal(); 
+            }
+        };
+    }
+    
+    td.appendChild(div);
+
+}
+// ==========================================
+// 📊 ANÁLISIS DE CARGA LABORAL
+// ==========================================
+function analyzeWorkLoad() {
+    // ✅ RESETEAR alertas
+    employees.forEach(e => e.alert = false);
+    let weeksMap = {}; 
+    
+    // ✅ NUEVO: Calcular rango de fechas VISIBLES
+    let visibleDates = [];
+    let tempDate = new Date(currentDate);
+    for(let i = 0; i < daysToShow; i++) {
+        visibleDates.push(getLocalISO(tempDate));
+        tempDate.setDate(tempDate.getDate() + 1);
+    }
+    
+    // ✅ NUEVO: Solo procesar registros de fechas visibles
+    for(let key in db) {
+        let dateStr = key.split('_')[0];
+        
+        // ✅ FILTRO: Ignorar fechas fuera de la vista actual
+        if (!visibleDates.includes(dateStr)) {
+            continue; // Saltar este registro
+        }
+        
+        db[key].forEach(item => {
+            let subId = key.split('_')[1];
+            let dateParts = dateStr.split('-');
+            let dateObj = new Date(dateParts[0], dateParts[1]-1, dateParts[2]);
+            let mondayStr = getMondayLocal(dateObj);
+            
+            if(!weeksMap[mondayStr]) weeksMap[mondayStr] = {};
+            
+            if(!weeksMap[mondayStr][item.empId]) {
+                weeksMap[mondayStr][item.empId] = { 
+                    dl: [], 
+                    abs: [], 
+                    hh: 0, 
+                    nights: 0, 
+                    regularHH: 0, 
+                    explicitExtra: 0,
+                    rest: []
+                };
+            }
+            
+            if (item.type === 'ABSENCE') {
+                if(!weeksMap[mondayStr][item.empId].abs.includes(dateStr)) { 
+                    weeksMap[mondayStr][item.empId].abs.push(dateStr); 
+                }
+            } else if (item.hours > 0) {
+                if(!weeksMap[mondayStr][item.empId].dl.includes(dateStr)) { 
+                    weeksMap[mondayStr][item.empId].dl.push(dateStr); 
+                }
+                
+                weeksMap[mondayStr][item.empId].hh += item.hours;
+                
+                if (item.isExtra === true) { 
+                    weeksMap[mondayStr][item.empId].explicitExtra += item.hours; 
+                } else { 
+                    weeksMap[mondayStr][item.empId].regularHH += item.hours; 
+                }
+                
+                if(isNightShift(subId)) { 
+                    weeksMap[mondayStr][item.empId].nights++; 
+                }
+            }
+        });
+    }
+
+    // ✅ Calcular días de descanso Y validar límites (SOLO semanas visibles)
+    Object.keys(weeksMap).forEach(mondayStr => {
+        let mDate = new Date(mondayStr.split('-')[0], mondayStr.split('-')[1]-1, mondayStr.split('-')[2]);
+        Object.keys(weeksMap[mondayStr]).forEach(empId => {
+            let stats = weeksMap[mondayStr][empId]; 
+            stats.rest = [];
+            
+            for(let i=0; i<7; i++) {
+                let tempD = new Date(mDate); 
+                tempD.setDate(tempD.getDate() + i); 
+                let iso = getLocalISO(tempD);
+                if(!stats.dl.includes(iso) && !stats.abs.includes(iso)) { 
+                    stats.rest.push(iso); 
+                }
+            }
+            
+            // ✅ Validar según límite personalizado del cargo
+            let emp = employees.find(e => e.id == empId);
+            if(emp) {
+                let limitHours = 48;
+                
+                let role = masterConfig.roles.find(r => r.name === emp.jobTitle);
+                if(role && role.weeklyTarget) {
+                    limitHours = role.weeklyTarget;
+                }
+                
+                // ✅ Solo marcar ERROR si excede en alguna semana VISIBLE
+                if(stats.hh > limitHours) { 
+                    emp.alert = true; 
+                }
+            }
+        });
+    });
+
+    renderStaffSidebar(); 
+    renderComplianceFooter(weeksMap);
+    return weeksMap; 
+}
+
+
+// ==========================================
+// 👥 RENDERIZADO DE SIDEBAR (PERSONAL)
+// ==========================================
+function renderStaffSidebar() {
+    const list = document.getElementById('staff-list');
+    list.innerHTML = '';
+    
+    let filtered = [...employees]; 
+    
+    if(currentDepartmentFilter !== 'ALL') {
+        filtered = filtered.filter(e => e.jobTitle === currentDepartmentFilter);
+    }
+    if(currentSearchTerm) { 
+        filtered = filtered.filter(e => 
+            e.name.toLowerCase().includes(currentSearchTerm) || 
+            (e.fullName && e.fullName.toLowerCase().includes(currentSearchTerm)) ||
+            e.num.toString().includes(currentSearchTerm)
+        ); 
+    }
+    
+    const countSpan = document.getElementById('total-staff-count');
+    if(countSpan) countSpan.innerText = filtered.length;
+
+    let staffWithStatus = filtered.map(emp => {
+        let status = getComplianceStatus(emp.id);
+        return { ...emp, complianceHtml: status.html, isComplete: status.isComplete };
+    });
+
+    staffWithStatus.sort((a, b) => {
+        if (a.isComplete === b.isComplete) {
+            return parseInt(a.num) - parseInt(b.num); 
+        }
+        return a.isComplete - b.isComplete;
+    });
+
+    let separatorRendered = false;
+
+    staffWithStatus.forEach(emp => {
+        
+        if (emp.isComplete && !separatorRendered && staffWithStatus.some(e => !e.isComplete)) {
+            let sep = document.createElement('div');
+            sep.style.cssText = "border-top: 2px dashed #cbd5e1; margin: 15px 10px 5px 10px; position:relative; height:1px;";
+            sep.innerHTML = `<span style="position:absolute; top:-9px; left:50%; transform:translateX(-50%); background:#f8fafc; padding:0 5px; font-size:0.55rem; color:#94a3b8; font-weight:bold;">COMPLETADOS</span>`;
+            list.appendChild(sep);
+            separatorRendered = true;
+        }
+
+        let item = document.createElement('div');
+        item.className = 'staff-item';
+        item.id = 'staff-row-' + emp.id; 
+        item.onclick = () => toggleWorkerHighlight(emp.id);
+
+        item.draggable = true;
+        item.ondragstart = (e) => handleDragStart(e, emp);
+        item.ondragend = handleDragEnd;
+        
+        let statusClass = emp.alert ? 'status-error' : 'status-ok';
+        let statusTitle = emp.alert ? 'Excede 48h semanales' : 'Horas OK';
+        let roleColor = '#cbd5e1'; 
+        let configRole = masterConfig.roles.find(r => r.name === emp.jobTitle);
+        if(configRole) roleColor = configRole.color;
+
+        let initials = emp.name.substring(0, 2).toUpperCase();
+        if(emp.name.includes(".")) {
+            let parts = emp.name.split(" ");
+            if(parts.length > 1) initials = parts[0][0] + parts[1][0];
+        }
+
+        let subContent = emp.complianceHtml || '<span style="color:#cbd5e1; font-size:0.6rem;">---</span>';
+
+        item.innerHTML = `
+            <div class="staff-number" style="color:${roleColor}; font-size: 0.9rem;">${emp.num}</div>
+            <div class="avatar-circle">${initials}</div>
+            <div style="display:flex; flex-direction:column; justify-content:center; flex:1; overflow:hidden;">
+                <div class="staff-name">${emp.name}</div>
+                <div style="font-size:0.75rem; margin-top:2px; height:16px; line-height:1; display:flex; align-items:center;">
+                    ${subContent}
+                </div>
+            </div>
+            <span class="status-dot ${statusClass}" title="${statusTitle}"></span>
+            <div class="btn-absence" onclick="event.stopPropagation(); openAbsenceModal('${emp.id}')" title="Ausencia">A</div>
+        `;
+        list.appendChild(item);
+    });
+
+    // Heatmap
+    if(filtered.length === 1) {
+         let emp = filtered[0];
+         let currentYear = currentDate.getFullYear();
+         let stats = getYearlyStats(emp.id, currentYear);
+         
+         let today = new Date();
+         let currentWeekNum = getWeekNumber(today); 
+
+         let hmDiv = document.createElement('div'); 
+         hmDiv.className = 'heatmap-wrapper';
+         
+         let html = `
+             <div class="hm-title"><span>RÉCORD ${currentYear}</span><span style="color:white;">${emp.num}</span></div>
+             <div class="tile-grid">`;
+
+         stats.forEach(s => {
+             let colorClass = 't-empty';
+
+             if (s.count === 4) {
+                colorClass = 't-ok';
+             } 
+             else if (s.count === 5) {
+                colorClass = 't-ok';
+             } 
+             else if (s.count > 5) {
+                colorClass = 't-danger';
+             }
+             else if (s.count > 0) {
+                colorClass = 't-warn';
+             }
+
+             let isCurrentWeek = (s.weekNum === currentWeekNum);
+             let extraClass = isCurrentWeek ? 'is-current' : '';
+             let tileId = isCurrentWeek ? 'id="active-week-tile"' : ''; 
+
+             html += `<div class="tile ${colorClass} ${extraClass}" ${tileId} title="Semana ${s.weekNum}: ${s.count} días"><div class="tile-num">${s.count > 0 ? String(s.count).padStart(2,'0') : '--'}</div><div class="tile-label">S${s.weekNum}</div></div>`;
+         });
+         html += `</div>`; 
+         
+         html += `<div style="display:flex; gap:10px; justify-content:center; margin-top:10px; font-size:0.6rem; color:#94a3b8;"><span style="display:flex; align-items:center; gap:3px;"><div style="width:6px; height:6px; background:#10b981; border-radius:50%;"></div> 4 Días</span><span style="display:flex; align-items:center; gap:3px;"><div style="width:6px; height:6px; background:#ef4444; border-radius:50%;"></div> >4 Días</span><span style="display:flex; align-items:center; gap:3px;"><div style="width:6px; height:6px; background:#3b82f6; border-radius:50%;"></div> Actual</span></div>`;
+
+         hmDiv.innerHTML = html;
+         list.appendChild(hmDiv);
+         
+         setTimeout(() => {
+             let activeTile = document.getElementById('active-week-tile');
+             if(activeTile) activeTile.scrollIntoView({ behavior: 'smooth', block: 'center' });
+             else hmDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+         }, 300);
+    }
+}
+
+function handleSearch(val) {
+    currentSearchTerm = val.toLowerCase();
+    renderStaffSidebar();
+    renderTable(); 
+    analyzeWorkLoad(); 
+}
+
+function getComplianceStatus(empId) {
+    let emp = employees.find(e => e.id === empId);
+    let targetHours = 48;
+    
+    if (emp) {
+        let role = masterConfig.roles.find(r => r.name === emp.jobTitle);
+        if (role && role.weeklyTarget) {
+            targetHours = role.weeklyTarget;
+        }
+    }
+
+    // ✅ CORRECCIÓN: Calcular semanas basándose en lunes reales
+    let weeksToCheck = [];
+    let tempDate = new Date(currentDate);
+    
+    // Agrupar fechas por semana (lunes a domingo)
+    for(let i = 0; i < daysToShow; i++) {
+        let iso = getLocalISO(tempDate);
+        let mondayStr = getMondayLocal(tempDate);
+        
+        if (!weeksToCheck.find(w => w.monday === mondayStr)) {
+            weeksToCheck.push({
+                monday: mondayStr,
+                days: []
+            });
+        }
+        
+        let week = weeksToCheck.find(w => w.monday === mondayStr);
+        week.days.push(iso);
+        
+        tempDate.setDate(tempDate.getDate() + 1);
+    }
+
+    let checksCount = 0;
+    let checksHtml = '';
+    
+    // ✅ CORRECCIÓN: Validar cada semana completa
+    weeksToCheck.forEach(week => {
+        let weekHours = 0;
+        
+        // Contar horas de TODOS los días de la semana (incluso fuera de vista)
+        let mondayDate = new Date(week.monday.split('-')[0], week.monday.split('-')[1]-1, week.monday.split('-')[2]);
+        
+        for(let d = 0; d < 7; d++) {
+            let checkDate = new Date(mondayDate);
+            checkDate.setDate(checkDate.getDate() + d);
+            let iso = getLocalISO(checkDate);
+            
+            Object.keys(db).forEach(key => {
+                if(key.startsWith(iso)) {
+                    let shifts = db[key].filter(x => x.empId === empId && x.type === 'WORK');
+                    shifts.forEach(shift => {
+                        weekHours += shift.hours;
+                    });
+                }
+            });
+        }
+
+        // ✅ CORRECCIÓN: Solo contar semanas que tienen al menos 1 día visible
+        if (week.days.length > 0) {
+            if (weekHours >= targetHours) {
+                checksCount++;
+                checksHtml += `<span style="margin-right:2px;" title="Semana ${week.monday}: ${weekHours}h / ${targetHours}h">✅</span>`;
+            } else if (weekHours > 0) {
+                checksHtml += `<span style="margin-right:2px; opacity:0.5;" title="Semana ${week.monday}: ${weekHours}h / ${targetHours}h (Incompleto)">⚠️</span>`;
+            }
+        }
+    });
+
+    let isComplete = (checksCount === weeksToCheck.length && weeksToCheck.length > 0);
+    return { html: checksHtml, isComplete: isComplete };
+}
+
+
+function getYearlyStats(empId, year) {
+    let stats = [];
+    
+    let d = new Date(year, 0, 1);
+    let day = d.getDay();
+    let diff = d.getDate() - day + (day == 0 ? -6 : 1);
+    let currentMonday = new Date(d.setDate(diff));
+
+    for(let w=0; w<53; w++) {
+        let count = 0;
+        let realWeekNum = getWeekNumber(currentMonday);
+
+        for(let i=0; i<7; i++) {
+            let temp = new Date(currentMonday);
+            temp.setDate(temp.getDate() + i);
+            let iso = getLocalISO(temp);
+            
+            Object.keys(db).forEach(k => { 
+                if(k.startsWith(iso)) {
+                    let found = db[k].find(s => s.empId === empId && s.type === 'WORK');
+                    if(found) count++; 
+                }
+            });
+        }
+        
+        if (realWeekNum > 0 && realWeekNum <= 53) {
+             let existing = stats.find(s => s.weekNum === realWeekNum);
+             if (!existing) {
+                 stats.push({ weekNum: realWeekNum, count: count }); 
+             }
+        }
+
+        currentMonday.setDate(currentMonday.getDate() + 7);
+    }
+    
+    stats.sort((a,b) => a.weekNum - b.weekNum);
+    return stats;
+}
+
+// ==========================================
+// 📈 COMPLIANCE FOOTER (RESUMEN SEMANAL)
+// ==========================================
+function renderComplianceFooter(weeksMap) {
+    const panel = document.getElementById('compliance-panel'); 
+    panel.innerHTML = '';
+    
+    let spacer = document.createElement('div');
+    spacer.className = 'comp-spacer';
+    spacer.innerHTML = `<div style="padding:10px; font-weight:bold; color:#94a3b8; text-align:right; font-size:0.7rem;">RESUMEN<br>SEMANAL 👉</div>`;
+    panel.appendChild(spacer);
+
+    let weeksContainer = document.createElement('div');
+    weeksContainer.style.display = 'flex';
+    weeksContainer.style.flex = '1';
+    weeksContainer.style.minWidth = '0';
+
+    let tempDate = new Date(currentDate); 
+    let currentBlock = null;
+
+    for(let i=0; i<daysToShow; i++) {
+        if(tempDate.getDay() === 1 || i === 0 || !currentBlock) {
+            
+            if(currentBlock) {
+                appendBlock(currentBlock, weeksContainer, weeksMap);
+            }
+
+            let mStr = getMondayLocal(tempDate);
+            let mDate = new Date(mStr.split('-')[0], mStr.split('-')[1]-1, mStr.split('-')[2]);
+            
+            currentBlock = { 
+                monday: mStr, 
+                daysCount: 0, 
+                weekNum: getWeekNumber(mDate) 
+            };
+        }
+        
+        currentBlock.daysCount++;
+        tempDate.setDate(tempDate.getDate()+1);
+    }
+
+    if(currentBlock) {
+        appendBlock(currentBlock, weeksContainer, weeksMap);
+    }
+
+    panel.appendChild(weeksContainer);
+}
+
+function appendBlock(block, container, weeksMap) {
+    let widthPct = (block.daysCount / daysToShow) * 100;
+    
+    let blockDiv = createBlockUI(block, 0, weeksMap);
+    
+    blockDiv.style.width = widthPct + "%";
+    blockDiv.style.flex = "0 0 " + widthPct + "%"; 
+    blockDiv.style.maxWidth = widthPct + "%";
+    
+    container.appendChild(blockDiv);
+}
+
+function createBlockUI(block, colWidth, weeksMap) {
+    let div = document.createElement('div'); 
+    div.className = 'comp-week-block';
+    
+    let widthPct = (block.daysCount / daysToShow) * 100;
+    div.style.width = widthPct + '%';
+    div.style.flex = 'none'; 
+
+    let html = `
+    <div class="comp-header">
+        <span>SEMANA ${block.weekNum}</span>
+        <button onclick="saveSpecificWeek('${block.monday}')" 
+                style="border:none; background:#15803d; color:white; border-radius:4px; cursor:pointer; font-size:0.6rem; padding:3px 8px; display:flex; align-items:center; gap:3px; font-weight:bold; box-shadow: 0 1px 2px rgba(0,0,0,0.1);" 
+                title="Guardar solo esta semana">
+            💾 GRABAR
+        </button>
+    </div>`;
+
+    html += `<div class="dt-head">
+        <div class="c-name">NOMBRES</div>
+        <div class="c-hh" title="Horas Totales">HH</div>
+        <div class="c-n" title="Turnos Noche">N</div>
+        <div class="c-a" title="Adicionales">A</div>
+        <div class="c-t" title="Días Laborados">T</div>
+        <div class="c-d" title="Días Descanso">D</div>
+        <div class="c-aus" title="Ausencias">AUS</div>
+    </div>`;
+
+    html += `<div style="flex:1; overflow-y:auto; padding-right:2px;">`;
+
+    let data = weeksMap[block.monday] || {};
+    let sortedIds = Object.keys(data).sort((a,b) => data[b].hh - data[a].hh);
+    
+    if (currentDepartmentFilter !== 'ALL') {
+        sortedIds = sortedIds.filter(eid => { 
+            let e = employees.find(x => x.id == eid); 
+            return e && e.jobTitle === currentDepartmentFilter; 
+        });
+    }
+    if(currentSearchTerm) { 
+        sortedIds = sortedIds.filter(eid => { 
+            let e = employees.find(x => x.id == eid); 
+            return e && (e.name.toLowerCase().includes(currentSearchTerm) || e.num.toString().includes(currentSearchTerm)); 
+        }); 
+    }
+
+    if(sortedIds.length === 0) { 
+        html += `<div style="text-align:center; color:#94a3b8; font-size:0.7rem; padding:20px; font-style:italic;">Sin datos</div>`;
+    } else {
+        sortedIds.forEach(eid => {
+            let emp = employees.find(e => e.id == eid); 
+            if(!emp) return;
+            let stats = data[eid]; 
+            
+            let overtimeFromBase = Math.max(0, stats.regularHH - 48);
+            let totalAdicional = stats.explicitExtra + overtimeFromBase; 
+            let pct = Math.min(100, (stats.hh / 48) * 100); 
+            
+            let barColor = stats.hh > 48 ? '#ef4444' : '#22c55e';
+            let hoursDisplay = stats.hh > 48 ? 48 : stats.hh;
+            let styleA = totalAdicional > 0 ? 'color:#f97316; font-weight:900;' : 'color:#cbd5e1;';
+            let textA = totalAdicional > 0 ? totalAdicional : '-';
+
+            let contentT, contentD, contentAUS = '';
+
+            if(daysToShow === 28) { 
+                contentT = `<span class="chip chip-work" style="background:none; border:none; color:#0f172a; padding:0;">${stats.dl.length}D</span>`; 
+                contentD = `<span class="chip chip-rest" style="background:none; border:none; color:#15803d; padding:0;">${stats.rest.length}L</span>`; 
+            } else { 
+                let groupT = groupDates(stats.dl); 
+                let groupD = groupDates(stats.rest); 
+                contentT = groupT ? `<span class="chip chip-work">${groupT}</span>` : ''; 
+                contentD = groupD ? `<span class="chip chip-rest">${groupD}</span>` : ''; 
+            }
+
+            if(stats.abs.length > 0) {
+                let absGroups = {}; 
+                stats.abs.forEach(dateIso => {
+                    let typeCode = 'otr'; 
+                    Object.keys(db).forEach(k => {
+                        if(k.startsWith(dateIso)) {
+                            let item = db[k].find(x => x.empId == eid && x.type === 'ABSENCE');
+                            if(item) {
+                                if(item.code.startsWith('V')) typeCode = 'vac';
+                                else if(item.code.startsWith('DM')) typeCode = 'med';
+                                else if(item.code.startsWith('Permiso')) typeCode = 'per';
+                                else if(item.code.startsWith('F')) typeCode = 'fal';
+                                else typeCode = 'otr';
+                            }
+                        }
+                    });
+                    if(!absGroups[typeCode]) absGroups[typeCode] = [];
+                    absGroups[typeCode].push(dateIso);
+                });
+                Object.keys(absGroups).forEach(type => {
+                    let datesStr = (daysToShow === 28) ? absGroups[type].length : groupDates(absGroups[type]);
+                    contentAUS += `<span class="chip chip-${type}">${datesStr}</span>`;
+                });
+            }
+
+            let footerName = emp.name;
+            if(daysToShow === 14 || daysToShow === 28) {
+                footerName = formatShortName(emp.name);
+            }
+            
+            html += `<div class="dt-row">
+                <div class="c-name" title="${emp.name}">${emp.num} ${footerName}</div>
+                <div class="c-hh"><span>${hoursDisplay}</span><div class="prog-bar"><div class="prog-fill" style="width:${pct}%; background:${barColor}"></div></div></div>
+                <div class="c-n">${stats.nights}</div>
+                <div class="c-a" style="${styleA}">${textA}</div>
+                <div class="c-t">${contentT}</div>
+                <div class="c-d">${contentD}</div>
+                <div class="c-aus">${contentAUS}</div>
+            </div>`;
+        });
+    }
+    html += `</div>`; 
+    div.innerHTML = html;
+    return div;
+}
+
+function toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const btnOpen = document.getElementById('btn-open-sidebar');
+    
+    sidebar.classList.toggle('collapsed');
+    
+    if (sidebar.classList.contains('collapsed')) {
+        btnOpen.style.display = 'block';
+    } else {
+        btnOpen.style.display = 'none';
+    }
+    
+    setTimeout(() => {
+        calculateColumnWidth();
+        renderTable();
+    }, 350);
+}
+// ==========================================
+// 🖱️ DRAG & DROP - EMPLEADOS
+// ==========================================
+function handleDragStart(e, emp) {
+    e.dataTransfer.setData('text/plain', JSON.stringify(emp));
+    e.dataTransfer.effectAllowed = "copy";
+    
+    document.body.classList.add('is-dragging');
+
+    Object.keys(db).forEach(key => {
+        let assignments = db[key];
+        if (assignments.some(a => a.empId === emp.id)) {
+            let cell = document.querySelector(`td[data-key="${key}"]`);
+            if (cell) {
+                cell.classList.add('highlight-assigned-cell');
+            }
+        }
+    });
+
+    let dragIcon = document.createElement('div');
+    let initials = emp.name.substring(0, 2).toUpperCase();
+    dragIcon.style.width = "40px"; 
+    dragIcon.style.height = "40px";
+    dragIcon.style.backgroundColor = "white"; 
+    dragIcon.style.border = "2px solid #2563eb"; 
+    dragIcon.style.borderRadius = "50%"; 
+    dragIcon.style.display = "flex";
+    dragIcon.style.alignItems = "center"; 
+    dragIcon.style.justifyContent = "center";
+    dragIcon.style.fontWeight = "bold";
+    dragIcon.innerText = initials;
+    document.body.appendChild(dragIcon);
+    e.dataTransfer.setDragImage(dragIcon, 20, 20);
+    setTimeout(() => document.body.removeChild(dragIcon), 0);
+}
+
+function handleDragEnd(e) {
+    document.body.classList.remove('is-dragging');
+
+    document.querySelectorAll('.highlight-assigned-cell').forEach(td => {
+        td.classList.remove('highlight-assigned-cell');
+    });
+    
+    document.querySelectorAll('.dimmed-row').forEach(tr => tr.classList.remove('dimmed-row'));
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    const cellKey = e.currentTarget.dataset.key; 
+    if(!cellKey) return;
+
+    if (db[cellKey] && db[cellKey][0] && db[cellKey][0].type === 'LOCKED') {
+        showToast("⛔ Turno Bloqueado");
+        return;
+    }
+
+    try {
+        const emp = JSON.parse(e.dataTransfer.getData('text/plain'));
+        let dateStr = cellKey.split('_')[0];
+        let targetSubId = cellKey.split('_')[1];
+        
+        let targetSub = null;
+        let targetArea = null;
+
+        structure.forEach(a => {
+            let s = a.subs.find(x => x.id === targetSubId);
+            if(s) {
+                targetSub = s;
+                targetArea = a;
+            }
+        });
+
+        if(!targetSub) return;
+
+        let isAvailType = (targetArea.id === 'zone_avail'); 
+
+        if (isAvailType) {
+            if(db[cellKey]) delete db[cellKey];
+            if(!db[cellKey]) db[cellKey] = [];
+
+            db[cellKey].push({ 
+                empId: emp.id, 
+                hours: 0,           
+                code: targetSub.name.substring(0,1), 
+                type: 'AVAILABILITY', 
+                isExtra: false 
+            });
+
+            renderTable();
+            analyzeWorkLoad(); 
+            saveDataLocal();
+            showToast("✅ Estado actualizado");
+            return; 
+        }
+
+        if (targetSub.allowedRoles && targetSub.allowedRoles.length > 0) {
+            if (!targetSub.allowedRoles.includes(emp.jobTitle)) {
+                showToast(`⛔ BLOQUEADO: ${emp.jobTitle} no puede entrar a ${targetSub.name}`);
+                return; 
+            }
+        } 
+        
+        let targetDate = new Date(dateStr.split('-')[0], dateStr.split('-')[1]-1, dateStr.split('-')[2]);
+        let targetType = isNightShift(targetSubId) ? 'NOCHE' : 'DIA';
+        
+        // ✅ VALIDACIÓN MEJORADA DE CRUCES DE TURNO
+        let yesterday = new Date(targetDate);
+        yesterday.setDate(yesterday.getDate() - 1);
+        let yesterdayIso = getLocalISO(yesterday);
+
+        let workedNightYesterday = false;
+        let workedDayToday = false;
+        
+        // Verificar si trabajó NOCHE ayer (que termina hoy en la mañana)
+        Object.keys(db).forEach(k => {
+            if(k.startsWith(yesterdayIso)) {
+                let shift = db[k].find(x => x.empId === emp.id && x.type === 'WORK');
+                if(shift) {
+                    let subId = k.split('_')[1];
+                    if(isNightShift(subId)) {
+                        workedNightYesterday = true;
+                    }
+                }
+            }
+        });
+
+        // Verificar si ya trabaja DÍA hoy (para evitar asignar NOCHE el mismo día)
+        Object.keys(db).forEach(k => {
+            if(k.startsWith(dateStr)) {
+                let shift = db[k].find(x => x.empId === emp.id && x.type === 'WORK');
+                if(shift) {
+                    let subId = k.split('_')[1];
+                    if(!isNightShift(subId)) {
+                        workedDayToday = true;
+                    }
+                }
+            }
+        });
+
+        // 🚫 BLOQUEO 1: No puede entrar DÍA si salió de NOCHE esta mañana
+        if (workedNightYesterday && targetType === 'DIA') {
+            let msg = `⛔ CRUCE DE TURNOS NO PERMITIDO\n\n` +
+                      `El trabajador ${emp.name} salió de TURNO NOCHE esta mañana.\n` +
+                      `NO puede ingresar a TURNO DÍA hoy por descanso biológico (mínimo 12h).\n\n` +
+                      `Normativa: D.S. 007-2002-TR (Descanso post-nocturno)\n\n` +
+                      `¿Desea forzar esta asignación bajo responsabilidad?`;
+
+            if (!confirm(msg)) return; 
+        }
+
+        // 🚫 BLOQUEO 2: No puede entrar NOCHE si trabajó DÍA hoy
+        if (workedDayToday && targetType === 'NOCHE') {
+            let msg = `⚠️ DOBLE TURNO DETECTADO\n\n` +
+                      `El trabajador ${emp.name} ya tiene turno DÍA programado hoy.\n` +
+                      `Asignar NOCHE el mismo día implica jornada continua de 24h.\n\n` +
+                      `Esto podría violar límites de jornada laboral.\n\n` +
+                      `¿Confirmar asignación de doble turno?`;
+
+            if (!confirm(msg)) return;
+        }
+
+        // Resto del código sin cambios...
+        let existingAbsence = null;
+        Object.keys(db).forEach(k => { 
+            if(k.startsWith(dateStr)) { 
+                let f = db[k].find(x => x.empId === emp.id && x.type === 'ABSENCE'); 
+                if(f) existingAbsence = f; 
+            } 
+        });
+        
+        let isExtra = false;
+        if(existingAbsence) {
+            if(existingAbsence.code.startsWith('V')) { 
+                if(!confirm(`📅 El personal está de VACACIONES.\n\n¿Deseas interrumpirlas para asignar un Turno Extra?`)) return; 
+                isExtra=true; 
+            }
+        }
+        
+        let conflict = false;
+        Object.keys(db).forEach(k => { 
+            if(k.startsWith(dateStr)) { 
+                if(db[k].find(x => x.empId === emp.id && x.type !== 'ABSENCE')) { 
+                    let sid = k.split('_')[1]; 
+                    if(sid === targetSubId) conflict = true; 
+                } 
+            } 
+        });
+        if(conflict) { 
+            alert("Ya programado aquí."); 
+            return; 
+        }
+
+        let assignedHours = 12; 
+        let roleC = masterConfig.roles.find(r => r.name === emp.jobTitle);
+        if(roleC && roleC.defaultHours) assignedHours = roleC.defaultHours;
+
+        let checkDate = new Date(targetDate); 
+        let dayOfWeek = checkDate.getDay();
+        let diffToMon = checkDate.getDate() - dayOfWeek + (dayOfWeek == 0 ? -6 : 1);
+        let mondayDate = new Date(checkDate); 
+        mondayDate.setDate(diffToMon);
+
+        let currentWeekHours = 0;
+        for (let i = 0; i < 7; i++) {
+            let tempD = new Date(mondayDate);
+            tempD.setDate(tempD.getDate() + i);
+            let isoCheck = getLocalISO(tempD);
+
+            Object.keys(db).forEach(k => {
+                if (k.startsWith(isoCheck)) {
+                    let shifts = db[k].filter(x => x.empId === emp.id && x.type === 'WORK');
+                    shifts.forEach(s => currentWeekHours += s.hours);
+                }
+            });
+        }
+
+        let newTotal = currentWeekHours + assignedHours;
+        
+        let limitHours = 48;
+        if(roleC && roleC.weeklyTarget) limitHours = roleC.weeklyTarget;
+
+        if (newTotal > limitHours) {
+            let msg = `⚠️ LÍMITE DE HORAS EXCEDIDO\n\n` +
+                      `• Acumulado actual: ${currentWeekHours} hrs\n` +
+                      `• Nueva proyección: ${newTotal} hrs (Límite: ${limitHours} hrs)\n\n` +
+                      `Esta acción generará HORAS EXTRAS o sobrecarga.\n` +
+                      `¿Desea proceder con la asignación?`;
+
+            if (!confirm(msg)) {
+                return; 
+            }
+        }
+
+        let codeL = targetType === 'NOCHE' ? 'N' : '';
+        if(!db[cellKey]) db[cellKey] = [];
+        
+        db[cellKey].push({ 
+            empId: emp.id, 
+            hours: assignedHours, 
+            code: codeL, 
+            type: 'WORK', 
+            isExtra: isExtra 
+        });
+        
+        renderTable();
+        analyzeWorkLoad();
+        showToast("✅ Asignado");
+        saveDataLocal();
+
+    } catch(err) { 
+        console.error(err); 
+    }
+}
+
+
+function isNightShift(subId) {
+    let result = false;
+    structure.forEach(area => {
+        let sub = area.subs.find(s => s.id === subId);
+        if(sub) {
+            if(sub.shiftType === 'NOCHE' || sub.name.toUpperCase().includes('NOCHE')) {
+                result = true;
+            }
+        }
+    });
+    return result;
+}
+
+function removeCard(e, key, index) {
+    e.stopPropagation(); 
+    if(confirm('¿Quitar asignación?')) {
+        db[key].splice(index, 1);
+        if(db[key].length === 0) delete db[key];
+        renderTable(); 
+        analyzeWorkLoad();
+        saveDataLocal();
+    }
+}
+
+// ==========================================
+// 🔄 DRAG & DROP - REORDENAR TURNOS
+// ==========================================
+function handleSubDragStart(e, areaId, index) {
+    const wrapper = document.getElementById('grid-wrapper');
+    if (!wrapper.classList.contains('edit-mode')) {
+        e.preventDefault();
+        return;
+    }
+
+    draggedSubData = { areaId: areaId, index: index };
+    e.target.classList.add('dragging-sub');
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => e.target.classList.add('dragging-sub'), 0);
+}
+
+function handleSubDragOver(e, targetAreaId) {
+    e.preventDefault();
+
+    if (!draggedSubData || draggedSubData.areaId !== targetAreaId) {
+        e.dataTransfer.dropEffect = 'none';
+        return;
+    }
+
+    e.dataTransfer.dropEffect = 'move';
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    
+    e.currentTarget.classList.remove('drop-target-top', 'drop-target-bottom');
+
+    if (e.clientY < midY) {
+        e.currentTarget.classList.add('drop-target-top');
+    } else {
+        e.currentTarget.classList.add('drop-target-bottom');
+    }
+}
+
+function handleSubDragLeave(e) {
+    e.currentTarget.classList.remove('drop-target-top', 'drop-target-bottom');
+}
+
+function handleSubDrop(e, targetAreaId, targetIndex) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const cell = e.currentTarget;
+    cell.classList.remove('drop-target-top', 'drop-target-bottom', 'dragging-sub');
+    document.querySelectorAll('.dragging-sub').forEach(el => el.classList.remove('dragging-sub'));
+
+    if (!draggedSubData) return;
+    if (draggedSubData.areaId !== targetAreaId) {
+        showToast("⛔ Solo puedes mover turnos dentro de su misma zona.");
+        return;
+    }
+    if (draggedSubData.index === targetIndex) return;
+
+    const area = structure.find(a => a.id === targetAreaId);
+    if (area) {
+        const [movedItem] = area.subs.splice(draggedSubData.index, 1);
+        area.subs.splice(targetIndex, 0, movedItem);
+
+        renderTable();
+        saveDataLocal();
+        showToast("✅ Orden actualizado");
+    }
+    
+    draggedSubData = null;
+}
+
+// ==========================================
+// 🖱️ MENÚ CONTEXTUAL (BLOQUEO)
+// ==========================================
+function openContextMenu(e, cellKey, isLockedCurrent) {
+    currentCtxCellKey = cellKey;
+    
+    const menu = document.getElementById('ctx-menu');
+    const btn = document.getElementById('ctx-btn-lock');
+    
+    if (isLockedCurrent) {
+        // ✅ Celda bloqueada: Mostrar opción de HABILITAR
+        btn.innerHTML = `<span>🔓</span> Habilitar Turno`;
+        btn.classList.remove('danger');
+        btn.style.color = "#15803d"; // Verde
+        btn.style.background = "#f0fdf4"; // Fondo verde claro
+    } else {
+        // ✅ Celda normal: Mostrar opción de BLOQUEAR
+        btn.innerHTML = `<span>🚫</span> Bloquear Turno`;
+        btn.classList.add('danger');
+        btn.style.color = "#ef4444"; // Rojo
+        btn.style.background = ""; // Sin fondo especial
+    }
+
+    // Posicionar menú donde fue el click
+    menu.style.display = 'block';
+    menu.style.left = `${e.pageX}px`;
+    menu.style.top = `${e.pageY}px`;
+}
+
+
+function toggleCellLock() {
+    if (!currentCtxCellKey) return;
+    
+    const key = currentCtxCellKey;
+    const menu = document.getElementById('ctx-menu');
+    menu.style.display = 'none';
+
+    let isLocked = (db[key] && db[key].length > 0 && db[key][0].type === 'LOCKED');
+
+    if (isLocked) {
+        delete db[key];
+        showToast("✅ Turno Habilitado");
+    } else {
+        if (db[key] && db[key].length > 0) {
+            if (!confirm("⚠️ Esta celda tiene personal asignado.\n\nAl bloquearla, se eliminarán las asignaciones.\n¿Continuar?")) {
+                return;
+            }
+        }
+        
+        db[key] = [{ type: 'LOCKED', hours: 0, empId: 'SYSTEM_LOCK' }];
+        showToast("🚫 Turno Bloqueado");
+    }
+
+    renderTable();
+    analyzeWorkLoad();
+    saveDataLocal();
+}
+
+document.addEventListener('click', function(e) {
+    const menu = document.getElementById('ctx-menu');
+    if (menu.style.display === 'block') {
+        menu.style.display = 'none';
+    }
+});
+
+// ==========================================
+// 🎯 HIGHLIGHT DE TRABAJADOR
+// ==========================================
+function toggleWorkerHighlight(empId) {
+    let targetId = String(empId);
+
+    // Limpiar highlights anteriores
+    document.querySelectorAll('.highlight-active').forEach(el => {
+        el.classList.remove('highlight-active');
+    });
+
+    // Si es el mismo trabajador, desactivar
+    if (activeHighlightId === targetId) {
+        activeHighlightId = null;
+        return; 
+    }
+
+    activeHighlightId = targetId;
+
+    // Resaltar en el sidebar
+    const sidebarRow = document.getElementById('staff-row-' + targetId);
+    if(sidebarRow) sidebarRow.classList.add('highlight-active');
+
+    // ✅ CORRECCIÓN: Buscar tarjetas con el atributo data-emp-id
+    const cards = document.querySelectorAll(`.shift-card[data-emp-id="${targetId}"]`);
+    
+    if(cards.length > 0) {
+        cards.forEach(card => {
+            card.classList.add('highlight-active');
+            
+            // ✅ NUEVO: Scroll suave a la primera tarjeta encontrada
+            if(card === cards[0]) {
+                card.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center', 
+                    inline: 'center' 
+                });
+            }
+        });
+        
+        // ✅ NUEVO: Mostrar contador más detallado
+        let emp = employees.find(e => e.id === targetId);
+        let empName = emp ? emp.name : 'Trabajador';
+        showToast(`🔍 ${empName}: ${cards.length} turno${cards.length > 1 ? 's' : ''} resaltado${cards.length > 1 ? 's' : ''}`);
+        
+    } else {
+        // ✅ MEJORADO: Mensaje más informativo
+        let emp = employees.find(e => e.id === targetId);
+        let empName = emp ? emp.name : 'Este trabajador';
+        
+        let startDate = currentDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+        let endDate = new Date(currentDate);
+        endDate.setDate(endDate.getDate() + daysToShow - 1);
+        let endDateStr = endDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+        
+        showToast(`ℹ️ ${empName} no tiene turnos visibles (${startDate} - ${endDateStr})`);
+    }
+}
+
+
+// ==========================================
+// 📅 MODAL DE AUSENCIAS
+// ==========================================
+function openAbsenceModal(empId) {
+    tempAbsenceEmpId = empId;
+    let emp = employees.find(e => e.id === empId);
+    document.getElementById('absence-emp-name').innerText = `${emp.num} - ${emp.name}`;
+    document.getElementById('modal-absence').style.display = 'flex';
+    let todayISO = getLocalISO(new Date());
+    document.getElementById('abs-start').value = todayISO;
+    document.getElementById('abs-end').value = todayISO;
+}
+
+function closeAbsenceModal() { 
+    document.getElementById('modal-absence').style.display = 'none'; 
+    tempAbsenceEmpId = null; 
+}
+
+function saveAbsence() {
+    if(!tempAbsenceEmpId) return;
+    let type = document.getElementById('abs-type').value;
+    let desc = document.getElementById('abs-desc').value;
+    let start = new Date(document.getElementById('abs-start').value);
+    let end = new Date(document.getElementById('abs-end').value);
+    start.setMinutes(start.getMinutes() + start.getTimezoneOffset());
+    end.setMinutes(end.getMinutes() + end.getTimezoneOffset());
+
+    if(isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) { 
+        alert("Fechas inválidas"); 
+        return; 
+    }
+
+    let codeMap = {
+        'sub_vac':'V', 
+        'sub_med':'DM', 
+        'sub_per':'Permiso S/G', 
+        'sub_fal':'F', 
+        'sub_otr':'OTRO'
+    };
+    let code = codeMap[type] || 'ABS';
+    if(desc) code += ` (${desc})`;
+
+    let loopDate = new Date(start);
+    while(loopDate <= end) {
+        let iso = getLocalISO(loopDate); 
+        let key = `${iso}_${type}`;
+        Object.keys(db).forEach(k => { 
+            if(k.startsWith(iso)) { 
+                db[k] = db[k].filter(x => x.empId !== tempAbsenceEmpId); 
+                if(db[k].length === 0) delete db[k]; 
+            } 
+        });
+        if(!db[key]) db[key] = [];
+        db[key].push({ 
+            empId: tempAbsenceEmpId, 
+            hours: 0, 
+            code: code, 
+            type: 'ABSENCE' 
+        });
+        loopDate.setDate(loopDate.getDate() + 1);
+    }
+    closeAbsenceModal(); 
+    renderTable(); 
+    analyzeWorkLoad(); 
+    showToast("✅ Ausencia registrada");
+    saveDataLocal();
+}
+
+// ==========================================
+// ✏️ MODO EDICIÓN Y GESTIÓN DE ZONAS
+// ==========================================
+function toggleEditMode(btn) {
+    const wrapper = document.getElementById('grid-wrapper'); 
+    wrapper.classList.toggle('edit-mode'); 
+    btn.classList.toggle('active');
+    document.getElementById('add-area-zone').style.display = wrapper.classList.contains('edit-mode') ? 'block' : 'none';
+    renderTable(); 
+}
+
+function addNewArea() {
+    let name = prompt("Nombre de la nueva Zona:");
+    if(name) {
+        let newId = 'a' + (new Date().getTime()); 
+        let insertIdx = structure.length - 2; 
+        structure.splice(insertIdx, 0, { 
+            id: newId, 
+            name: name.toUpperCase(), 
+            subs: [{
+                id: 's'+new Date().getTime(), 
+                name: 'DIA', 
+                icon:'☀️'
+            }] 
+        });
+        renderTable();
+        saveDataLocal();
+    }
+}
+
+function delArea(areaId) {
+    let area = structure.find(a => a.id === areaId);
+    if (!area) return;
+
+    if (!confirm(`⚠️ ¿Estás seguro de eliminar la zona "${area.name}"?\n\nSe borrarán TODOS sus turnos y asignaciones de personal.`)) {
+        return;
+    }
+
+    let deletedCount = 0;
+    
+    area.subs.forEach(sub => {
+        Object.keys(db).forEach(key => {
+            if (key.endsWith('_' + sub.id)) {
+                delete db[key];
+                deletedCount++;
+            }
+        });
+    });
+
+    structure = structure.filter(a => a.id !== areaId);
+
+    renderTable();
+    analyzeWorkLoad();
+    saveDataLocal();
+    
+    showToast(`🗑️ Zona eliminada (y ${deletedCount} registros limpiados)`);
+}
+
+function delSub(areaId, subId) {
+    let area = structure.find(a => a.id === areaId);
+    if (!area) return;
+
+    if (area.subs.length <= 1) {
+        alert("⚠️ Operación bloqueada:\n\nLa zona debe tener al menos un turno activo.");
+        return;
+    }
+
+    let hasData = Object.keys(db).some(key => key.endsWith('_' + subId));
+
+    let confirmMessage = "¿Seguro que deseas eliminar este turno?";
+    
+    if (hasData) {
+        confirmMessage = `⚠️ ELIMINACIÓN DE TURNO CON DATOS\n\n` +
+                         `Hay personal programado en este turno.\n` +
+                         `Si continúas, se perderán todas las asignaciones históricas y futuras de este horario.\n\n` +
+                         `¿Confirmar eliminación definitiva?`;
+    } else {
+        confirmMessage = "¿Eliminar este turno de la estructura?";
+    }
+
+    if (confirm(confirmMessage)) {
+        area.subs = area.subs.filter(s => s.id !== subId);
+
+        let deletedCount = 0;
+        Object.keys(db).forEach(key => {
+            if (key.endsWith('_' + subId)) {
+                delete db[key];
+                deletedCount++;
+            }
+        });
+
+        renderTable();
+        analyzeWorkLoad();
+        saveDataLocal();
+        
+        showToast(hasData ? `🗑️ Turno y ${deletedCount} registros eliminados` : "🗑️ Turno eliminado");
+    }
+}
+// ==========================================
+// 📝 MODALES DE CREACIÓN/EDICIÓN DE TURNOS
+// ==========================================
+function openModal(areaId) { 
+    tempAreaIdForModal = areaId; 
+    editingSubId = null;
+    
+    let titleEl = document.querySelector('#modal-overlay h3');
+    if(titleEl) titleEl.innerText = "Crear Grupo de Turno";
+    
+    document.getElementById('custom-shift-name').value = '';
+    setShiftType('DIA');
+
+    const list = document.getElementById('multi-role-list');
+    list.innerHTML = '';
+    
+    if (masterConfig.roles.length === 0) {
+        list.innerHTML = '<div style="padding:10px; color:#ccc;">No hay cargos configurados.</div>';
+    } else {
+        masterConfig.roles.forEach(role => {
+            list.innerHTML += `
+                <label class="checkbox-item">
+                    <input type="checkbox" class="role-chk" value="${role.name}">
+                    <span style="font-size:0.75rem; font-weight:600;">${role.icon} ${role.name}</span>
+                </label>`;
+        });
+    }
+    document.getElementById('modal-overlay').style.display = 'flex'; 
+}
+
+function editShift(areaId, subId) {
+    let area = structure.find(a => a.id === areaId);
+    if(!area) return;
+    let sub = area.subs.find(s => s.id === subId);
+    if(!sub) return;
+
+    tempAreaIdForModal = areaId;
+    editingSubId = subId;
+
+    document.getElementById('custom-shift-name').value = sub.name;
+
+    let type = sub.shiftType || 'DIA';
+    setShiftType(type);
+
+    const list = document.getElementById('multi-role-list');
+    list.innerHTML = '';
+    
+    masterConfig.roles.forEach(role => {
+        let isChecked = (sub.allowedRoles && sub.allowedRoles.includes(role.name)) ? 'checked' : '';
+        
+        list.innerHTML += `
+            <label class="checkbox-item">
+                <input type="checkbox" class="role-chk" value="${role.name}" ${isChecked}>
+                <span style="font-size:0.75rem; font-weight:600;">${role.icon} ${role.name}</span>
+            </label>`;
+    });
+
+    let titleEl = document.querySelector('#modal-overlay h3');
+    if(titleEl) titleEl.innerText = "✏️ Editar Turno";
+
+    document.getElementById('modal-overlay').style.display = 'flex';
+}
+
+function setShiftType(type) {
+    document.getElementById('new-shift-type').value = type;
+    document.getElementById('btn-day').className = type === 'DIA' ? 'type-btn selected' : 'type-btn';
+    document.getElementById('btn-night').className = type === 'NOCHE' ? 'type-btn selected' : 'type-btn';
+}
+
+function checkAllRoles(val) {
+    document.querySelectorAll('.role-chk').forEach(c => c.checked = val);
+}
+
+function saveMultiShift() {
+    if(!tempAreaIdForModal) return;
+    
+    let name = document.getElementById('custom-shift-name').value.trim();
+    let type = document.getElementById('new-shift-type').value;
+    
+    let selectedRoles = [];
+    document.querySelectorAll('.role-chk:checked').forEach(c => selectedRoles.push(c.value));
+
+    if(name === '') { 
+        alert("Escribe un nombre"); 
+        return; 
+    }
+    if(selectedRoles.length === 0) { 
+        alert("Selecciona al menos un cargo"); 
+        return; 
+    }
+
+    let area = structure.find(a => a.id === tempAreaIdForModal);
+    if(area) {
+        if (editingSubId) {
+            let sub = area.subs.find(s => s.id === editingSubId);
+            if(sub) {
+                sub.name = name.toUpperCase();
+                sub.shiftType = type;
+                sub.icon = (type === 'DIA') ? '☀️' : '🌙';
+                sub.allowedRoles = selectedRoles;
+                showToast("✅ Turno actualizado");
+            }
+        } else {
+            area.subs.push({
+                id: 's' + new Date().getTime(),
+                name: name.toUpperCase(),
+                icon: type === 'DIA' ? '☀️' : '🌙',
+                shiftType: type,
+                allowedRoles: selectedRoles
+            });
+            showToast("✅ Turno creado");
+        }
+        renderTable();
+        saveDataLocal();
+    }
+    
+    let titleEl = document.querySelector('#modal-overlay h3');
+    if(titleEl) titleEl.innerText = "Crear Grupo de Turno";
+    
+    closeModal();
+}
+
+function closeModal() { 
+    document.getElementById('modal-overlay').style.display = 'none'; 
+    tempAreaIdForModal = null; 
+    editingSubId = null;
+}
+
+// ==========================================
+// 🎨 MODAL DE ICONOS
+// ==========================================
+function openIconModal(areaId, subId) {
+    tempIconAreaId = areaId; 
+    tempIconSubId = subId;
+    editingMode = 'GRID'; 
+    document.getElementById('modal-icon').style.display = 'flex';
+}
+
+function closeIconModal() {
+    document.getElementById('modal-icon').style.display = 'none'; 
+    tempIconAreaId = null; 
+    tempIconSubId = null;
+}
+
+function saveIcon(iconChar) {
+    if (editingMode === 'ROLE' && editingRoleIndex !== null) {
+        masterConfig.roles[editingRoleIndex].icon = iconChar;
+        renderMasterConfigUI(); 
+        applyMasterConfigStyles(); 
+        renderStaffSidebar(); 
+    } 
+    else if (tempIconAreaId && tempIconSubId) {
+        let area = structure.find(a => a.id === tempIconAreaId);
+        if(area) {
+            let sub = area.subs.find(s => s.id === tempIconSubId);
+            if(sub) { 
+                sub.icon = iconChar; 
+                renderTable(); 
+            }
+        }
+    }
+    closeIconModal();
+}
+
+function openIconSelectorForRole(index) {
+    editingRoleIndex = index;
+    editingMode = 'ROLE';
+    document.getElementById('modal-icon').style.display = 'flex';
+}
+
+// ==========================================
+// 🗓️ NAVEGACIÓN DE FECHAS
+// ==========================================
+function moveDate(dir) { 
+    currentDate.setDate(currentDate.getDate() + (dir * daysToShow)); 
+    alignDateToMonday(); 
+    renderTable(); 
+    analyzeWorkLoad(); 
+}
+
+function goToToday() { 
+    currentDate = new Date(); 
+    alignDateToMonday(); 
+    renderTable(); 
+    analyzeWorkLoad(); 
+}
+
+function alignDateToMonday() { 
+    let day = currentDate.getDay(); 
+    let diff = currentDate.getDate() - day + (day == 0 ? -6 : 1); 
+    currentDate.setDate(diff); 
+}
+
+function clearView() {
+    let start = new Date(currentDate);
+    let end = new Date(currentDate);
+    end.setDate(end.getDate() + daysToShow - 1);
+    
+    let startStr = start.getDate() + '/' + (start.getMonth()+1);
+    let endStr = end.getDate() + '/' + (end.getMonth()+1);
+
+    if(!confirm(`🗑️ ¿Estás seguro?\n\nSe borrarán las asignaciones visibles (${startStr} al ${endStr}).\n\nEl resto del calendario quedará intacto.`)) {
+        return;
+    }
+
+    let visibleISOs = [];
+    let temp = new Date(currentDate);
+    for(let i=0; i<daysToShow; i++) {
+        visibleISOs.push(getLocalISO(temp));
+        temp.setDate(temp.getDate() + 1);
+    }
+
+    let deletedCount = 0;
+    Object.keys(db).forEach(key => {
+        let datePart = key.split('_')[0];
+        if (visibleISOs.includes(datePart)) {
+            delete db[key];
+            deletedCount++;
+        }
+    });
+
+    renderTable();
+    analyzeWorkLoad();
+    
+    if (deletedCount > 0) {
+        pushToCloud(); 
+        showToast(`☁️ Guardando borrado de ${deletedCount} registros...`);
+    } else {
+        showToast("Nada que borrar en esta vista.");
+    }
+}
+
+function showToast(msg) {
+    let t = document.getElementById('toast'); 
+    t.innerText = msg; 
+    t.style.display = 'block';
+    setTimeout(() => { 
+        t.style.display = 'none'; 
+    }, 3000);
+}
+
+// ==========================================
+// 💾 GUARDAR SEMANA ESPECÍFICA
+// ==========================================
+function saveSpecificWeek(targetMonday) {
+    if(!confirm(`¿Deseas CERRAR y GUARDAR el reporte de la semana del ${targetMonday}?\n\nSe enviarán a Excel los turnos y cálculos de esta semana.`)) return;
+    
+    showToast("⏳ Procesando datos para guardar...");
+
+    let detailRows = [];
+    
+    Object.keys(db).forEach(key => {
+        let parts = key.split('_'); 
+        let dateIso = parts[0]; 
+        let subId = parts[1];
+        
+        let dParts = dateIso.split('-');
+        let dateObj = new Date(dParts[0], dParts[1]-1, dParts[2]);
+        let shiftMonday = getMondayLocal(dateObj);
+
+        if (shiftMonday === targetMonday) {
+            let zoneName = "---"; 
+            let shiftName = "---";
+            
+            structure.forEach(area => { 
+                let s = area.subs.find(x => x.id === subId); 
+                if(s) { 
+                    zoneName = area.name; 
+                    shiftName = s.name; 
+                } 
+            });
+            
+            db[key].forEach(item => {
+                let emp = employees.find(e => e.id === item.empId);
+                if(emp) {
+                    detailRows.push([ 
+                        dateIso, 
+                        shiftMonday, 
+                        emp.num, 
+                        emp.dni || '', 
+                        emp.fullName, 
+                        zoneName, 
+                        shiftName, 
+                        item.hours, 
+                        item.type, 
+                        item.code || '' 
+                    ]);
+                }
+            });
+        }
+    });
+
+    let summaryRows = [];
+    let weeksData = analyzeWorkLoad();
+    
+    if (weeksData[targetMonday]) {
+        let weekStats = weeksData[targetMonday];
+        
+        Object.keys(weekStats).forEach(empId => {
+            let stats = weekStats[empId]; 
+            let emp = employees.find(e => e.id == empId);
+            
+            if(emp && (stats.hh > 0 || stats.abs.length > 0)) {
+                
+                let overtimeFromBase = Math.max(0, stats.regularHH - 48);
+                let totalExtrasToPay = stats.explicitExtra + overtimeFromBase;
+                
+                let absenceText = "NO"; 
+                let absenceDetails = "";
+                
+                if(stats.abs.length > 0) {
+                    absenceText = "SI"; 
+                    let typesFound = [];
+                    stats.abs.forEach(absDate => {
+                        Object.keys(db).forEach(k => { 
+                            if(k.startsWith(absDate)) { 
+                                let item = db[k].find(x => x.empId == emp.id && x.type === 'ABSENCE'); 
+                                if(item) typesFound.push(item.code); 
+                            } 
+                        });
+                    });
+                    absenceDetails = [...new Set(typesFound)].join(', ');
+                }
+                
+                let status = (stats.hh >= 48) ? "CUMPLIÓ" : "FALTA HORAS";
+                if (stats.hh > 48) status = "EXCEDE";
+                if (stats.hh === 0 && stats.abs.length > 0) status = "AUSENCIA";
+
+                summaryRows.push([ 
+                    targetMonday, 
+                    emp.num, 
+                    emp.dni || '', 
+                    emp.fullName, 
+                    stats.hh, 
+                    stats.regularHH, 
+                    totalExtrasToPay, 
+                    stats.nights, 
+                    stats.dl.length, 
+                    stats.rest.length, 
+                    absenceText, 
+                    absenceDetails, 
+                    status 
+                ]);
+            }
+        });
+    }
+
+    if (detailRows.length === 0 && summaryRows.length === 0) { 
+        alert(`⚠️ ALERTA: No se encontraron datos para la semana del ${targetMonday}.\n\nVerifica que hayas asignado turnos en esa fecha antes de guardar.`); 
+        return; 
+    }
+
+    let payload = { 
+        details: detailRows, 
+        summary: summaryRows 
+    };
+
+    google.script.run
+        .withSuccessHandler(function(res) { 
+            showToast("✅ Guardado Exitoso"); 
+            alert(res); 
+        })
+        .withFailureHandler(function(err) { 
+            showToast("❌ Error al guardar");
+            alert("❌ ERROR CRÍTICO:\nNo se pudo guardar en Google Sheets.\n\nDetalle: " + err.message); 
+        })
+        .saveFullReport(payload);
+}
+
+// ==========================================
+// ⌨️ EVENTOS DE TECLADO
+// ==========================================
+document.addEventListener('keydown', function(e) {
+    if (e.key === "Escape") {
+        
+        const iconModal = document.getElementById('modal-icon');
+        if (iconModal && iconModal.style.display === 'flex') {
+            closeIconModal();
+            return; 
+        }
+
+        const shiftModal = document.getElementById('modal-overlay');
+        if (shiftModal && shiftModal.style.display === 'flex') {
+            closeModal();
+            return;
+        }
+
+        const configModal = document.getElementById('modal-master-config');
+        if (configModal && configModal.style.display === 'flex') {
+            closeMasterConfig();
+            return;
+        }
+
+        const absModal = document.getElementById('modal-absence');
+        if (absModal && absModal.style.display === 'flex') {
+            closeAbsenceModal();
+            return;
+        }
+
+        const ctxMenu = document.getElementById('ctx-menu');
+        if (ctxMenu && ctxMenu.style.display === 'block') {
+            ctxMenu.style.display = 'none';
+            return;
+        }
+    }
+});
+
+// ==========================================
+// 🎬 INICIALIZACIÓN AUTOMÁTICA
+// ==========================================
+// Preparar empleados
+employees.forEach(e => { 
+    e.alert = false; 
+    e.id = e.id.toString(); 
+});
+employees.sort((a, b) => parseInt(a.num) - parseInt(b.num));
+
+// Llamar cuando el módulo se cargue
+// Si usas un botón para abrir el módulo, llama startRolModule() desde ahí
+// Si se carga automáticamente al abrir la página, descomenta la siguiente línea:
+// startRolModule();
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'f') {
+        e.preventDefault();
+        document.getElementById('search-box').focus();
+        document.getElementById('search-box').select();
+    }
+});
+
+// ============================================================
+// AUTO-AJUSTE DE VISTA POR GIRO (SOLO MODO LITE)
+// ============================================================
+(function() {
+    let resizeDebounce = null;
+    window.addEventListener('resize', function() {
+        if (!isLiteMode) return;
+        if (userManualViewSelection) return;
+        if (resizeDebounce) clearTimeout(resizeDebounce);
+        resizeDebounce = setTimeout(function() {
+            const isLandscape = window.innerWidth > window.innerHeight;
+            const targetDays = isLandscape ? 28 : 7;
+            if (daysToShow !== targetDays && !userManualViewSelection) {
+                changeView(targetDays, true);
+            }
+        }, 300);
+    });
+})();
+
+// Llamar una vez al iniciar para asegurar la vista correcta
+// Llamar una vez al iniciar para asegurar la vista correcta
+if (isLiteMode && !userManualViewSelection) {
+    setTimeout(function() {
+        const isLandscape = window.innerWidth > window.innerHeight;
+        changeView(isLandscape ? 28 : 7, true);
+    }, 500);
+}
+
+
+
+</script>
+</div>

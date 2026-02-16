@@ -1,0 +1,311 @@
+<body>
+  <div class="d-flex align-items-center mt-3">
+    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" 
+         style="width: 40px; height: 40px;">
+      <i class="fas fa-boxes text-white"></i>
+    </div>
+    <div>
+      <h5 class="mb-0 text-primary">Herramientas de gestión</h5>
+      <small class="text-muted"> Tipos de Herramientas de gestión</small>
+    </div>
+  </div>
+
+  <div class="container-fluid px-0 my-4" id="inventarioCheckExtra">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+      <div class="d-flex align-items-center gap-1">
+        <button onclick="abrirFormularioInvetExtra()" class="btn btn-secondary btn-sm">Nuevo registro</button>
+        
+        <button class="btn btn-success btn-sm" onclick="descargarExcelInventarioExtra()" title="Descargar Excel">
+          <i class="fa-solid fa-file-excel"></i>
+        </button>
+      </div>
+
+      <div class="d-flex align-items-center gap-1">
+        <input type="text" id="buscadorInvetExtra" class="form-control" placeholder="Buscar..." style="max-width: 250px; height:30px;">
+        <button class="btn btn-info btn-sm" onclick="buscarInventarioExtra()">Buscar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="loadingInventarioCheckExtra" class="text-center my-4" style="display: none;">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p class="mt-2">Cargando datos extra...</p>
+  </div>
+
+  <div class="table-responsive" style="max-height: 500px;">
+    <table class="table table-bordered table-hover my-1 print-container small-table">
+      <thead style="position: sticky; top: 0; background-color: white; z-index: 1;">
+        <tr id="encabezadosInvetExtra"></tr>
+      </thead>
+      <tbody id="cuerpoInvetExtra" style="font-size:0.8em;"></tbody>
+    </table>
+  </div>
+
+  <div class="text-center mt-2">
+    <button id="btnCargarMasInvetExtra" class="btn btn-outline-secondary" style="display:none;" onclick="cargarDatosInvetExtra()">
+      <i class="fa-solid fa-arrow-down"></i> Ver más
+    </button>
+  </div>
+
+  <dialog id="modalInvetExtra" class="border-0 rounded-3 shadow p-2" style="width: 90%; max-width: 500px;">
+    <div class="modal-content border-0">
+      <div class="modal-header py-2">
+        <h5 class="modal-title w-100 text-center" id="modal-titulo-InvetExtra">Inventario</h5>
+        <button type="button" class="btn-close" aria-label="Cerrar" onclick="cerrarModalInvetExtra()"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formularioInvetExtra" method="dialog">
+          </form>
+        <div id="mensaje-error-InvetExtra" class="text-danger mt-2" style="display:none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-guardarInvetExtra" type="button" onclick="guardarCambiosInventarioExtra()" class="btn btn-primary">Guardar</button>
+        <button type="button" onclick="cerrarModalInvetExtra()" class="btn btn-secondary">Cancelar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    // Variables Globales Renombradas
+    let datosGlobalesInvetExtra = [];
+    let headersInvetExtra = [];
+    
+    // Variables de paginación Renombradas
+    let offsetInvetExtra = 0;
+    const limitInvetExtra = 30;
+    let terminoBusquedaInvetExtra = "";
+    let totalFilasInvetExtra = 0;
+    // Variable auxiliar para listas globales
+    let listasGlobalesExtra = {};
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1. Cargar listas globales y luego los datos
+      google.script.run.withSuccessHandler(function (listas) {
+        listasGlobalesExtra = listas; 
+        cargarDatosInvetExtra(true); 
+      }).getTodasLasListas(); 
+
+      // 2. Buscador local
+      document.getElementById("buscadorInvetExtra").addEventListener("input", function () {
+        const texto = this.value.toLowerCase();
+        const filtrados = datosGlobalesInvetExtra.filter(fila =>
+          fila.some(celda => String(celda).toLowerCase().includes(texto))
+        );
+        mostrarFilasInvetExtra(filtrados);
+      });
+    });
+
+    function cargarDatosInvetExtra(reset = false) {
+      if (reset) {
+        offsetInvetExtra = 0;
+        datosGlobalesInvetExtra = [];
+      }
+
+      document.getElementById("loadingInventarioCheckExtra").style.display = "block";
+
+      // Llamada a la función ServerSide RENOMBRADA
+      google.script.run.withSuccessHandler(res => {
+        headersInvetExtra = res.headersInvet;
+        totalFilasInvetExtra = res.total;
+
+        if (offsetInvetExtra === 0) {
+          document.getElementById("encabezadosInvetExtra").innerHTML = 
+            headersInvetExtra.map(h => `<th>${h}</th>`).join("") + "<th>Acción</th>";
+        }
+
+        datosGlobalesInvetExtra = datosGlobalesInvetExtra.concat(res.filas);
+        mostrarFilasInvetExtra(datosGlobalesInvetExtra);
+
+        document.getElementById("loadingInventarioCheckExtra").style.display = "none";
+        offsetInvetExtra += limitInvetExtra;
+        document.getElementById("btnCargarMasInvetExtra").style.display = (offsetInvetExtra < totalFilasInvetExtra) ? "block" : "none";
+
+      }).obtenerInventarioServerSideExtra(offsetInvetExtra, limitInvetExtra, terminoBusquedaInvetExtra);
+    }
+
+    function buscarInventarioExtra() {
+      terminoBusquedaInvetExtra = document.getElementById("buscadorInvetExtra").value.trim().toLowerCase();
+      cargarDatosInvetExtra(true);
+    }
+
+    function mostrarFilasInvetExtra(data) {
+      const tbody = document.getElementById("cuerpoInvetExtra");
+      tbody.innerHTML = "";
+      data.forEach((fila, i) => {
+        const tr = document.createElement("tr");
+        fila.forEach(celda => {
+          const td = document.createElement("td");
+          if(String(celda).startsWith("http")) {
+             td.innerHTML = `<a href="${celda}" target="_blank">Ver Ficha</a>`;
+          } else {
+             td.textContent = celda;
+          }
+          tr.appendChild(td);
+        });
+
+        // Botones de acción
+        const btnTd = document.createElement("td");
+        btnTd.innerHTML = `
+          <button class="btn btn-sm btn-info me-1" onclick="abrirFormularioInvetExtra(${i})">✏️</button>
+          <button class="btn btn-sm btn-danger" onclick="eliminarRegistroInvetExtra(${i})">🗑️</button>
+        `;
+        tr.appendChild(btnTd);
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- LÓGICA DEL FORMULARIO CORREGIDA ---
+    function abrirFormularioInvetExtra(index = null) { 
+    const modalInvet = document.getElementById("modalInvetExtra");
+    const form = document.getElementById("formularioInvetExtra");
+    const isNuevo = index === null;
+    
+    // Si es nuevo creamos array vacío, si es edición cargamos datos
+    const valores = isNuevo ? Array(headersInvetExtra.length).fill("") : datosGlobalesInvetExtra[index];
+    let contenidoHTML = "";
+
+    headersInvetExtra.forEach((h, i) => {
+        const valor = valores[i] || "";
+
+        const esSelect = [1, 2, 5].includes(i); 
+        const esObligatorio = [1, 2, 5].includes(i); 
+        
+        const asterisco = esObligatorio ? '<span style="color:red">*</span>' : '';
+        const requiredAttr = esObligatorio ? 'required' : '';
+
+        // CASO 1: ID (Columna 0)
+        if (i === 0) {
+            if (isNuevo) {
+                contenidoHTML += `<input name="${h}" type="hidden" value="">`;
+            } else {
+                contenidoHTML += `
+                    <div class="mb-3">
+                        <label class="form-label"><strong>ID (Auto)</strong></label>
+                        <input name="${h}" type="text" value="${valor}" readonly class="form-control bg-light">
+                    </div>`;
+            }
+
+        // CASO 2: SELECTS (Columnas 1, 2 y 5)
+        } else if (esSelect) {
+            let opciones = [];
+            
+            // Columna 1: Equipo (Traído desde el servidor)
+            if (i === 1) opciones =  listasGlobalesExtra.opts || []; 
+            
+            // Columna 2: Etapa (Opciones fijas solicitadas)
+            if (i === 2) opciones = ["Inicial", "Seguimiento", "Eficacia"];
+            
+            // Columna 5: Estado
+            if (i === 5) opciones = listasGlobalesExtra.estados || ["Vigente", "En revisión", "Retirado"];
+
+            contenidoHTML += `
+                <div class="mb-3">
+                    <label class="form-label">${h} ${asterisco}</label>
+                    <select name="${h}" class="form-select" ${requiredAttr}>
+                        <option value="">-- Seleccionar --</option>
+                        ${opciones.map(op => `<option value="${op}" ${op === valor ? "selected" : ""}>${op}</option>`).join("")}
+                    </select>
+                </div>`;
+            
+        // CASO 3: TEXTO NORMAL (Resto de columnas)
+        } else {
+            contenidoHTML += `
+                <div class="mb-3">
+                    <label class="form-label">${h} ${asterisco}</label>
+                    <input name="${h}" type="text" value="${valor}" class="form-control" ${requiredAttr}>
+                </div>`;
+        }
+    });
+
+    form.innerHTML = contenidoHTML;
+    form.dataset.index = index; 
+    document.getElementById("modal-titulo-InvetExtra").textContent = isNuevo ? "Nuevo Registro Extra" : "Editar Registro Extra";
+    document.getElementById("mensaje-error-InvetExtra").style.display = "none";
+    modalInvet.showModal();
+}
+
+    function cerrarModalInvetExtra() {
+      document.getElementById("modalInvetExtra").close();
+    }
+
+    function guardarCambiosInventarioExtra() {
+      const btn = document.getElementById("btn-guardarInvetExtra");
+      const form = document.getElementById("formularioInvetExtra");
+      const campos = form.querySelectorAll("input, select");
+      const mensajeError = document.getElementById("mensaje-error-InvetExtra");
+      const isNuevo = form.dataset.index === "null";
+      
+      let hayError = false;
+      campos.forEach((c) => {
+        if (c.hasAttribute('required') && c.value.trim() === "") {
+          hayError = true;
+        }
+      });
+
+      if (hayError) {
+        mensajeError.textContent = "Complete los campos obligatorios (*).";
+        mensajeError.style.display = "block";
+        return;
+      }
+
+      btn.textContent = "Guardando...";
+      btn.disabled = true;
+
+      const data = Array.from(campos).map(el => el.value.trim());
+
+      const callback = () => {
+        Swal.fire("Guardado", "El registro ha sido actualizado.", "success");
+        cerrarModalInvetExtra();
+        cargarDatosInvetExtra(true); 
+        btn.textContent = "Guardar";
+        btn.disabled = false;
+      };
+
+      if (isNuevo) {
+        google.script.run.withSuccessHandler(callback).agregarInventarioExtra(data);
+      } else {
+        google.script.run.withSuccessHandler(callback).actualizarInventarioExtra(data);
+      }
+    }
+
+    function eliminarRegistroInvetExtra(index) {
+      const num = datosGlobalesInvetExtra[index][0];
+      
+      Swal.fire({
+        title: "¿Eliminar?",
+        text: `¿Estás seguro de eliminar el registro N° ${num}?`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: "Sí, eliminar"
+      }).then(res => {
+        if (res.isConfirmed) {
+          google.script.run.withSuccessHandler(() => {
+            Swal.fire("Eliminado", "", "success");
+            cargarDatosInvetExtra(true);
+          }).eliminarInventarioExtraPorNum(num);
+        }
+      });
+    }
+
+    // --- 3. FUNCIÓN PARA DESCARGAR EXCEL ---
+    function descargarExcelInventarioExtra() {
+       if(!datosGlobalesInvetExtra || datosGlobalesInvetExtra.length === 0) {
+          Swal.fire("Atención", "No hay datos para exportar", "info");
+          return;
+       }
+       const wsData = [headersInvetExtra, ...datosGlobalesInvetExtra];
+
+       // Crear Worksheet desde array de arrays (aoa)
+       const ws = XLSX.utils.aoa_to_sheet(wsData);
+       const wb = XLSX.utils.book_new();
+       XLSX.utils.book_append_sheet(wb, ws, "Inventario_Extra");
+
+       // Descargar archivo
+       XLSX.writeFile(wb, "Reporte_Inventario_Extra.xlsx");
+    }
+  </script>
+</body>

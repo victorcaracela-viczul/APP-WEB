@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+      #formulario input {
+        width: 100%;
+        margin-bottom: 10px;
+        padding: 5px;
+      }
+  </style>
+</head>
+<body>
+  <div class="d-flex align-items-center mt-3">
+  <div class="bg-indigo rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: #6610f2;">
+    <i class="fas fa-chalkboard-teacher text-white"></i>
+  </div>
+  <div>
+    <h5 class="mb-0" style="color: #6610f2;">Cursos</h5>
+    <small class="text-muted">Temas, horarios, capacitadores</small>
+  </div>
+</div>
+
+  <div class="container-fluid my-1 px-0">
+  <!-- ✅ Botones y buscador en una sola fila -->
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+
+  <!-- 🔹 Grupo izquierdo: Botones -->
+  <div class="d-flex align-items-center gap-1">
+    <button onclick="abrirFormulario()" class="btn btn-secondary btn-sm">Nuevo curso</button>
+    <button class="btn btn-warning btn-sm" id="btn3" onclick="window.print()" style="font-size:15px;">
+      <i class="fa-solid fa-print"></i>
+    </button>
+  </div>
+
+  <!-- 🔹 Grupo derecho: Buscador -->
+  <div>
+    <input type="text" id="buscador" class="form-control" placeholder="Buscar..." style="max-width: 250px; height:30px;">
+  </div>
+
+</div>
+
+  <div id="loadingCursosG" class="text-center my-4" style="display: none;">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Cargando...</span>
+  </div>
+  <p class="mt-2">Cargando Cursos...</p>
+</div>
+  <div class="table-responsive">
+  <table class="table print-container">
+    <thead><tr id="encabezados"></tr></thead>
+    <tbody id="cuerpo"></tbody>
+  </table>
+</div>
+</div>
+
+<dialog id="modal" class="border-0 rounded-3 shadow p-2" style="width: 90%; max-width: 500px;">
+  <div class="modal-content border-0">
+    <div class="modal-header py-2">
+      <h5 class="modal-title w-100 text-center" id="modal-titulo">Editar curso</h5>
+      <button type="button" class="btn-close" aria-label="Cerrar" onclick="cerrarModal()"></button>
+    </div>
+    <div class="modal-body">
+      <form id="formulario" method="dialog">
+        <!-- Inputs se generan dinámicamente -->
+      </form>
+      <div id="mensaje-error" class="text-danger mt-2" style="display:none;"></div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-guardar1" type="button" onclick="guardarCambios1()" class="btn btn-primary">Guardar</button>
+      <button type="button" onclick="cerrarModal()" class="btn btn-secondary">Cancelar</button>
+    </div>
+  </div>
+</dialog>
+
+ <script>
+    let datosGlobales = [];
+    let headers = [];
+
+    cargarDatos();
+
+function abrirFormulario(index = null) {
+  const modal = document.getElementById("modal");
+  const form = document.getElementById("formulario");
+  const isNuevo = index === null;
+
+  document.getElementById("modal-titulo").textContent = isNuevo ? "Nuevo curso" : "Editar curso";
+
+  const valores = isNuevo ? Array(headers.length).fill("") : datosGlobales[index];
+  form.innerHTML = "";
+
+  // 🔁 Listas disponibles
+  const opcionesColumnaBCurso = listasGlobales?.areas || [];
+  const opcionesColumnaCCurso = listasGlobales?.trabajadores || [];
+
+  headers.forEach((h, i) => {
+    const valor = valores[i] ?? "";
+    let campoHTML = "";
+
+    if (i === 2) {
+      // Fecha y hora
+      campoHTML = `
+        <div class="mb-3">
+          <label class="form-label">${h}</label>
+          <input name="${h}" value="${valor}" type="datetime-local" class="form-control">
+        </div>`;
+    } else if ([3, 5, 6].includes(i)) {
+      // Campos numéricos
+      campoHTML = `
+        <div class="mb-3">
+          <label class="form-label">${h}</label>
+          <input name="${h}" value="${valor}" type="number" class="form-control">
+        </div>`;
+    } else if (i === 7) {
+      // Capacitador (datalist)
+      const listId = `datalist-${h}`;
+      const opciones = opcionesColumnaCCurso.map(opt => `<option value="${opt}">`).join("");
+      campoHTML = `
+        <div class="mb-3">
+          <label class="form-label">${h}</label>
+          <input name="${h}" value="${valor}" list="${listId}" class="form-control">
+          <datalist id="${listId}">
+            ${opciones}
+          </datalist>
+        </div>`;
+    } else if (i === 8) {
+      // Área (select)
+      const opciones = opcionesColumnaBCurso.map(opt =>
+        `<option value="${opt}" ${valor === opt ? "selected" : ""}>${opt}</option>`
+      ).join("");
+      campoHTML = `
+        <div class="mb-3">
+          <label class="form-label">${h}</label>
+          <select name="${h}" class="form-select">
+            <option value="">Seleccione</option>
+            ${opciones}
+          </select>
+        </div>`;
+    } else if (i === headers.length - 1) {
+      // ✅ Último campo: checkbox (Certificación)
+      const checked = (valor === true || valor === "TRUE" || valor === "true" || valor === "VERDADERO") ? "checked" : "";
+      campoHTML = `
+        <div class="form-check form-switch mb-3 ml-1" style="width:75px;">
+          <input class="form-check-input" type="checkbox" id="check-${h}" name="${h}" ${checked}>
+          <label class="form-check-label" for="check-${h}">${h}</label>
+        </div>`;
+    } else {
+      // Campos de texto normales
+      campoHTML = `
+        <div class="mb-3">
+          <label class="form-label">${h}</label>
+          <input name="${h}" value="${valor}" type="text" class="form-control" ${i === 0 && !isNuevo ? "readonly" : ""}>
+        </div>`;
+    }
+
+    form.innerHTML += campoHTML;
+  });
+
+  form.dataset.index = index;
+  modal.showModal();
+}
+
+
+    function cerrarModal() {
+      document.getElementById("modal").close();
+    }
+
+function guardarCambios1() {
+  const btnGuardar = document.getElementById("btn-guardar1");
+  const form = document.getElementById("formulario");
+  const elementos = form.querySelectorAll("input, select, textarea");
+  const mensajeError = document.getElementById("mensaje-error");
+
+  btnGuardar.textContent = "Guardando...";
+  btnGuardar.disabled = true;
+
+  const camposVacios = Array.from(elementos).some(el => el.value.trim() === "");
+
+  if (camposVacios) {
+    mensajeError.textContent = "Todos los campos son obligatorios.";
+    mensajeError.style.display = "block";
+    btnGuardar.textContent = "Guardar";
+    btnGuardar.disabled = false;
+    return;
+  }
+
+  mensajeError.style.display = "none";
+  const data = Array.from(elementos).map(el => {
+  if (el.type === "checkbox") return el.checked; // ✅ true / false
+  return el.value.trim();
+});
+
+  const index = form.dataset.index;
+
+  const refrescarCursos = () => {
+    const dniUsuario = JSON.parse(localStorage.getItem('userName')).usuario;
+    loadingStartG();
+    google.script.run.withSuccessHandler(mostrarResultados).obtenerDatosPorDNI(dniUsuario);
+  };
+
+  const callbackAgregar = () => {
+    Swal.fire({
+      icon: 'success',
+      title: 'Registro agregado correctamente',
+      timer: 1500,
+      showConfirmButton: false,
+    });
+    cerrarModal();
+    cargarDatos();
+    refrescarCursos();
+    google.script.run.withSuccessHandler(construirTabla).obtenerMatrizPermisos();
+    btnGuardar.textContent = "Guardar";
+    btnGuardar.disabled = false;
+  };
+
+  const callbackActualizar = () => {
+    Swal.fire({
+      icon: 'success',
+      title: 'Registro actualizado correctamente',
+      timer: 1500,
+      showConfirmButton: false,
+    });
+    cerrarModal();
+    cargarDatos();
+    refrescarCursos();
+    btnGuardar.textContent = "Guardar";
+    btnGuardar.disabled = false;
+  };
+
+  if (index === "null") {
+    google.script.run.withSuccessHandler(callbackAgregar).agregarRegistro(data);
+  } else {
+    google.script.run.withSuccessHandler(callbackActualizar).actualizarRegistro(data);
+  }
+}
+
+
+
+function cargarDatos() {
+  document.getElementById("loadingCursosG").style.display = "block";
+  google.script.run.withSuccessHandler(function(res) {
+    if (!res?.headers || !res?.filas) return console.error("Datos incompletos:", res);
+
+    headers = res.headers;
+    datosGlobales = res.filas;
+
+    const thead = document.getElementById("encabezados");
+    const tbody = document.getElementById("cuerpo");
+
+    thead.innerHTML = headers.map(t => `<th>${t}</th>`).join("") + "<th>Acción</th>";
+
+    mostrarFilas(datosGlobales);
+    document.getElementById("loadingCursosG").style.display = "none";
+  }).obtenerMatrizInvertida();
+}
+
+
+function eliminarRegistro(index) {
+  const curso = datosGlobales[index][0]; // Valor único
+
+  if (!curso) return alert("Registro inválido.");
+
+  Swal.fire({
+    title: 'Alerta',
+    text: `¿Estás seguro de eliminar el registro del curso: "${curso}"?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar',
+    reverseButtons: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // ✅ Todo esto se ejecuta SOLO cuando el backend haya eliminado el registro
+      google.script.run.withSuccessHandler(() => {
+        Swal.fire('Eliminado!', 'El curso ha sido eliminado.', 'success');
+        cargarDatos();
+        google.script.run.withSuccessHandler(construirTabla).obtenerMatrizPermisos();
+      }).eliminarRegistroPorCurso(curso);
+    }
+  });
+}
+
+
+function mostrarFilas(data) {
+  const tbody = document.getElementById("cuerpo");
+  tbody.innerHTML = "";
+
+  data.forEach((fila, i) => {
+    const tr = document.createElement("tr");
+
+fila.forEach((celda, colIndex) => {
+  const td = document.createElement("td");
+
+  if (colIndex === 4 && typeof celda === "string" && celda.startsWith("http")) {
+    // 📸 Imagen
+    const img = document.createElement("img");
+    img.src = celda;
+    img.alt = "Imagen";
+    img.style.maxWidth = "100px";
+    img.style.maxHeight = "60px";
+    td.appendChild(img);
+
+  } else if (colIndex === 1 && typeof celda === "string" && celda.startsWith("http")) {
+    // 📂 Link
+    const btnLink = document.createElement("button");
+    btnLink.innerHTML = '<i class="fa-solid fa-folder"></i>';
+    btnLink.classList.add("btn", "btn-sm", "btn-secondary");
+    btnLink.onclick = () => window.open(celda, "_blank");
+    td.appendChild(btnLink);
+
+  } else if (
+    typeof celda === "boolean" ||
+    celda === "TRUE" ||
+    celda === "FALSE" ||
+    celda === "true" ||
+    celda === "false" ||
+    celda === "VERDADERO" ||
+    celda === "FALSO"
+  ) {
+    // ✅ Booleano (última columna: Certificación)
+    const esVerdadero = celda === true || celda === "TRUE" || celda === "true" || celda === "VERDADERO";
+    td.textContent = esVerdadero ? "Sí" : "No";
+    td.style.color = esVerdadero ? "green" : "red";
+    td.style.fontWeight = "bold";
+
+  } else {
+    // Texto normal
+    td.textContent = celda;
+  }
+
+  tr.appendChild(td);
+});
+
+
+    const btnTd = document.createElement("td");
+
+    const btnEditar = document.createElement("button");
+    btnEditar.innerHTML = '<i class="fa-solid fa-pen"></i>';
+    btnEditar.classList.add("btn", "btn-sm", "btn-info");
+    btnEditar.onclick = () => abrirFormulario(i);
+    btnTd.appendChild(btnEditar);
+
+    const btnEliminar = document.createElement("button");
+    btnEliminar.innerHTML = '<i class="fa-solid fa-trash"></i>';
+    btnEliminar.classList.add("btn", "btn-sm", "btn-danger");
+    btnEliminar.onclick = () => eliminarRegistro(i);
+    btnTd.appendChild(btnEliminar);
+
+    tr.appendChild(btnTd);
+    tbody.appendChild(tr);
+  });
+}
+document.addEventListener("DOMContentLoaded", function () {
+  const buscador = document.getElementById("buscador");
+
+  buscador.addEventListener("input", function () {
+    const texto = this.value.toLowerCase();
+
+    const filtrados = datosGlobales.filter(fila =>
+      fila.some(celda => String(celda).toLowerCase().includes(texto))
+    );
+
+    mostrarFilas(filtrados);
+  });
+});
+
+  </script>
+</body>
+</html>

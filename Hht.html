@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+  </head>
+  <body>
+    <div class="d-flex align-items-center mt-3">
+  <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+    <i class="fas fa-user-clock text-white"></i>
+  </div>
+  <div>
+    <h5 class="mb-0 text-success">Horas Hombre Trabajadas</h5>
+    <small class="text-muted">Listas de HHT por empresa</small>
+  </div>
+</div>
+
+  <div class="container-fluid my-1 px-0">
+<div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+  <!-- IZQUIERDA -->
+  <div class="d-flex align-items-center gap-1">
+    <button onclick="abrirFormularioHtt()" class="btn btn-secondary btn-sm">Nuevo HHT</button>
+    <button class="btn btn-warning btn-sm" id="btn2" onclick="window.print()" style="font-size:15px;">
+      <i class="fa-solid fa-print"></i>
+    </button>
+  </div>
+
+  <!-- DERECHA -->
+  <div class="d-flex align-items-center gap-1">
+    <input type="text" id="buscadorHtt" class="form-control" placeholder="Buscar..." style="max-width: 250px; height:30px;">
+    <button id="btnBuscarHtt" class="btn btn-info btn-sm">Buscar</button>
+  </div>
+</div>
+
+  <div id="loadingTablaHtt" class="text-center my-4" style="display: none;">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Cargando...</span>
+  </div>
+  <p class="mt-2">Cargando horas hombre trabajadas...</p>
+</div>
+    <div class="table-responsive">
+      <table class="table print-container">
+        <thead><tr id="encabezadosHtt"></tr></thead>
+        <tbody id="cuerpoHtt"></tbody>
+      </table>
+    </div>
+    <div class="text-start my-3">
+  <button id="btnVerMasHht" class="btn btn-outline-secondary shadow-sm" style="display:none;" onclick="verMasHht()"><i class="fa-solid fa-arrow-down"></i>Ver más</button>
+</div>
+
+ </div>
+  
+ <dialog id="modal2Hht" class="border-0 rounded-3 shadow p-2" style="width: 90%; max-width: 500px;">
+  <div class="modal-content border-0">
+    <div class="modal-header py-2">
+      <h5 class="modal-title w-100 text-center" id="modal-tituloHht">Editar HHT</h5>
+      <button type="button" class="btn-close" aria-label="Cerrar" onclick="cerrarModalHht()"></button>
+    </div>
+    <div class="modal-body">
+      <form id="formularioHht" method="dialog">
+        <!-- Aquí colocas los campos del formulario -->
+      </form>
+      <div id="mensaje-errorHht" class="text-danger mt-2" style="display:none;"></div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-guardar2Hht" type="button" onclick="guardarCambiosHht()" class="btn btn-primary">Guardar</button>
+      <button type="button" onclick="cerrarModalHht()" class="btn btn-secondary">Cancelar</button>
+    </div>
+  </div>
+</dialog>
+
+  <script>
+    let datosGlobalesHht = [];
+    let headersHht = [];
+    let datosHht = [];
+    let totalHht = 0;
+    let offsetHht = 0;
+    const limitHht = 30;
+    let filtroHht = "";
+
+    document.getElementById("btnBuscarHtt").addEventListener("click", () => {
+      offsetHht = 0;
+      filtroHht = document.getElementById("buscadorHtt").value.toLowerCase();
+      datosHht = [];
+      cargarDatosHht();
+    });
+
+    function verMasHht() {
+      offsetHht += limitHht;
+      cargarDatosHht();
+    }
+
+function cargarDatosHht() {
+  document.getElementById("loadingTablaHtt").style.display = "block";
+  const btnVerMasHht = document.getElementById("btnVerMasHht");
+  btnVerMasHht.disabled = true;
+  google.script.run.withSuccessHandler(function (res) {
+    if (!res?.headersHht || !res?.filas) return console.error("Datos incompletos:", res);
+
+    if (offsetHht === 0) {
+      headersHht = res.headersHht;
+      datosHht = res.filas;
+      datosGlobalesHht = datosHht.slice();
+      document.getElementById("encabezadosHtt").innerHTML = headersHht
+        .map(h => `<th>${h}</th>`).join("") + "<th>Acción</th>";
+    } else {
+      datosHht = datosHht.concat(res.filas);
+      datosGlobalesHht = datosHht.slice(); // También actualiza globales para edición
+    }
+
+    totalHht = res.total;
+
+    mostrarFilasHht(datosHht);
+
+    // 👇 Lógica para mostrar u ocultar el botón "Ver más"
+    const btnVerMas = document.getElementById("btnVerMasHht");
+    if (datosHht.length < totalHht) {
+      btnVerMas.style.display = "inline-block";
+    } else {
+      btnVerMas.style.display = "none";
+    }
+
+    document.getElementById("loadingTablaHtt").style.display = "none";
+    btnVerMasHht.disabled = false;
+  }).obtenerMatrizHhtPaginado(offsetHht, limitHht, filtroHht);
+}
+
+function mostrarFilasHht(data) {
+  const tbody = document.getElementById("cuerpoHtt");
+  tbody.innerHTML = "";
+
+  const fragment = document.createDocumentFragment();
+
+  data.forEach((fila) => {
+    const tr = document.createElement("tr");
+
+    fila.forEach((celda) => {
+      const td = document.createElement("td");
+      td.textContent = celda;
+      tr.appendChild(td);
+    });
+
+    // Columna de acciones
+    const btnTd = document.createElement("td");
+
+    const btnEditar = document.createElement("button");
+    btnEditar.innerHTML = '<i class="fa-solid fa-pen"></i>';
+    btnEditar.className = "btn btn-sm btn-info me-1";
+    btnEditar.onclick = () => abrirFormularioHtt(fila[0]);
+
+    const btnEliminar = document.createElement("button");
+    btnEliminar.innerHTML = '<i class="fa-solid fa-trash"></i>';
+    btnEliminar.className = "btn btn-sm btn-danger";
+    btnEliminar.onclick = () => eliminarRegistroHht(fila[0]);
+
+    btnTd.appendChild(btnEditar);
+    btnTd.appendChild(btnEliminar);
+
+    tr.appendChild(btnTd);
+    fragment.appendChild(tr);
+  });
+
+  tbody.appendChild(fragment);
+}
+
+function abrirFormularioHtt(id = null) {
+  const modal2Hht = document.getElementById("modal2Hht");
+  const form = document.getElementById("formularioHht");
+  const isNuevo = id === null;
+
+  document.getElementById("modal-tituloHht").textContent = isNuevo ? "Nuevo registro HHT" : "Editar registro HHT";
+
+  let valores = Array(headersHht.length).fill("");
+  let indexOriginal = null;
+
+  if (!isNuevo) {
+    const filaOriginal = datosGlobalesHht.find((f, i) => {
+      if (String(f[0]).trim() === String(id).trim()) {
+        indexOriginal = i;
+        return true;
+      }
+      return false;
+    });
+
+    if (!filaOriginal) {
+      alert("No se pudo encontrar la fila original.");
+      return;
+    }
+
+    valores = filaOriginal;
+  }
+
+  form.innerHTML = "";
+
+  headersHht.forEach((h, i) => {
+    if (i === 0) return; // ID oculto o no editable
+
+    const valor = valores[i] || "";
+    const inputId = `campo-${i}`;
+    let tipo = "text";
+
+    if (i === 1) tipo = "date";
+    else if (h.includes("N°") || h.includes("HHT")) tipo = "number";
+
+    if (h.toUpperCase() === "EMPRESA") {
+      let optionsHTML = listasGlobales.empresas.map(opt => `<option value="${opt}" ${opt === valor ? 'selected' : ''}>${opt}</option>`).join("");
+      form.innerHTML += `
+        <div class="mb-3">
+          <label for="${inputId}" class="form-label fw-semibold">${h}</label>
+          <select id="${inputId}" name="${h}" class="form-select">
+            <option value="">-- Seleccionar --</option>
+            ${optionsHTML}
+          </select>
+        </div>`;
+    } else {
+      form.innerHTML += `
+        <div class="mb-3">
+          <label for="${inputId}" class="form-label fw-semibold">${h}</label>
+          <input id="${inputId}" name="${h}" value="${valor}" type="${tipo}" class="form-control">
+        </div>`;
+    }
+  });
+
+  form.dataset.index = indexOriginal;
+  modal2Hht.showModal();
+
+  const campoObreros = form.querySelector('input[name="N° OBREROS"]');
+  const campoEmpleados = form.querySelector('input[name="N° EMPLEADOS"]');
+  const campoTotalTrabajadores = form.querySelector('input[name="TOTAL EMPLEADOS"]');
+  const campoHhtObreros = form.querySelector('input[name="HHT OBREROS"]');
+  const campoHhtEmpleados = form.querySelector('input[name="HHT EMPLEADOS"]');
+  const campoHhtTotal = form.querySelector('input[name="TOTAL HHT"]');
+
+  function actualizarTotales() {
+    const numObreros = parseInt(campoObreros?.value) || 0;
+    const numEmpleados = parseInt(campoEmpleados?.value) || 0;
+    if (campoTotalTrabajadores) campoTotalTrabajadores.value = numObreros + numEmpleados;
+
+    const hhtObreros = parseFloat(campoHhtObreros?.value) || 0;
+    const hhtEmpleados = parseFloat(campoHhtEmpleados?.value) || 0;
+    if (campoHhtTotal) campoHhtTotal.value = hhtObreros + hhtEmpleados;
+  }
+
+  [campoObreros, campoEmpleados, campoHhtObreros, campoHhtEmpleados].forEach(input => {
+    if (input) input.addEventListener("input", actualizarTotales);
+  });
+
+  actualizarTotales();
+}
+
+
+    function cerrarModalHht() {
+      document.getElementById("modal2Hht").close();
+    }
+
+      function guardarCambiosHht() {
+  const btnGuardar = document.getElementById("btn-guardar2Hht");
+  const form = document.getElementById("formularioHht");
+  const elementos = form.querySelectorAll("input, select, textarea");
+  const mensajeError = document.getElementById("mensaje-errorHht");
+  const camposVacios = Array.from(elementos).some(el => el.value.trim() === "");
+
+  btnGuardar.textContent = "Guardando...";
+  btnGuardar.disabled = true;
+
+  if (camposVacios) {
+    mensajeError.textContent = "Todos los campos son obligatorios.";
+    mensajeError.style.display = "block";
+    btnGuardar.textContent = "Guardar";
+    btnGuardar.disabled = false;
+    return;
+  }
+
+  mensajeError.style.display = "none";
+
+  // Construir los datos según el orden de los headers
+  const index = form.dataset.index;
+  let data = Array(headersHht.length).fill("");
+
+  // Rellenar desde los campos del formulario
+  elementos.forEach((el, i) => {
+    const idCampo = parseInt(el.id.split("-")[1]);
+    data[idCampo] = el.value.trim();
+  });
+
+  // Si es edición, asegurarse de conservar el ID original
+  if (index !== "null") {
+    data[0] = datosGlobalesHht[index][0];
+  }
+
+const callback = () => {
+  Swal.fire({ icon: 'success', title: 'Registro guardado', timer: 1500, showConfirmButton: false });
+  cerrarModalHht();
+
+  offsetHht = 0; // 👈 Importante: Reinicia paginación
+  cargarDatosHht();    // 🔄 Vuelve a cargar desde cero
+
+  btnGuardar.textContent = "Guardar";
+  btnGuardar.disabled = false;
+};
+
+
+  if (index === "null") {
+    google.script.run.withSuccessHandler(callback).agregarPreguntaHht(data);
+  } else {
+    google.script.run.withSuccessHandler(callback).actualizarHht(data);
+  }
+}
+
+function eliminarRegistroHht(id) {
+  if (!id) return alert("Registro inválido.");
+
+  Swal.fire({
+    title: '¿Eliminar?',
+    text: `¿Deseas eliminar el ID "${id}"?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      google.script.run.withSuccessHandler(() => {
+        // ✅ Remover visualmente el registro eliminado
+        datosHht = datosHht.filter(fila => String(fila[0]) !== String(id));
+        datosGlobalesHht = datosGlobalesHht.filter(fila => String(fila[0]) !== String(id));
+        mostrarFilasHht(datosHht); // 👈 Vuelve a renderizar sin recargar todo
+
+        Swal.fire('Eliminado', 'La pregunta fue eliminada.', 'success');
+      }).eliminarHhtPorID(id);
+    }
+  });
+}
+
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const buscadorHtt = document.getElementById("buscadorHtt");
+      buscadorHtt.addEventListener("input", function () {
+        const texto = this.value.toLowerCase();
+        const filtrados = datosGlobalesHht.filter(fila =>
+          fila.some(celda => String(celda).toLowerCase().includes(texto))
+        );
+        mostrarFilasHht(filtrados);
+      });
+      cargarDatosHht();
+    });
+  </script>
+  </body>
+</html>
