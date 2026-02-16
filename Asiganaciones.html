@@ -168,6 +168,84 @@
     .mb-3{ margin-bottom:1rem; }
     .m-0{ margin:0; }
     .mt-2{ margin-top:.5rem; }
+
+    /* === Firmas Pendientes === */
+    .btn-firmas-pendientes{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 16px; border-radius:12px; border:2px solid #0d6efd;
+      background:#fff; color:#0d6efd; font-weight:600; font-size:.9rem;
+      cursor:pointer; transition:all .2s; position:relative;
+    }
+    .btn-firmas-pendientes:hover{ background:#0d6efd; color:#fff; transform:translateY(-1px); box-shadow:0 4px 12px rgba(13,110,253,0.3); }
+    .btn-firmas-pendientes .badge-pendientes{
+      background:#dc3545; color:#fff; border-radius:50%; min-width:22px; height:22px;
+      display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700;
+    }
+
+    /* Panel de Pendientes */
+    .panel-pendientes-overlay{
+      position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9000;
+      display:none; align-items:center; justify-content:center;
+    }
+    .panel-pendientes-overlay.show{ display:flex; }
+    .panel-pendientes{
+      background:#fff; border-radius:20px; max-width:600px; width:95%;
+      max-height:90vh; overflow:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3);
+      padding:24px; position:relative;
+    }
+    .panel-pendientes .btn-cerrar{
+      position:absolute; top:12px; right:16px; background:none; border:none;
+      font-size:1.5rem; cursor:pointer; color:#6c757d; line-height:1;
+    }
+    .panel-pendientes .item-pendiente{
+      border:1px solid #e9ecef; border-radius:12px; padding:16px; margin-bottom:12px;
+      transition:all .2s;
+    }
+    .panel-pendientes .item-pendiente:hover{ box-shadow:0 4px 12px rgba(0,0,0,.08); }
+    .panel-pendientes .item-pendiente .producto-nombre{ font-weight:700; font-size:1.05rem; color:#212529; }
+    .panel-pendientes .item-pendiente .item-meta{ font-size:.85rem; color:#6c757d; margin-top:4px; }
+    .panel-pendientes .item-actions{ display:flex; gap:8px; margin-top:12px; }
+    .panel-pendientes .btn-aceptar{
+      flex:1; padding:10px; border:none; border-radius:10px; background:#198754; color:#fff;
+      font-weight:600; cursor:pointer; transition:.2s; font-size:.9rem;
+    }
+    .panel-pendientes .btn-aceptar:hover{ background:#157347; }
+    .panel-pendientes .btn-rechazar{
+      flex:1; padding:10px; border:2px solid #dc3545; border-radius:10px; background:#fff; color:#dc3545;
+      font-weight:600; cursor:pointer; transition:.2s; font-size:.9rem;
+    }
+    .panel-pendientes .btn-rechazar:hover{ background:#dc3545; color:#fff; }
+
+    /* Modal Firma */
+    .firma-overlay{
+      position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9500;
+      display:none; align-items:center; justify-content:center;
+    }
+    .firma-overlay.show{ display:flex; }
+    .firma-modal{
+      background:#fff; border-radius:20px; max-width:500px; width:95%;
+      padding:24px; box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    }
+    .firma-modal canvas{
+      border:2px dashed #cbd5e1; border-radius:10px; background:#fff;
+      touch-action:none; width:100%; height:180px;
+    }
+
+    /* Modal Rechazo */
+    .rechazo-overlay{
+      position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9500;
+      display:none; align-items:center; justify-content:center;
+    }
+    .rechazo-overlay.show{ display:flex; }
+    .rechazo-modal{
+      background:#fff; border-radius:20px; max-width:450px; width:95%;
+      padding:24px; box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    /* Estado badges */
+    .estado-confirmado{ color:#198754; font-weight:600; }
+    .estado-rechazado{ color:#dc3545; font-weight:600; }
+    .estado-pendiente{ color:#ffc107; font-weight:600; }
   </style>
 </head>
 
@@ -183,12 +261,19 @@
         <small class="text-muted">EPPs, Equipos, Materiales, Herramientas, Productos</small>
       </div>
     </div>
-<div id="contenedorCampana" class="campana-flotante" style="display: none;" onclick="alternarAlertas()">
-  <span class="icono-campana">🦺</span>
-  <span id="contadorAlertas" class="badge-alerta">0</span>
-</div>
-
-
+    <div class="d-flex align-items-center" style="gap:12px;">
+      <!-- Botón Firmas Pendientes -->
+      <button id="btnFirmasPendientes" class="btn-firmas-pendientes" onclick="togglePanelPendientes()" style="display:none;">
+        <i class="fa-solid fa-file-signature"></i>
+        <span>Firmas Pendientes</span>
+        <span id="contadorPendientes" class="badge-pendientes">0</span>
+      </button>
+      <!-- Campana alertas vencimiento -->
+      <div id="contenedorCampana" class="campana-flotante" style="display: none;" onclick="alternarAlertas()">
+        <span class="icono-campana">🦺</span>
+        <span id="contadorAlertas" class="badge-alerta">0</span>
+      </div>
+    </div>
   </div>
 
   <!-- Chips de categorías -->
@@ -256,6 +341,57 @@
     </div>
   </div>
 </div>
+<!-- Panel de Firmas Pendientes -->
+<div id="panelPendientesOverlay" class="panel-pendientes-overlay" onclick="cerrarPanelPendientesFuera(event)">
+  <div class="panel-pendientes" onclick="event.stopPropagation()">
+    <button class="btn-cerrar" onclick="togglePanelPendientes()">&times;</button>
+    <h5 style="color:#0d6efd;font-weight:700;margin-bottom:4px;"><i class="fa-solid fa-file-signature"></i> Firmas Pendientes</h5>
+    <p style="font-size:.85rem;color:#6c757d;margin-bottom:16px;">EPPs asignados que requieren tu confirmaci&oacute;n y firma.</p>
+    <div id="listaPendientes"></div>
+    <div id="sinPendientes" class="d-none" style="text-align:center;padding:32px 0;color:#6c757d;">
+      <i class="fa-solid fa-circle-check" style="font-size:2.5rem;color:#198754;margin-bottom:12px;display:block;"></i>
+      <p style="font-weight:600;">No tienes EPPs pendientes</p>
+      <p style="font-size:.85rem;">Todos tus EPPs han sido confirmados.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Firma Digital -->
+<div id="firmaOverlay" class="firma-overlay">
+  <div class="firma-modal">
+    <h5 style="color:#212529;font-weight:700;margin-bottom:4px;"><i class="fa-solid fa-pen-nib"></i> Firma Digital</h5>
+    <p id="firmaProductoLabel" style="font-size:.9rem;color:#6c757d;margin-bottom:12px;"></p>
+    <canvas id="sigPadWorker"></canvas>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button onclick="limpiarFirmaWorker()" style="flex:1;padding:8px;border:1px solid #dee2e6;border-radius:10px;background:#fff;cursor:pointer;font-weight:500;">Limpiar</button>
+      <button onclick="cancelarFirma()" style="flex:1;padding:8px;border:1px solid #dee2e6;border-radius:10px;background:#fff;cursor:pointer;font-weight:500;">Cancelar</button>
+      <button id="btnConfirmarFirma" onclick="enviarFirma()" style="flex:2;padding:8px;border:none;border-radius:10px;background:#198754;color:#fff;cursor:pointer;font-weight:600;">Confirmar y Firmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Rechazo -->
+<div id="rechazoOverlay" class="rechazo-overlay">
+  <div class="rechazo-modal">
+    <h5 style="color:#dc3545;font-weight:700;margin-bottom:4px;"><i class="fa-solid fa-triangle-exclamation"></i> Rechazar EPP</h5>
+    <p id="rechazoProductoLabel" style="font-size:.9rem;color:#6c757d;margin-bottom:12px;"></p>
+    <label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:6px;">Motivo del rechazo:</label>
+    <select id="selectMotivoRechazo" style="width:100%;padding:10px;border:1px solid #dee2e6;border-radius:10px;font-size:.95rem;margin-bottom:8px;">
+      <option value="">-- Selecciona un motivo --</option>
+      <option value="Talla incorrecta">Talla incorrecta</option>
+      <option value="Producto da&ntilde;ado">Producto da&ntilde;ado</option>
+      <option value="No solicitado">No solicitado</option>
+      <option value="Producto equivocado">Producto equivocado</option>
+      <option value="Otro">Otro</option>
+    </select>
+    <input id="inputMotivoOtro" type="text" placeholder="Especifica el motivo..." style="width:100%;padding:10px;border:1px solid #dee2e6;border-radius:10px;font-size:.95rem;margin-bottom:12px;display:none;"/>
+    <div style="display:flex;gap:8px;">
+      <button onclick="cancelarRechazo()" style="flex:1;padding:10px;border:1px solid #dee2e6;border-radius:10px;background:#fff;cursor:pointer;font-weight:500;">Cancelar</button>
+      <button id="btnConfirmarRechazo" onclick="enviarRechazo()" style="flex:1;padding:10px;border:none;border-radius:10px;background:#dc3545;color:#fff;cursor:pointer;font-weight:600;">Confirmar Rechazo</button>
+    </div>
+  </div>
+</div>
+
 <script>
   /** ===== Config ===== **/
   const PLACEHOLDER_IMG='https://lh5.googleusercontent.com/d/1n38-t1dDdj56TqOjv8c4SAAcUQcA0U72';
@@ -744,7 +880,279 @@ function cerrarAlertaFuera(event) {
 function resetEPPModule() {
   // ... (tu código de reset)
   document.getElementById('contenedorCampana').style.display = 'none';
+  document.getElementById('btnFirmasPendientes').style.display = 'none';
 }
+
+/* ===== FIRMAS PENDIENTES - FLUJO TRABAJADOR ===== */
+let pendientesData = [];
+let currentPendienteId = null;
+let sigPadWorkerCtx = null;
+let sigPadWorkerDown = false;
+let sigPadWorkerLast = null;
+
+// Cargar pendientes al buscar
+function cargarPendientes(dni){
+  if(!dni) return;
+  gasCall('obtenerEntregasPendientes', dni)
+    .then(function(items){
+      pendientesData = items || [];
+      const btn = document.getElementById('btnFirmasPendientes');
+      const badge = document.getElementById('contadorPendientes');
+      if(pendientesData.length > 0){
+        btn.style.display = 'inline-flex';
+        badge.textContent = pendientesData.length;
+      } else {
+        btn.style.display = 'none';
+      }
+    })
+    .catch(function(){ pendientesData = []; });
+}
+
+function togglePanelPendientes(){
+  const overlay = document.getElementById('panelPendientesOverlay');
+  if(overlay.classList.contains('show')){
+    overlay.classList.remove('show');
+    document.body.style.overflow = 'auto';
+  } else {
+    renderListaPendientes();
+    overlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function cerrarPanelPendientesFuera(e){
+  togglePanelPendientes();
+}
+
+function renderListaPendientes(){
+  const lista = document.getElementById('listaPendientes');
+  const sinItems = document.getElementById('sinPendientes');
+
+  if(!pendientesData.length){
+    lista.innerHTML = '';
+    sinItems.classList.remove('d-none');
+    return;
+  }
+
+  sinItems.classList.add('d-none');
+  lista.innerHTML = pendientesData.map(function(item){
+    return '<div class="item-pendiente" id="pend_' + item.ID_REG + '">' +
+      '<div class="producto-nombre">' + (item.PRODUCTO || '') + (item.VARIANTE ? ' <span style="color:#6c757d;font-weight:400;">(' + item.VARIANTE + ')</span>' : '') + '</div>' +
+      '<div class="item-meta">' +
+        '<i class="fa-solid fa-calendar"></i> ' + (item.FECHA || '') +
+        ' &nbsp;|&nbsp; <i class="fa-solid fa-warehouse"></i> ' + (item.ALMACEN || '') +
+        ' &nbsp;|&nbsp; <i class="fa-solid fa-boxes-stacked"></i> Cant: ' + (item.CANTIDAD || 0) +
+        (item.DEVOLVIBLE && item.DEVOLVIBLE.toLowerCase().startsWith('s') ? ' &nbsp;|&nbsp; <span style="color:#e65100;">Devolvible</span>' : '') +
+      '</div>' +
+      (item.OBS ? '<div class="item-meta"><i class="fa-solid fa-comment"></i> ' + item.OBS + '</div>' : '') +
+      '<div class="item-meta"><i class="fa-solid fa-user"></i> Entregado por: ' + (item.USUARIO || '---') + '</div>' +
+      '<div class="item-actions">' +
+        '<button class="btn-aceptar" onclick="abrirFirma(\'' + item.ID_REG + '\',\'' + (item.PRODUCTO || '').replace(/'/g, "\\'") + '\',\'' + (item.VARIANTE || '').replace(/'/g, "\\'") + '\')"><i class="fa-solid fa-check"></i> Aceptar y Firmar</button>' +
+        '<button class="btn-rechazar" onclick="abrirRechazo(\'' + item.ID_REG + '\',\'' + (item.PRODUCTO || '').replace(/'/g, "\\'") + '\',\'' + (item.VARIANTE || '').replace(/'/g, "\\'") + '\')"><i class="fa-solid fa-xmark"></i> Rechazar</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+/* --- FIRMA --- */
+function initSigPadWorker(){
+  var c = document.getElementById('sigPadWorker');
+  if(!c) return;
+  sigPadWorkerCtx = c.getContext('2d', { willReadFrequently:true });
+  function resize(){
+    var dpr = window.devicePixelRatio || 1;
+    var cssW = c.parentElement.clientWidth - 10 || 460;
+    var cssH = 180;
+    c.width = Math.floor(cssW * dpr);
+    c.height = Math.floor(cssH * dpr);
+    c.style.width = cssW + 'px';
+    c.style.height = cssH + 'px';
+    sigPadWorkerCtx.setTransform(dpr,0,0,dpr,0,0);
+    sigPadWorkerCtx.lineWidth = 2;
+    sigPadWorkerCtx.lineCap = 'round';
+    sigPadWorkerCtx.lineJoin = 'round';
+  }
+  resize();
+
+  function pos(e){
+    var r = c.getBoundingClientRect();
+    var t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - r.left, y: t.clientY - r.top };
+  }
+  function start(e){ sigPadWorkerDown=true; sigPadWorkerLast=pos(e); e.preventDefault(); }
+  function move(e){
+    if(!sigPadWorkerDown || !sigPadWorkerLast) return;
+    var p=pos(e);
+    sigPadWorkerCtx.beginPath();
+    sigPadWorkerCtx.moveTo(sigPadWorkerLast.x, sigPadWorkerLast.y);
+    sigPadWorkerCtx.lineTo(p.x, p.y);
+    sigPadWorkerCtx.stroke();
+    sigPadWorkerLast=p;
+    e.preventDefault();
+  }
+  function end(){ sigPadWorkerDown=false; sigPadWorkerLast=null; }
+
+  c.addEventListener('pointerdown', start);
+  c.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', end);
+  c.addEventListener('touchstart', start, {passive:false});
+  c.addEventListener('touchmove', move, {passive:false});
+  c.addEventListener('touchend', end);
+}
+
+function limpiarFirmaWorker(){
+  var c = document.getElementById('sigPadWorker');
+  if(c && sigPadWorkerCtx) sigPadWorkerCtx.clearRect(0,0,c.width,c.height);
+}
+
+function getSigDataWorker(){
+  var c = document.getElementById('sigPadWorker');
+  if(!c) return null;
+  var ctx = c.getContext('2d');
+  var img = ctx.getImageData(0,0,c.width,c.height).data;
+  for(var i=3; i<img.length; i+=4){ if(img[i]!==0) return c.toDataURL('image/png'); }
+  return null;
+}
+
+function abrirFirma(idReg, producto, variante){
+  currentPendienteId = idReg;
+  document.getElementById('firmaProductoLabel').textContent = 'Confirmar recepci\u00f3n de: ' + producto + (variante ? ' (' + variante + ')' : '');
+  document.getElementById('firmaOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  // Inicializar pad si es la primera vez
+  if(!sigPadWorkerCtx) initSigPadWorker();
+  limpiarFirmaWorker();
+}
+
+function cancelarFirma(){
+  document.getElementById('firmaOverlay').classList.remove('show');
+  currentPendienteId = null;
+  limpiarFirmaWorker();
+}
+
+function enviarFirma(){
+  var sigData = getSigDataWorker();
+  if(!sigData){
+    eppToast('Debes firmar antes de confirmar', 'warn');
+    return;
+  }
+  if(!currentPendienteId) return;
+
+  var btn = document.getElementById('btnConfirmarFirma');
+  btn.disabled = true;
+  btn.textContent = 'Procesando...';
+
+  gasCall('confirmarEntregaEpp', [currentPendienteId, sigData])
+    .then(function(res){
+      if(res && res.ok){
+        eppToast('EPP confirmado correctamente', 'ok', 2500);
+        // Quitar de la lista local
+        pendientesData = pendientesData.filter(function(x){ return x.ID_REG !== currentPendienteId; });
+        renderListaPendientes();
+        // Actualizar badge
+        var badge = document.getElementById('contadorPendientes');
+        badge.textContent = pendientesData.length;
+        if(pendientesData.length === 0){
+          document.getElementById('btnFirmasPendientes').style.display = 'none';
+        }
+        // Cerrar modal firma
+        document.getElementById('firmaOverlay').classList.remove('show');
+        currentPendienteId = null;
+        limpiarFirmaWorker();
+        // Refrescar vista de EPPs
+        var dniLogin = '';
+        try{ dniLogin = JSON.parse(localStorage.getItem('userName')).usuario; }catch(e){}
+        if(dniLogin) buscar(dniLogin);
+      } else {
+        eppToast(res?.message || 'Error al confirmar', 'err', 3000);
+      }
+    })
+    .catch(function(e){
+      eppToast(String(e), 'err', 3000);
+    })
+    .finally(function(){
+      btn.disabled = false;
+      btn.textContent = 'Confirmar y Firmar';
+    });
+}
+
+/* --- RECHAZO --- */
+function abrirRechazo(idReg, producto, variante){
+  currentPendienteId = idReg;
+  document.getElementById('rechazoProductoLabel').textContent = 'Rechazar: ' + producto + (variante ? ' (' + variante + ')' : '');
+  document.getElementById('selectMotivoRechazo').value = '';
+  document.getElementById('inputMotivoOtro').value = '';
+  document.getElementById('inputMotivoOtro').style.display = 'none';
+  document.getElementById('rechazoOverlay').classList.add('show');
+}
+
+// Mostrar/ocultar input "Otro"
+document.addEventListener('DOMContentLoaded', function(){
+  var sel = document.getElementById('selectMotivoRechazo');
+  if(sel){
+    sel.addEventListener('change', function(){
+      document.getElementById('inputMotivoOtro').style.display = sel.value === 'Otro' ? 'block' : 'none';
+    });
+  }
+});
+
+function cancelarRechazo(){
+  document.getElementById('rechazoOverlay').classList.remove('show');
+  currentPendienteId = null;
+}
+
+function enviarRechazo(){
+  var sel = document.getElementById('selectMotivoRechazo');
+  var motivo = sel.value;
+  if(motivo === 'Otro'){
+    motivo = document.getElementById('inputMotivoOtro').value.trim();
+  }
+  if(!motivo){
+    eppToast('Selecciona un motivo de rechazo', 'warn');
+    return;
+  }
+  if(!currentPendienteId) return;
+
+  var btn = document.getElementById('btnConfirmarRechazo');
+  btn.disabled = true;
+  btn.textContent = 'Procesando...';
+
+  gasCall('rechazarEntregaEpp', [currentPendienteId, motivo])
+    .then(function(res){
+      if(res && res.ok){
+        eppToast('EPP rechazado. Se notific\u00f3 al administrador.', 'warn', 3000);
+        // Quitar de la lista local
+        pendientesData = pendientesData.filter(function(x){ return x.ID_REG !== currentPendienteId; });
+        renderListaPendientes();
+        var badge = document.getElementById('contadorPendientes');
+        badge.textContent = pendientesData.length;
+        if(pendientesData.length === 0){
+          document.getElementById('btnFirmasPendientes').style.display = 'none';
+        }
+        document.getElementById('rechazoOverlay').classList.remove('show');
+        currentPendienteId = null;
+      } else {
+        eppToast(res?.message || 'Error al rechazar', 'err', 3000);
+      }
+    })
+    .catch(function(e){
+      eppToast(String(e), 'err', 3000);
+    })
+    .finally(function(){
+      btn.disabled = false;
+      btn.textContent = 'Confirmar Rechazo';
+    });
+}
+
+/* ===== Hook: cargar pendientes al buscar EPPs ===== */
+var _originalBuscar = buscar;
+buscar = async function(dniForzado){
+  await _originalBuscar(dniForzado);
+  // Cargar pendientes después de buscar
+  var dniLogin = '';
+  try{ dniLogin = dniForzado || JSON.parse(localStorage.getItem('userName')).usuario; }catch(e){}
+  if(dniLogin) cargarPendientes(dniLogin);
+};
 </script>
 
 </body>

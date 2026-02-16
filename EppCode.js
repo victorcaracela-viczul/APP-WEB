@@ -22,8 +22,8 @@ const SHEPP = {
 // (Si cambias el orden de columnas en la hoja, ACTUALIZA solo estos índices.)
 const IDX = {
   STOCK: { ID:1, ALMACEN:2, PRODUCTO:3, VARIANTE:4, CATEGORIA:5, STOCK:6, STOCK_MINIMO:7, PRECIO:8, IMG:9, FILE:10 },
-  MOV:   { ID_MOV:1, FECHA:2, OPERACION:3, ALMACEN:4, PRODUCTO:5, VARIANTE:6, CANTIDAD:7, ID_PROV:8, MARCA:9, COSTO_UNITARIO:10, MONEDA:11, IMPORTE:12, USUARIO:13, OBS:14, DNI:15, CARGO:16, FIRMA_URL:17 },
-  REG:   { ID_REG:1, FECHA:2, OPERACION:3, ALMACEN:4, PRODUCTO:5, VARIANTE:6, DNI:7, NOMBRES:8, EMPRESA:9, CARGO:10, CANTIDAD:11, COSTO_UNITARIO:12, MONEDA:13, IMPORTE:14, USUARIO:15, OBS:16, DEVOLVIBLE:17, VIDA_UTIL_DIAS:18, FREC_INSP:19, REQ_CAP_TEMA:20, FECHA_VENCIMIENTO:21, PROX_INSPECCION:22, FIRMA_URL:23, REF_ID:24 },
+  MOV:   { ID_MOV:1, FECHA:2, OPERACION:3, ALMACEN:4, PRODUCTO:5, VARIANTE:6, CANTIDAD:7, ID_PROV:8, MARCA:9, COSTO_UNITARIO:10, MONEDA:11, IMPORTE:12, USUARIO:13, OBS:14, DNI:15, CARGO:16, FIRMA_URL:17, ESTADO:18, FECHA_CONFIRMACION:19 },
+  REG:   { ID_REG:1, FECHA:2, OPERACION:3, ALMACEN:4, PRODUCTO:5, VARIANTE:6, DNI:7, NOMBRES:8, EMPRESA:9, CARGO:10, CANTIDAD:11, COSTO_UNITARIO:12, MONEDA:13, IMPORTE:14, USUARIO:15, OBS:16, DEVOLVIBLE:17, VIDA_UTIL_DIAS:18, FREC_INSP:19, REQ_CAP_TEMA:20, FECHA_VENCIMIENTO:21, PROX_INSPECCION:22, FIRMA_URL:23, REF_ID:24, ESTADO:25, FECHA_CONFIRMACION:26 },
   ALM:   { ID_ALMACEN:1, NOMBRE:2, UBICACION:3, ESTADO:4 },
   PER:   { ID:1, DNI:2, NOMBRES:3, EMPRESA:5, CARGO:7, CONDICION:12 } // PERSONAl
 };
@@ -352,7 +352,9 @@ function _readRegistroCache_(){
     USUARIO  : _str(r[IDX.REG.USUARIO-1]),
     OBS      : _str(r[IDX.REG.OBS-1]),
     FIRMA_URL: _str(r[IDX.REG.FIRMA_URL-1]),
-    REF_ID   : _str(r[IDX.REG.REF_ID-1])
+    REF_ID   : _str(r[IDX.REG.REF_ID-1]),
+    ESTADO   : _str(r[IDX.REG.ESTADO-1] || ''),
+    FECHA_CONFIRMACION: _str(r[IDX.REG.FECHA_CONFIRMACION-1] || '')
   }));
   // TTL 120s
   cache.put(key, JSON.stringify(list), 120);
@@ -383,7 +385,9 @@ function _readMovCache_(){
     OBS      : _str(r[IDX.MOV.OBS-1]),
     DNI      : typeof IDX.MOV.DNI==='number' ? _str(r[IDX.MOV.DNI-1]) : '',
     CARGO    : typeof IDX.MOV.CARGO==='number' ? _str(r[IDX.MOV.CARGO-1]) : '',
-    FIRMA_URL: typeof IDX.MOV.FIRMA_URL==='number' ? _str(r[IDX.MOV.FIRMA_URL-1]) : ''
+    FIRMA_URL: typeof IDX.MOV.FIRMA_URL==='number' ? _str(r[IDX.MOV.FIRMA_URL-1]) : '',
+    ESTADO   : typeof IDX.MOV.ESTADO==='number' ? _str(r[IDX.MOV.ESTADO-1]) : '',
+    FECHA_CONFIRMACION: typeof IDX.MOV.FECHA_CONFIRMACION==='number' ? _str(r[IDX.MOV.FECHA_CONFIRMACION-1]) : ''
   }));
   // TTL 120s
   cache.put(key, JSON.stringify(list), 120);
@@ -692,8 +696,10 @@ function registrarEntrega(payload){
     row[IDX.REG.REQ_CAP_TEMA-1]=reglas.REQ_CAP_TEMA;
     row[IDX.REG.FECHA_VENCIMIENTO-1]=vence||'';
     row[IDX.REG.PROX_INSPECCION-1]=prox||'';
-    row[IDX.REG.FIRMA_URL-1]=_str(payload.firmaUrl||'');
+    row[IDX.REG.FIRMA_URL-1]=''; // Firma se llena cuando el trabajador confirme
     row[IDX.REG.REF_ID-1]=_str(payload.refId||'');
+    row[IDX.REG.ESTADO-1]='Pendiente';
+    row[IDX.REG.FECHA_CONFIRMACION-1]='';
     _appendArray(SHEPP.REGISTRO, row);
 
     // 🔹 MOVIMIENTOS (hoja MOVIMIENTOS)
@@ -705,21 +711,22 @@ function registrarEntrega(payload){
     m[IDX.MOV.PRODUCTO-1]=producto;
     m[IDX.MOV.VARIANTE-1]=variante;
     m[IDX.MOV.CANTIDAD-1]=cant;
-    m[IDX.MOV.ID_PROV-1]=''; 
+    m[IDX.MOV.ID_PROV-1]='';
     m[IDX.MOV.MARCA-1]='';
-    m[IDX.MOV.COSTO_UNITARIO-1]=precioUnit; 
-    m[IDX.MOV.MONEDA-1]=moneda; 
+    m[IDX.MOV.COSTO_UNITARIO-1]=precioUnit;
+    m[IDX.MOV.MONEDA-1]=moneda;
     m[IDX.MOV.IMPORTE-1]=precioUnit*cant;
     m[IDX.MOV.USUARIO-1]=Session.getActiveUser().getEmail();
-    m[IDX.MOV.OBS-1]=obsAuto; // ← 🆕 También en movimientos
+    m[IDX.MOV.OBS-1]=obsAuto;
     m[IDX.MOV.DNI-1]=_str(payload.dni||'');
     m[IDX.MOV.CARGO-1]=_str(payload.cargo||'');
-    m[IDX.MOV.FIRMA_URL-1]=_str(payload.firmaUrl||'');
+    m[IDX.MOV.FIRMA_URL-1]='';
+    m[IDX.MOV.ESTADO-1]='Pendiente';
+    m[IDX.MOV.FECHA_CONFIRMACION-1]='';
     _appendArray(SHEPP.MOV, m);
 
-    // 🔹 ACTUALIZAR STOCK
-    _ensureStockDelta(almacen, producto, variante, -cant, false, null);
-    
+    // 🚫 YA NO se descuenta stock aquí — se descuenta cuando el trabajador confirme
+
     return { ok:true, id: row[IDX.REG.ID_REG-1] };
   }catch(err){
     return { ok:false, message: err.message||String(err) };
@@ -1079,7 +1086,9 @@ function getHistorialByDni(dni, limit) {
         VIDA_UTIL_DIAS:    vidaUtil,                    // ✅ Enriquecido
         FECHA_VENCIMIENTO: _fmtDateOut(fechaVenc),      // ✅ Calculado si falta
         FIRMA_URL:         _str(r[IDX.REG.FIRMA_URL-1] || ''),
-        OBS: _str(r[IDX.REG.OBS-1] || '')
+        OBS: _str(r[IDX.REG.OBS-1] || ''),
+        ESTADO: _str(r[IDX.REG.ESTADO-1] || ''),
+        FECHA_CONFIRMACION: _str(r[IDX.REG.FECHA_CONFIRMACION-1] || '')
       };
     })
     .sort((a, b) => new Date(b.FECHA) - new Date(a.FECHA));
@@ -1136,6 +1145,239 @@ function saveSignature(dataUrl) {
   const direct = 'https://lh5.googleusercontent.com/d/' + id;
 
   return { ok: true, url: direct, id };
+}
+
+/** ================== FLUJO TRABAJADOR: Pendientes / Confirmar / Rechazar ================== **/
+
+/**
+ * Obtiene todas las entregas pendientes de confirmación para un trabajador.
+ * @param {string} dni - DNI del trabajador
+ * @returns {Array} Lista de entregas pendientes
+ */
+function obtenerEntregasPendientes(dni){
+  try{
+    if(!dni) return [];
+    const sh = _sh(SHEPP.REGISTRO);
+    const data = sh.getDataRange().getValues();
+    const pendientes = [];
+    for(let i=1; i<data.length; i++){
+      const r = data[i];
+      if(_str(r[IDX.REG.DNI-1]) !== _str(dni)) continue;
+      if(_str(r[IDX.REG.OPERACION-1]) !== 'Entrega') continue;
+      if(_str(r[IDX.REG.ESTADO-1]) !== 'Pendiente') continue;
+      pendientes.push({
+        ID_REG: _str(r[IDX.REG.ID_REG-1]),
+        FECHA: _fmtDateOut(r[IDX.REG.FECHA-1]),
+        ALMACEN: _str(r[IDX.REG.ALMACEN-1]),
+        PRODUCTO: _str(r[IDX.REG.PRODUCTO-1]),
+        VARIANTE: _str(r[IDX.REG.VARIANTE-1]),
+        CANTIDAD: _num(r[IDX.REG.CANTIDAD-1]),
+        USUARIO: _str(r[IDX.REG.USUARIO-1]),
+        OBS: _str(r[IDX.REG.OBS-1]),
+        DEVOLVIBLE: _str(r[IDX.REG.DEVOLVIBLE-1]),
+        ESTADO: 'Pendiente'
+      });
+    }
+    return pendientes;
+  }catch(e){
+    console.error('Error en obtenerEntregasPendientes: ' + e.message);
+    return [];
+  }
+}
+
+/**
+ * Cuenta entregas pendientes para un trabajador (para badge).
+ * @param {string} dni - DNI del trabajador
+ * @returns {number}
+ */
+function contarEntregasPendientes(dni){
+  return obtenerEntregasPendientes(dni).length;
+}
+
+/**
+ * Trabajador confirma la recepción de un EPP individual.
+ * Cambia estado a "Confirmado", guarda firma, fecha y descuenta stock.
+ * @param {string} idReg - ID del registro en REGISTRO
+ * @param {string} firmaDataUrl - Base64 de la firma digital
+ * @returns {Object} { ok, message }
+ */
+function confirmarEntregaEpp(idReg, firmaDataUrl){
+  const lock = LockService.getScriptLock(); lock.tryLock(30000);
+  try{
+    if(!idReg) throw new Error('ID de registro requerido');
+    if(!firmaDataUrl) throw new Error('Firma requerida para confirmar');
+
+    // Subir firma a Drive
+    const firmaRes = saveSignature(firmaDataUrl);
+    if(!firmaRes || !firmaRes.ok) throw new Error('No se pudo guardar la firma');
+    const firmaUrl = firmaRes.url;
+
+    const ahora = new Date();
+    const tz = Session.getScriptTimeZone();
+    const fechaConf = Utilities.formatDate(ahora, tz, 'yyyy-MM-dd HH:mm:ss');
+
+    // Buscar y actualizar en REGISTRO
+    const shReg = _sh(SHEPP.REGISTRO);
+    const dataReg = shReg.getDataRange().getValues();
+    let regRow = -1;
+    let regData = null;
+    for(let i=1; i<dataReg.length; i++){
+      if(_str(dataReg[i][IDX.REG.ID_REG-1]) === _str(idReg)){
+        regRow = i+1; // 1-based
+        regData = dataReg[i];
+        break;
+      }
+    }
+    if(regRow < 0) throw new Error('Registro no encontrado: ' + idReg);
+    if(_str(regData[IDX.REG.ESTADO-1]) !== 'Pendiente') throw new Error('Este EPP ya fue procesado');
+
+    // Actualizar REGISTRO
+    const totalColsReg = Math.max(shReg.getLastColumn(), IDX.REG.FECHA_CONFIRMACION);
+    const regRange = shReg.getRange(regRow, 1, 1, totalColsReg);
+    const regVals = regRange.getValues()[0];
+    // Expandir si faltan columnas
+    while(regVals.length < IDX.REG.FECHA_CONFIRMACION) regVals.push('');
+    regVals[IDX.REG.FIRMA_URL-1] = firmaUrl;
+    regVals[IDX.REG.ESTADO-1] = 'Confirmado';
+    regVals[IDX.REG.FECHA_CONFIRMACION-1] = fechaConf;
+    shReg.getRange(regRow, 1, 1, regVals.length).setValues([regVals]);
+
+    // Buscar y actualizar en MOVIMIENTOS (mirror)
+    const shMov = _sh(SHEPP.MOV);
+    const dataMov = shMov.getDataRange().getValues();
+    for(let i=1; i<dataMov.length; i++){
+      const m = dataMov[i];
+      if(_str(m[IDX.MOV.OPERACION-1]) === 'Entrega' &&
+         _str(m[IDX.MOV.DNI-1]) === _str(regData[IDX.REG.DNI-1]) &&
+         _str(m[IDX.MOV.PRODUCTO-1]) === _str(regData[IDX.REG.PRODUCTO-1]) &&
+         _str(m[IDX.MOV.VARIANTE-1]||'') === _str(regData[IDX.REG.VARIANTE-1]||'') &&
+         _str(m[IDX.MOV.FECHA-1]) === _str(regData[IDX.REG.FECHA-1]) &&
+         _str(m[IDX.MOV.ESTADO-1]) === 'Pendiente'){
+        const movRow = i+1;
+        const totalColsMov = Math.max(shMov.getLastColumn(), IDX.MOV.FECHA_CONFIRMACION);
+        const movRange = shMov.getRange(movRow, 1, 1, totalColsMov);
+        const movVals = movRange.getValues()[0];
+        while(movVals.length < IDX.MOV.FECHA_CONFIRMACION) movVals.push('');
+        movVals[IDX.MOV.FIRMA_URL-1] = firmaUrl;
+        movVals[IDX.MOV.ESTADO-1] = 'Confirmado';
+        movVals[IDX.MOV.FECHA_CONFIRMACION-1] = fechaConf;
+        shMov.getRange(movRow, 1, 1, movVals.length).setValues([movVals]);
+        break;
+      }
+    }
+
+    // Descontar stock AHORA
+    const almacen = _str(regData[IDX.REG.ALMACEN-1]);
+    const producto = _str(regData[IDX.REG.PRODUCTO-1]);
+    const variante = _str(regData[IDX.REG.VARIANTE-1]);
+    const cant = _num(regData[IDX.REG.CANTIDAD-1]);
+    _ensureStockDelta(almacen, producto, variante, -cant, false, null);
+
+    return { ok:true, message:'EPP confirmado correctamente' };
+  }catch(err){
+    return { ok:false, message: err.message||String(err) };
+  }finally{
+    try{ invalidateStockCache(); }catch(e){}
+    try{ lock.releaseLock(); }catch(e){}
+  }
+}
+
+/**
+ * Trabajador rechaza un EPP.
+ * Cambia estado a "Rechazado", guarda motivo, NO descuenta stock.
+ * @param {string} idReg - ID del registro en REGISTRO
+ * @param {string} motivo - Motivo del rechazo
+ * @returns {Object} { ok, message }
+ */
+function rechazarEntregaEpp(idReg, motivo){
+  const lock = LockService.getScriptLock(); lock.tryLock(30000);
+  try{
+    if(!idReg) throw new Error('ID de registro requerido');
+    if(!motivo) throw new Error('Motivo de rechazo requerido');
+
+    const ahora = new Date();
+    const tz = Session.getScriptTimeZone();
+    const fechaConf = Utilities.formatDate(ahora, tz, 'yyyy-MM-dd HH:mm:ss');
+
+    // Buscar y actualizar en REGISTRO
+    const shReg = _sh(SHEPP.REGISTRO);
+    const dataReg = shReg.getDataRange().getValues();
+    let regRow = -1;
+    let regData = null;
+    for(let i=1; i<dataReg.length; i++){
+      if(_str(dataReg[i][IDX.REG.ID_REG-1]) === _str(idReg)){
+        regRow = i+1;
+        regData = dataReg[i];
+        break;
+      }
+    }
+    if(regRow < 0) throw new Error('Registro no encontrado');
+    if(_str(regData[IDX.REG.ESTADO-1]) !== 'Pendiente') throw new Error('Este EPP ya fue procesado');
+
+    // Actualizar REGISTRO
+    const totalColsReg = Math.max(shReg.getLastColumn(), IDX.REG.FECHA_CONFIRMACION);
+    const regRange = shReg.getRange(regRow, 1, 1, totalColsReg);
+    const regVals = regRange.getValues()[0];
+    while(regVals.length < IDX.REG.FECHA_CONFIRMACION) regVals.push('');
+    regVals[IDX.REG.ESTADO-1] = 'Rechazado';
+    regVals[IDX.REG.FECHA_CONFIRMACION-1] = fechaConf;
+    regVals[IDX.REG.OBS-1] = 'RECHAZADO: ' + _str(motivo) + (regVals[IDX.REG.OBS-1] ? ' | ' + regVals[IDX.REG.OBS-1] : '');
+    shReg.getRange(regRow, 1, 1, regVals.length).setValues([regVals]);
+
+    // Mirror en MOVIMIENTOS
+    const shMov = _sh(SHEPP.MOV);
+    const dataMov = shMov.getDataRange().getValues();
+    for(let i=1; i<dataMov.length; i++){
+      const m = dataMov[i];
+      if(_str(m[IDX.MOV.OPERACION-1]) === 'Entrega' &&
+         _str(m[IDX.MOV.DNI-1]) === _str(regData[IDX.REG.DNI-1]) &&
+         _str(m[IDX.MOV.PRODUCTO-1]) === _str(regData[IDX.REG.PRODUCTO-1]) &&
+         _str(m[IDX.MOV.VARIANTE-1]||'') === _str(regData[IDX.REG.VARIANTE-1]||'') &&
+         _str(m[IDX.MOV.FECHA-1]) === _str(regData[IDX.REG.FECHA-1]) &&
+         _str(m[IDX.MOV.ESTADO-1]) === 'Pendiente'){
+        const movRow = i+1;
+        const totalColsMov = Math.max(shMov.getLastColumn(), IDX.MOV.FECHA_CONFIRMACION);
+        const movRange = shMov.getRange(movRow, 1, 1, totalColsMov);
+        const movVals = movRange.getValues()[0];
+        while(movVals.length < IDX.MOV.FECHA_CONFIRMACION) movVals.push('');
+        movVals[IDX.MOV.ESTADO-1] = 'Rechazado';
+        movVals[IDX.MOV.FECHA_CONFIRMACION-1] = fechaConf;
+        movVals[IDX.MOV.OBS-1] = 'RECHAZADO: ' + _str(motivo) + (movVals[IDX.MOV.OBS-1] ? ' | ' + movVals[IDX.MOV.OBS-1] : '');
+        shMov.getRange(movRow, 1, 1, movVals.length).setValues([movVals]);
+        break;
+      }
+    }
+
+    // NO se descuenta stock
+    return { ok:true, message:'EPP rechazado. Motivo registrado.' };
+  }catch(err){
+    return { ok:false, message: err.message||String(err) };
+  }finally{
+    try{ invalidateStockCache(); }catch(e){}
+    try{ lock.releaseLock(); }catch(e){}
+  }
+}
+
+/**
+ * Resumen de estados para el admin (conteo de Pendientes y Rechazados).
+ * @param {string} almacen - Filtro opcional por almacén
+ * @returns {Object} { pendientes, rechazados }
+ */
+function obtenerResumenEstados(almacen){
+  try{
+    const rows = _readRows(SHEPP.REGISTRO);
+    let pendientes = 0, rechazados = 0;
+    for(const r of rows){
+      if(_str(r[IDX.REG.OPERACION-1]) !== 'Entrega') continue;
+      if(almacen && _str(r[IDX.REG.ALMACEN-1]) !== _str(almacen)) continue;
+      const estado = _str(r[IDX.REG.ESTADO-1]);
+      if(estado === 'Pendiente') pendientes++;
+      else if(estado === 'Rechazado') rechazados++;
+    }
+    return { pendientes, rechazados };
+  }catch(e){
+    return { pendientes:0, rechazados:0 };
+  }
 }
 
 function crearProductoConOpcionalIngreso(p){

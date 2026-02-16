@@ -1489,14 +1489,24 @@ function verificarAlertasAlInicio() {
   const userData = JSON.parse(localStorage.getItem('userName'));
   if (!userData || !userData.usuario) return;
 
-  // Llamamos al servidor para ver si hay alertas activas
+  // Verificar alertas completas (vencimientos + pendientes de firma)
   google.script.run
-    .withSuccessHandler(function(alertas) {
-      if (alertas && alertas.length > 0) {
+    .withSuccessHandler(function(resultado) {
+      if (!resultado) return;
+      if (resultado.tienePendientes) {
+        // Cambiar texto del aviso para EPPs pendientes de firma
+        const textoEl = document.getElementById('textoAviso');
+        if (textoEl) {
+          textoEl.innerHTML = 'Tienes <b>' + resultado.totalPendientes + ' EPP' + (resultado.totalPendientes > 1 ? 's' : '') + '</b> pendiente' + (resultado.totalPendientes > 1 ? 's' : '') + ' de recepci\u00f3n. Revisa tu m\u00f3dulo de Asignaciones.';
+        }
+        mostrarAvisoTemporal();
+      } else if (resultado.tieneVencimientos) {
+        const textoEl = document.getElementById('textoAviso');
+        if (textoEl) textoEl.textContent = 'Tienes alertas pendientes. Revisa tu m\u00f3dulo de EPPs.';
         mostrarAvisoTemporal();
       }
     })
-    .obtenerAlertasVencimientos(userData.usuario);
+    .verificarAlertasCompletas(userData.usuario);
 }
 
 function mostrarAvisoTemporal() {

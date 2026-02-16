@@ -76,3 +76,26 @@ function obtenerAlertasVencimientos(dniLogin) {
     return [];
   }
 }
+
+/**
+ * Verifica si un trabajador tiene EPPs pendientes de firma.
+ * Usado para mostrar aviso al login.
+ * @param {string} dniLogin - DNI del usuario logueado
+ * @returns {Object} { tieneVencimientos, tienePendientes, totalPendientes }
+ */
+function verificarAlertasCompletas(dniLogin) {
+  try {
+    const alertasVenc = obtenerAlertasVencimientos(dniLogin);
+    const pendientes = (typeof obtenerEntregasPendientes === 'function')
+      ? obtenerEntregasPendientes(dniLogin)
+      : [];
+    return {
+      tieneVencimientos: alertasVenc && alertasVenc.length > 0,
+      tienePendientes: pendientes && pendientes.length > 0,
+      totalPendientes: pendientes ? pendientes.length : 0
+    };
+  } catch (e) {
+    console.error("Error en verificarAlertasCompletas: " + e.message);
+    return { tieneVencimientos: false, tienePendientes: false, totalPendientes: 0 };
+  }
+}
