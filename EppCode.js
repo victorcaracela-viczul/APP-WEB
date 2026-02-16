@@ -1797,16 +1797,12 @@ function obtenerMaestroCompleto() {
   try {
     const ss = getSpreadsheetEPP();
     const shReg = ss.getSheetByName(SHEPP.REGISTRO);
-    
-    if (!shReg) {
-      throw new Error('No se encontró la hoja REGISTRO');
-    }
-    
+    if (!shReg) throw new Error('No se encontró la hoja REGISTRO');
+
     const data = shReg.getDataRange().getValues();
     const headers = data[0];
     const rows = data.slice(1);
-    
-    // 🔍 Índices de columnas
+
     const idx = {
       FECHA: headers.indexOf('FECHA'),
       OPERACION: headers.indexOf('OPERACION'),
@@ -1816,61 +1812,89 @@ function obtenerMaestroCompleto() {
       PRODUCTO: headers.indexOf('PRODUCTO'),
       VARIANTE: headers.indexOf('VARIANTE'),
       FECHA_VENCIMIENTO: headers.indexOf('FECHA_VENCIMIENTO'),
-      VIDA_UTIL_DIAS: headers.indexOf('VIDA_UTIL_DIAS')
+      VIDA_UTIL_DIAS: headers.indexOf('VIDA_UTIL_DIAS'),
+      ESTADO: headers.indexOf('ESTADO')
     };
-    
-    // 📊 Procesar solo entregas
-    const entregas = rows
-      .filter(r => _str(r[idx.OPERACION]) === 'Entrega')
-      .map(r => {
-        const fechaVenc = r[idx.FECHA_VENCIMIENTO];
-        const diasVida = Number(r[idx.VIDA_UTIL_DIAS] || 0);
-        
-        // 🔧 Calcular estado
-        let estado = 'SIN ASIGNAR';
-        let clase = 'sin-asignar';
-        let diasRestantes = 0;
-        
-        if (fechaVenc && diasVida > 0) {
-          const hoy = new Date();
-          hoy.setHours(0, 0, 0, 0);
-          
-          const venc = new Date(fechaVenc);
-          venc.setHours(0, 0, 0, 0);
-          
-          const diffMs = venc - hoy;
-          diasRestantes = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-          
-          if (diasRestantes < 0) {
-            estado = 'VENCIDO';
-            clase = 'st-ENTR';
-          } else if (diasRestantes <= 15) {
-            estado = 'POR VENCER';
-            clase = 'st-NOTIF';
-          } else {
-            estado = 'VIGENTE';
-            clase = 'st-OK';
-          }
+
+    // Solo entregas (no devoluciones ni rechazados)
+    const entregas = rows.filter(r => {
+      if (_str(r[idx.OPERACION]) !== 'Entrega') return false;
+      const est = _str(r[idx.ESTADO]).toLowerCase();
+      if (est === 'rechazado') return false;
+      return true;
+    });
+
+    // Quedarse solo con la ÚLTIMA entrega por DNI+PRODUCTO (la más reciente)
+    const mapaUltima = new Map();
+    entregas.forEach(r => {
+      const key = _str(r[idx.DNI]) + '||' + _str(r[idx.PRODUCTO]);
+      const fecha = new Date(r[idx.FECHA]);
+      const existing = mapaUltima.get(key);
+      if (!existing || fecha > new Date(existing[idx.FECHA])) {
+        mapaUltima.set(key, r);
+      }
+    });
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const result = [];
+    mapaUltima.forEach(r => {
+      const fechaVenc = r[idx.FECHA_VENCIMIENTO];
+      const diasVida = Number(r[idx.VIDA_UTIL_DIAS] || 0);
+
+      let estado = 'VIGENTE';
+      let clase = 'st-OK';
+      let diasRestantes = 0;
+
+      if (fechaVenc) {
+        const venc = new Date(fechaVenc);
+        venc.setHours(0, 0, 0, 0);
+        const diffMs = venc - hoy;
+        diasRestantes = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diasRestantes < 0) {
+          estado = 'VENCIDO';
+          clase = 'st-ENTR';
+        } else if (diasRestantes <= 30) {
+          estado = 'POR VENCER';
+          clase = 'st-NOTIF';
+        } else {
+          estado = 'VIGENTE';
+          clase = 'st-OK';
         }
-        
-        return {
-          fecha: _fmtDateOut(r[idx.FECHA]),
-          trabajador: _str(r[idx.NOMBRES]),
-          cargo: _str(r[idx.CARGO]),
-          producto: _str(r[idx.PRODUCTO]),
-          variante: _str(r[idx.VARIANTE]),
-          vencimiento: _fmtDateOut(fechaVenc),
-          estado: estado,
-          clase: clase,
-          diasRestantes: diasRestantes
-        };
+      } else if (diasVida > 0) {
+        // Tiene vida útil pero no fecha vencimiento: calcular desde fecha entrega
+        const fEntrega = new Date(r[idx.FECHA]);
+        if (!isNaN(fEntrega.getTime())) {
+          const venc = new Date(fEntrega.getTime() + diasVida * 86400000);
+          venc.setHours(0, 0, 0, 0);
+          diasRestantes = Math.ceil((venc - hoy) / 86400000);
+          if (diasRestantes < 0) { estado = 'VENCIDO'; clase = 'st-ENTR'; }
+          else if (diasRestantes <= 30) { estado = 'POR VENCER'; clase = 'st-NOTIF'; }
+        }
+      }
+      // Si no tiene ni fecha vencimiento ni vida útil, queda VIGENTE/st-OK
+
+      result.push({
+        fecha: _fmtDateOut(r[idx.FECHA]),
+        dni: _str(r[idx.DNI]),
+        trabajador: _str(r[idx.NOMBRES]),
+        cargo: _str(r[idx.CARGO]),
+        producto: _str(r[idx.PRODUCTO]),
+        variante: _str(r[idx.VARIANTE]),
+        vencimiento: _fmtDateOut(fechaVenc),
+        estado: estado,
+        clase: clase,
+        diasRestantes: diasRestantes
       });
-    
-    Logger.log(`✅ Maestro completo: ${entregas.length} registros`);
-    return entregas;
-    
+    });
+
+    Logger.log('Maestro completo: ' + result.length + ' registros (ultimas entregas)');
+    return result;
+
   } catch(e) {
-    Logger.log('❌ Error en obtenerMaestroCompleto: ' + e.message);
+    Logger.log('Error en obtenerMaestroCompleto: ' + e.message);
     throw new Error('Error al obtener maestro: ' + e.message);
   }
 }

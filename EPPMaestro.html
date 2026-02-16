@@ -1,572 +1,191 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <base target="_top">
-    <style>
-
-      /* ANIMACIÓN DE CARGA DE IMÁGENES */
-.header-epp-img {
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.header-epp-img[src*="placeholder"] {
-  opacity: 0.5;
-  filter: grayscale(100%);
-}
-
-/* ASEGURAR VISIBILIDAD INMEDIATA */
-.tab-pane {
-  min-height: 400px;
-}
-
-.tab-pane.active {
-  display: block !important;
-  opacity: 1 !important;
-}
-
-.tabla-horizontal {
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-
-
-      /* ESTILOS ESPECÍFICOS DEL MAESTRO EPP */
-      .email-cell {
-        max-width: 110px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      /* TABLA HORIZONTAL EPP */
-      .scroll-horizontal {
-        overflow-x: auto;
-        overflow-y: hidden;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        background: var(--white);
-        border: 1px solid var(--gray-border);
-      }
-
-      .tabla-horizontal {
-        display: inline-flex;
-        font-size: 11px;
-        min-width: 100%;
-      }
-
-      .columna-trabajador {
-        display: flex;
-        flex-direction: column;
-        background: var(--white);
-        border-right: 2px solid var(--gray-border);
-        position: sticky;
-        left: 0;
-        z-index: 10;
-      }
-
-      .header-trabajador {
-        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-        color: #111827;
-        padding: 12px;
-        text-align: center;
-        font-weight: 600;
-        border-bottom: 2px solid var(--gray-border);
-        height: 80px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .celda-trabajador {
-        padding: 10px 15px;
-        border-bottom: 1px solid var(--gray-border);
-        text-align: left;
-        height: 45px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        min-width: 200px;
-        transition: background 0.2s;
-        cursor: pointer;
-      }
-      
-      .celda-trabajador:hover {
-        background: var(--hover-bg);
-      }
-      
-      .fila-oculta {
-        display: none !important;
-      }
-
-      .nombre-trabajador {
-        font-weight: 600;
-        color: #111827;
-      }
-
-      .cargo-trabajador {
-        font-size: 10px;
-        color: #6c757d;
-      }
-
-      .columna-epp {
-        display: flex;
-        flex-direction: column;
-        background: var(--white);
-        border-right: 1px solid var(--gray-border);
-        min-width: 80px;
-      }
-
-      .header-epp {
-        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-        color: #111827;
-        padding: 8px;
-        text-align: center;
-        font-weight: 600;
-        border-bottom: 2px solid var(--gray-border);
-        height: 80px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s;
-      }
-      
-      .header-epp:hover {
-        background: var(--hover-bg);
-        transform: scale(1.05);
-      }
-
-      .header-epp-img {
-        width: 50px;
-        height: 50px;
-        border-radius: 10px;
-        object-fit: cover;
-        border: 2px solid var(--gray-border);
-        background: var(--white);
-        transition: all 0.3s;
-      }
-      
-      .header-epp:hover .header-epp-img {
-        border-color: var(--main-text-color);
-        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
-      }
-
-      .celda-epp {
-        padding: 10px;
-        border-bottom: 1px solid var(--gray-border);
-        text-align: center;
-        height: 45px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.2s;
-      }
-      
-      .celda-epp:hover {
-        background: var(--hover-bg);
-      }
-
-      .semaforo {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        display: inline-block;
-        cursor: pointer;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-        transition: all 0.3s;
-      }
-      
-      .semaforo:hover {
-        transform: scale(1.2);
-      }
-
-      .st-OK { 
-        background: #198754;
-        border: 2px solid #146c43;
-      }
-
-      .st-NOTIF { 
-        background: #ffc107;
-        border: 2px solid #e0a800;
-      }
-
-      .st-ENTR { 
-        background: #dc3545;
-        border: 2px solid #b02a37;
-      }
-
-      .sin-asignar {
-        background: #e9ecef;
-        border: 2px solid #ced4da;
-      }
-
-      /* TOOLTIP */
-      .tooltip-epp {
-        position: fixed;
-        background: var(--white);
-        color: #111827;
-        padding: 16px;
-        border-radius: 12px;
-        font-size: 12px;
-        z-index: 10000;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-        max-width: 300px;
-        border: 1px solid var(--gray-border);
-      }
-
-      .tooltip-epp.show {
-        opacity: 1;
-      }
-
-      .tooltip-header {
-        font-weight: 600;
-        margin-bottom: 12px;
-        padding-bottom: 8px;
-        border-bottom: 2px solid var(--gray-border);
-        color: #111827;
-      }
-
-      .tooltip-row {
-        margin: 6px 0;
-        display: flex;
-        justify-content: space-between;
-      }
-
-      .tooltip-label {
-        color: #6c757d;
-        font-size: 11px;
-      }
-
-      .tooltip-value {
-        font-weight: 600;
-        color: #111827;
-      }
-
-      .badge-retraso {
-        background: #dc3545;
-        color: white;
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 10px;
-        font-weight: 600;
-        margin-top: 8px;
-        display: inline-block;
-      }
-
-      .badge-dias {
-        background: #198754;
-        color: white;
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 10px;
-        font-weight: 600;
-        margin-top: 8px;
-        display: inline-block;
-      }
-
-      /* KPIs */
-      .kpi-card {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 16px;
-        border-radius: 10px;
-        background: var(--white);
-        border: 1px solid var(--gray-border);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        transition: all 0.2s ease;
-      }
-      
-      .kpi-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      }
-      
-      .kpi-card.verde { border-left: 4px solid #198754; }
-      .kpi-card.naranja { border-left: 4px solid #ffc107; }
-      .kpi-card.rojo { border-left: 4px solid #dc3545; }
-      
-      .kpi-value {
-        font-size: 24px;
-        font-weight: 700;
-        line-height: 1;
-      }
-      
-      .kpi-label {
-        font-size: 11px;
-        color: #6c757d;
-        text-transform: uppercase;
-        font-weight: 600;
-      }
-
-      /* LEYENDA */
-      .leyenda-item {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        color: #374151;
-        margin-right: 20px;
-      }
-      
-      .leyenda-circulo {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-      }
-
-      /* MODAL */
-      .modal-imagen {
-        display: none;
-        position: fixed;
-        z-index: 10001;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.8);
-      }
-      
-      .modal-imagen-content {
-        position: relative;
-        margin: 5% auto;
-        width: 90%;
-        max-width: 600px;
-        background: var(--white);
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-      }
-      
-      .modal-close {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        font-size: 28px;
-        font-weight: bold;
-        color: #6c757d;
-        cursor: pointer;
-      }
-      
-      .modal-close:hover {
-        color: #dc3545;
-      }
-      
-      .modal-imagen-img {
-        width: 100%;
-        border-radius: 10px;
-        margin-bottom: 15px;
-      }
-      
-      .modal-imagen-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #111827;
-        margin-bottom: 10px;
-      }
-      
-      .modal-imagen-desc {
-        color: #6c757d;
-        font-size: 14px;
-      }
-
-      /* ALERTAS */
-      .alert-card {
-        background: var(--white);
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 15px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        border-left: 4px solid #dc3545;
-        border: 1px solid var(--gray-border);
-        transition: all 0.3s;
-      }
-      
-      .alert-card:hover {
-        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-        transform: translateX(5px);
-      }
-      
-      .alert-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-      }
-      
-      .alert-title {
-        font-weight: 600;
-        color: #111827;
-        font-size: 15px;
-      }
-      
-      .alert-badge {
-        background: #dc3545;
-        color: white;
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 11px;
-        font-weight: 600;
-      }
-      
-      .alert-body {
-        color: #6c757d;
-        font-size: 13px;
-        line-height: 1.6;
-      }
-      
-      .alert-meta {
-        display: flex;
-        gap: 15px;
-        margin-top: 10px;
-        font-size: 12px;
-        flex-wrap: wrap;
-      }
-      
-      .alert-meta-item {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        color: #6c757d;
-      }
-    </style>
-  </head>
-  <body>
+<style>
+  /* ========== MAESTRO EPP ========== */
+  .scroll-horizontal{overflow-x:auto;overflow-y:hidden;border-radius:8px;border:1px solid var(--gray-border,#dee2e6);background:#fff}
+  .tabla-horizontal{display:inline-flex;font-size:11px;min-width:100%}
+  .columna-trabajador{display:flex;flex-direction:column;background:#fff;border-right:2px solid var(--gray-border,#dee2e6);position:sticky;left:0;z-index:10}
+  .header-trabajador{background:linear-gradient(135deg,#f8f9fa,#e9ecef);padding:10px;text-align:center;font-weight:600;border-bottom:2px solid var(--gray-border,#dee2e6);height:72px;display:flex;align-items:center;justify-content:center}
+  .celda-trabajador{padding:8px 12px;border-bottom:1px solid var(--gray-border,#dee2e6);height:40px;display:flex;flex-direction:column;justify-content:center;min-width:200px}
+  .celda-trabajador:hover{background:#f8f9fa}
+  .nombre-trabajador{font-weight:600;font-size:11px;color:#111827}
+  .cargo-trabajador{font-size:10px;color:#6c757d}
+  .columna-epp{display:flex;flex-direction:column;border-right:1px solid var(--gray-border,#dee2e6);min-width:75px}
+  .header-epp{background:linear-gradient(135deg,#f8f9fa,#e9ecef);padding:6px;text-align:center;font-weight:600;border-bottom:2px solid var(--gray-border,#dee2e6);height:72px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .header-epp:hover{background:#e2e6ea}
+  .header-epp-img{width:44px;height:44px;border-radius:8px;object-fit:cover;border:2px solid var(--gray-border,#dee2e6);background:#fff;transition:opacity .3s}
+  .celda-epp{padding:8px;border-bottom:1px solid var(--gray-border,#dee2e6);text-align:center;height:40px;display:flex;align-items:center;justify-content:center}
+  .celda-epp:hover{background:#f8f9fa}
+  .semaforo{width:22px;height:22px;border-radius:50%;display:inline-block;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15);transition:transform .2s}
+  .semaforo:hover{transform:scale(1.3)}
+  .st-OK{background:#198754;border:2px solid #146c43}
+  .st-NOTIF{background:#ffc107;border:2px solid #e0a800}
+  .st-ENTR{background:#dc3545;border:2px solid #b02a37}
+  .sin-asignar{background:#e9ecef;border:2px solid #ced4da}
+  .fila-oculta{display:none!important}
+  .kpi-card{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:8px;background:#fff;border:1px solid var(--gray-border,#dee2e6)}
+  .kpi-card.verde{border-left:4px solid #198754}
+  .kpi-card.naranja{border-left:4px solid #ffc107}
+  .kpi-card.rojo{border-left:4px solid #dc3545}
+  .kpi-value{font-size:20px;font-weight:700;line-height:1}
+  .kpi-label{font-size:10px;color:#6c757d;text-transform:uppercase;font-weight:600}
+  .tooltip-epp{position:fixed;background:#fff;color:#111;padding:14px;border-radius:10px;font-size:12px;z-index:10000;pointer-events:none;opacity:0;transition:opacity .2s;box-shadow:0 6px 20px rgba(0,0,0,.15);max-width:280px;border:1px solid #dee2e6}
+  .tooltip-epp.show{opacity:1}
+  .tooltip-header{font-weight:600;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #dee2e6}
+  .tooltip-row{margin:4px 0;display:flex;justify-content:space-between;gap:10px}
+  .tooltip-label{color:#6c757d;font-size:11px}
+  .tooltip-value{font-weight:600}
+  .modal-imagen{display:none;position:fixed;z-index:10001;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.7)}
+  .modal-imagen-content{position:relative;margin:5% auto;width:90%;max-width:500px;background:#fff;border-radius:10px;padding:20px}
+  .modal-close{position:absolute;top:12px;right:15px;font-size:24px;font-weight:bold;color:#6c757d;cursor:pointer}
+  .modal-close:hover{color:#dc3545}
+  .modal-imagen-img{width:100%;border-radius:8px;margin-bottom:10px}
+  /* Lista de compras */
+  .compra-prioridad{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+  .compra-prioridad.vencido{background:#f8d7da;color:#842029}
+  .compra-prioridad.porvencer{background:#fff3cd;color:#664d03}
+</style>
 
 <!-- ENCABEZADO -->
-<div class="d-flex align-items-center mt-3">
-  <div class="bg-purple rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background-color: #6f42c1;">
+<div class="d-flex align-items-center mt-3 mb-2">
+  <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width:40px;height:40px;background:#6f42c1">
     <i class="fas fa-hard-hat text-white"></i>
   </div>
   <div>
-    <h5 class="mb-0" style="color: #6f42c1;">Maestro EPP</h5>
+    <h5 class="mb-0" style="color:#6f42c1">Maestro EPP</h5>
     <small class="text-muted">Control de equipos de protección personal</small>
   </div>
 </div>
 
-<div class="container-fluid my-1 px-0">
+<div class="container-fluid px-0">
 
   <!-- TABS -->
   <ul class="nav nav-tabs mb-3" role="tablist">
     <li class="nav-item">
-      <a class="nav-link active" data-bs-toggle="tab" href="#vistaGeneral" onclick="mostrarVista('general')">
+      <a class="nav-link active" data-bs-toggle="tab" href="#vistaGeneral">
         <i class="fas fa-th"></i> Vista General
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" data-bs-toggle="tab" href="#vistaAlertas" onclick="mostrarVista('alertas')">
-        <i class="fas fa-exclamation-triangle"></i> Alertas y Pendientes
-        <span id="badgeAlertas" class="badge bg-danger ms-1">0</span>
+      <a class="nav-link" data-bs-toggle="tab" href="#vistaCompras" id="tabComprasLink">
+        <i class="fas fa-shopping-cart"></i> Lista de Compras
+        <span id="badgeCompras" class="badge bg-danger ms-1" style="display:none">0</span>
       </a>
     </li>
   </ul>
 
-  <!-- CONTENIDO DE TABS -->
   <div class="tab-content">
-    
-    <!-- TAB: VISTA GENERAL -->
-    <div id="vistaGeneral" class="tab-pane fade show active">
 
-      <!-- LEYENDA -->
-      <div class="mb-2">
-        <strong>Leyenda:</strong>
-        <div class="leyenda-item">
-          <span class="leyenda-circulo" style="background: #198754; border: 2px solid #146c43;"></span>
-          <span>Vigente</span>
-        </div>
-        <div class="leyenda-item">
-          <span class="leyenda-circulo" style="background: #ffc107; border: 2px solid #e0a800;"></span>
-          <span>Por vencer (≤15 días)</span>
-        </div>
-        <div class="leyenda-item">
-          <span class="leyenda-circulo" style="background: #dc3545; border: 2px solid #b02a37;"></span>
-          <span>Vencido</span>
-        </div>
-        <div class="leyenda-item">
-          <span class="leyenda-circulo" style="background: #e9ecef; border: 2px solid #ced4da;"></span>
-          <span>Sin asignar</span>
-        </div>
-      </div>
+    <!-- ==================== TAB: VISTA GENERAL ==================== -->
+    <div id="vistaGeneral" class="tab-pane fade show active" style="min-height:300px">
 
       <!-- TOOLBAR -->
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-
-        <!-- Grupo izquierdo: Filtros -->
         <div class="d-flex align-items-center gap-1">
-          <input type="text" id="txtBusqueda" class="form-control" 
-                 placeholder="🔍 Buscar trabajador..." 
-                 onkeyup="filtrarTablaHorizontal()"
-                 style="max-width: 250px; height:30px; border: 1px solid black;">
-          
-          <select id="filtroCategoriaEPP" class="form-select" 
+          <input type="text" id="txtBusqueda" class="form-control form-control-sm"
+                 placeholder="Buscar trabajador..." onkeyup="filtrarTablaHorizontal()"
+                 style="max-width:220px;border:1px solid #6c757d">
+          <select id="filtroCategoriaEPP" class="form-select form-select-sm"
                   onchange="filtrarTablaHorizontal()"
-                  style="max-width: 180px; height:30px; border: 1px solid black;">
-            <option value="">📦 Todas</option>
-            <option value="epp">🛡️ Solo EPP</option>
-            <option value="uniforme">👕 Solo Uniformes</option>
+                  style="max-width:160px;border:1px solid #6c757d">
+            <option value="">Todas</option>
+            <option value="epp">Solo EPP</option>
+            <option value="uniforme">Solo Uniformes</option>
           </select>
-          
-          <button class="btn btn-secondary btn-sm" onclick="cargarDatosMaestro()">
-            <i class="fas fa-sync-alt"></i> Actualizar
-          </button>
-
-          <button class="btn btn-warning btn-sm" onclick="window.print()">
-            <i class="fa-solid fa-print"></i>
+          <button class="btn btn-outline-secondary btn-sm" onclick="cargarDatosMaestro()">
+            <i class="fas fa-sync-alt"></i>
           </button>
         </div>
 
-        <!-- Grupo centro: KPIs -->
+        <!-- KPIs -->
         <div class="d-flex align-items-center gap-2" id="kpisContainer">
-          <div style="color: #6c757d; font-size: 12px;">Cargando...</div>
+          <small class="text-muted">Cargando...</small>
         </div>
 
-        <!-- Grupo derecho: Acciones -->
-        <div class="d-flex align-items-center gap-1">
-          <button class="btn btn-warning btn-sm" onclick="generarListaCompra()">
-            <i class="fas fa-shopping-cart"></i> Lista de Compra
-          </button>
-          <button class="btn btn-danger btn-sm" onclick="exportarPendientesPDF()">
-            <i class="fas fa-file-pdf"></i> Exportar PDF
-          </button>
+        <!-- Leyenda compacta -->
+        <div class="d-flex align-items-center gap-2" style="font-size:11px">
+          <span><span class="semaforo st-OK" style="width:14px;height:14px;vertical-align:middle"></span> Vigente</span>
+          <span><span class="semaforo st-NOTIF" style="width:14px;height:14px;vertical-align:middle"></span> Por vencer</span>
+          <span><span class="semaforo st-ENTR" style="width:14px;height:14px;vertical-align:middle"></span> Vencido</span>
+          <span><span class="semaforo sin-asignar" style="width:14px;height:14px;vertical-align:middle"></span> Sin dato</span>
         </div>
-
       </div>
 
-      <!-- LOADING -->
-      <div id="loadingMaestroEPP" class="text-center my-4" style="display: none;">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Cargando...</span>
-        </div>
-        <p class="mt-2">Preparando información...</p>
-      </div>
-
-      <!-- TABLA HORIZONTAL -->
-      <div class="scroll-horizontal print-container">
+      <!-- TABLA -->
+      <div class="scroll-horizontal">
         <div class="tabla-horizontal" id="tablaHorizontal">
-          <div style="padding: 40px; text-align: center;">
-            <div class="spinner-border spinner-border-sm text-primary"></div>
-            <br>Cargando datos...
+          <div class="text-center py-4 text-muted w-100">
+            <div class="spinner-border spinner-border-sm text-primary"></div><br>
+            Haz clic en <b>Maestro General EPP</b> para cargar
           </div>
         </div>
       </div>
 
     </div>
-    
-    <!-- TAB: ALERTAS Y PENDIENTES -->
-    <div id="vistaAlertas" class="tab-pane fade">
-      <div id="alertasContainer">
-        <div style="padding: 40px; text-align: center; color: #6c757d;">
-          <div class="spinner-border spinner-border-sm text-primary"></div>
-          <br>Cargando alertas...
+
+    <!-- ==================== TAB: LISTA DE COMPRAS ==================== -->
+    <div id="vistaCompras" class="tab-pane fade" style="min-height:300px">
+
+      <!-- Filtro de días -->
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div class="d-flex align-items-center gap-2">
+          <label class="form-label mb-0 fw-bold" style="font-size:13px">Incluir próximos:</label>
+          <select id="filtroComprasDias" class="form-select form-select-sm" style="width:auto;border:1px solid #6c757d" onchange="renderizarListaCompras()">
+            <option value="0">Solo vencidos</option>
+            <option value="15">+ por vencer en 15 días</option>
+            <option value="30" selected>+ por vencer en 30 días</option>
+            <option value="60">+ por vencer en 60 días</option>
+            <option value="90">+ por vencer en 90 días</option>
+          </select>
+        </div>
+        <div class="d-flex gap-1">
+          <button class="btn btn-outline-dark btn-sm" onclick="imprimirProveedor()">
+            <i class="fas fa-print"></i> Imprimir Proveedor
+          </button>
+          <button class="btn btn-outline-dark btn-sm" onclick="imprimirRegistro()">
+            <i class="fas fa-clipboard-list"></i> Imprimir Registro
+          </button>
         </div>
       </div>
+
+      <!-- Resumen -->
+      <div id="comprasResumen" class="mb-3"></div>
+
+      <!-- Tabla editable -->
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle" id="tablaCompras" style="font-size:12px">
+          <thead class="table-light">
+            <tr>
+              <th style="width:30px">#</th>
+              <th>Producto</th>
+              <th style="width:100px">Talla/Var.</th>
+              <th style="width:80px" class="text-center">Cantidad</th>
+              <th style="width:110px" class="text-center">Prioridad</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyCompras">
+            <tr><td colspan="5" class="text-center text-muted py-3">Carga los datos desde Vista General primero</td></tr>
+          </tbody>
+          <tfoot id="tfootCompras"></tfoot>
+        </table>
+      </div>
+
+      <!-- Detalle por trabajador (colapsable) -->
+      <div class="mt-3">
+        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#detalleComprasTrabajadores">
+          <i class="fas fa-users"></i> Ver detalle por trabajador
+        </button>
+        <div class="collapse mt-2" id="detalleComprasTrabajadores">
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered" id="tablaDetalleTrabajadores" style="font-size:11px">
+              <thead class="table-light">
+                <tr><th>Producto / Talla</th><th>Trabajador</th><th>Estado</th><th class="text-center">Cant</th></tr>
+              </thead>
+              <tbody id="tbodyDetalle"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div>
-    
   </div>
 </div>
 
@@ -578,589 +197,399 @@
   <div class="modal-imagen-content">
     <span class="modal-close" onclick="cerrarModalImagen()">&times;</span>
     <img class="modal-imagen-img" id="modalImg" src="" alt="EPP">
-    <div class="modal-imagen-title" id="modalTitle"></div>
-    <div class="modal-imagen-desc" id="modalDesc"></div>
+    <div id="modalTitle" style="font-size:16px;font-weight:600"></div>
   </div>
 </div>
 
 <script>
-  var cargarDatosMaestro;
-  var filtrarTablaHorizontal;
-  var mostrarTooltip;
-  var ocultarTooltip;
-  var abrirModalImagen;
-  var cerrarModalImagen;
-  var exportarPendientesPDF;
-  var generarListaCompra;
-  var mostrarVista;
+/* ================================================================
+   MAESTRO EPP — Script principal
+   ================================================================ */
+var cargarDatosMaestro, filtrarTablaHorizontal, mostrarTooltip, ocultarTooltip,
+    abrirModalImagen, cerrarModalImagen, renderizarListaCompras,
+    imprimirProveedor, imprimirRegistro;
 
-  (function() {
-    'use strict';
+(function(){
+'use strict';
 
-    let datosCompletos = [];
-    let trabajadoresUnicos = [];
-    let eppsUnicos = [];
-    let productMeta = new Map();
-    let categoriasEPP = {};
+let datosCompletos = [];
+let trabajadoresUnicos = [];
+let eppsUnicos = [];
+const productMeta = new Map();
+const categoriasEPP = {};
+const PLACEHOLDER = 'https://lh5.googleusercontent.com/d/1n38-t1dDdj56TqOjv8c4SAAcUQcA0U72';
 
-    const PLACEHOLDER_IMG = 'https://lh5.googleusercontent.com/d/1n38-t1dDdj56TqOjv8c4SAAcUQcA0U72';
+// ========== helpers ==========
+function esc(t){ return String(t||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
 
-    // ========== OBTENER METADATA ==========
-    async function getProductMeta(pb) {
-      if (productMeta.has(pb)) return productMeta.get(pb);
-      
-      try {
-        const res = await new Promise((resolve, reject) => {
-          google.script.run
-            .withSuccessHandler(resolve)
-            .withFailureHandler(reject)
-            .searchStockPaged({ term: pb, limit: 0 });
-        });
-        
-        const rows = res?.rows || [];
-        const samePB = rows.filter(r => (r.PRODUCTO || '') === pb);
-        const pick = (arr, key) => (arr.find(r => r[key]) || rows.find(r => r[key]) || {})[key] || '';
-        const img = pick(samePB, 'IMG');
-        const categoria = pick(samePB, 'CATEGORIA');
-        
-        if (categoria) {
-          categoriasEPP[pb] = categoria.toLowerCase();
-        }
-        
-        const meta = { img: img || PLACEHOLDER_IMG };
-        productMeta.set(pb, meta);
-        return meta;
-      } catch(e) {
-        const meta = { img: PLACEHOLDER_IMG };
-        productMeta.set(pb, meta);
-        return meta;
-      }
-    }
-
-    // ========== CARGAR DATOS ==========
-    function _cargarDatosMaestro() {
-      console.log('🔄 Cargando datos del maestro...');
-      const contenedor = document.getElementById('tablaHorizontal');
-      const loading = document.getElementById('loadingMaestroEPP');
-      
-      if(!contenedor) return;
-
-      loading.style.display = 'block';
-      contenedor.innerHTML = '<div style="padding: 40px; text-align: center;"><div class="spinner-border spinner-border-sm text-primary"></div><br>Cargando datos...</div>';
-
-      google.script.run
-        .withSuccessHandler(function(data) {
-          console.log('✅ Datos recibidos:', data);
-          datosCompletos = data || [];
-          
-          if (!datosCompletos.length) {
-            contenedor.innerHTML = '<div style="padding: 40px; text-align: center; color: #6c757d;">No hay datos disponibles</div>';
-            loading.style.display = 'none';
-            return;
-          }
-          
-          procesarDatos();
-        })
-        .withFailureHandler(function(err) {
-          console.error('❌ Error:', err);
-          contenedor.innerHTML = '<div style="padding: 40px; color: #dc3545; text-align: center;"><strong>Error:</strong> ' + (err.message || err) + '</div>';
-          loading.style.display = 'none';
-        })
-        .obtenerMaestroCompleto();
-    }
-
-    // ========== PROCESAR DATOS (VERSIÓN OPTIMIZADA) ==========
-async function procesarDatos() {
-  console.log('📊 Procesando datos...');
-  const contenedor = document.getElementById('tablaHorizontal');
-  const loading = document.getElementById('loadingMaestroEPP');
-
-  // Extraer trabajadores únicos
-  const mapaTrabajadores = new Map();
-  datosCompletos.forEach(reg => {
-    if (reg.trabajador && !mapaTrabajadores.has(reg.trabajador)) {
-      mapaTrabajadores.set(reg.trabajador, {
-        nombre: reg.trabajador,
-        cargo: reg.cargo || 'Sin cargo'
-      });
-    }
-  });
-  trabajadoresUnicos = Array.from(mapaTrabajadores.values());
-
-  // Extraer EPPs únicos
-  const setEPPs = new Set();
-  datosCompletos.forEach(reg => {
-    if (reg.producto) setEPPs.add(reg.producto);
-  });
-  eppsUnicos = Array.from(setEPPs).sort();
-
-  console.log('✅ Datos procesados - Trabajadores:', trabajadoresUnicos.length, 'EPPs:', eppsUnicos.length);
-  
-  // 🚀 RENDERIZAR INMEDIATAMENTE (sin esperar imágenes)
-  renderizarKPIs();
-  renderizarTabla(); // ← Tabla aparece AL INSTANTE con placeholders
-  renderizarAlertas();
-  
-  loading.style.display = 'none';
-  
-  // 🔄 Cargar imágenes EN SEGUNDO PLANO
-  console.log('🖼️ Cargando imágenes en segundo plano...');
-  
-  let cargadas = 0;
-  const total = eppsUnicos.length;
-  
-  // Cargar todas las imágenes en paralelo
-  await Promise.all(eppsUnicos.map(async (epp) => {
-    await getProductMeta(epp);
-    cargadas++;
-    
-    // Actualizar SOLO el header de este EPP (sin re-renderizar toda la tabla)
-    actualizarHeaderEPP(epp);
-    
-    // Log de progreso cada 5 imágenes
-    if (cargadas % 5 === 0 || cargadas === total) {
-      console.log(`📸 Imágenes cargadas: ${cargadas}/${total}`);
-    }
-  }));
-  
-  console.log('✅ Todas las imágenes cargadas');
+// ========== product images ==========
+async function getProductMeta(pb){
+  if(productMeta.has(pb)) return productMeta.get(pb);
+  try{
+    const res=await new Promise((ok,ko)=>{
+      google.script.run.withSuccessHandler(ok).withFailureHandler(ko)
+        .searchStockPaged({term:pb,limit:0});
+    });
+    const rows=res?.rows||[];
+    const samePB=rows.filter(r=>(r.PRODUCTO||'')===pb);
+    const pick=(arr,k)=>(arr.find(r=>r[k])||rows.find(r=>r[k])||{})[k]||'';
+    const img=pick(samePB,'IMG'); const cat=pick(samePB,'CATEGORIA');
+    if(cat) categoriasEPP[pb]=cat.toLowerCase();
+    const m={img:img||PLACEHOLDER}; productMeta.set(pb,m); return m;
+  }catch(e){ const m={img:PLACEHOLDER}; productMeta.set(pb,m); return m; }
 }
 
-// 🆕 FUNCIÓN PARA ACTUALIZAR SOLO UN HEADER DE EPP
-function actualizarHeaderEPP(epp) {
-  const meta = productMeta.get(epp) || { img: PLACEHOLDER_IMG };
-  const header = document.querySelector(`.columna-epp[data-producto="${epp.toLowerCase()}"] .header-epp-img`);
-  
-  if (header && header.src !== meta.img) {
-    header.src = meta.img;
-    
-    // Animación suave al cargar
-    header.style.opacity = '0';
-    setTimeout(() => {
-      header.style.transition = 'opacity 0.3s ease';
-      header.style.opacity = '1';
-    }, 10);
+// ========== CARGAR DATOS ==========
+function _cargarDatosMaestro(){
+  const contenedor=document.getElementById('tablaHorizontal');
+  if(!contenedor) return;
+  contenedor.innerHTML='<div class="text-center py-4 w-100"><div class="spinner-border spinner-border-sm text-primary"></div><br>Cargando datos...</div>';
+
+  google.script.run
+    .withSuccessHandler(function(data){
+      datosCompletos=data||[];
+      if(!datosCompletos.length){
+        contenedor.innerHTML='<div class="text-center py-4 text-muted w-100">No hay entregas registradas</div>';
+        return;
+      }
+      procesarDatos();
+    })
+    .withFailureHandler(function(err){
+      contenedor.innerHTML='<div class="text-center py-4 text-danger w-100"><b>Error:</b> '+(err.message||err)+'</div>';
+    })
+    .obtenerMaestroCompleto();
+}
+
+// ========== PROCESAR ==========
+async function procesarDatos(){
+  const mapT=new Map();
+  datosCompletos.forEach(r=>{
+    if(r.trabajador && !mapT.has(r.trabajador)){
+      mapT.set(r.trabajador,{nombre:r.trabajador, cargo:r.cargo||'Sin cargo'});
+    }
+  });
+  trabajadoresUnicos=Array.from(mapT.values()).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+
+  const setE=new Set();
+  datosCompletos.forEach(r=>{ if(r.producto) setE.add(r.producto); });
+  eppsUnicos=Array.from(setE).sort();
+
+  renderizarKPIs();
+  renderizarTabla();
+  _renderizarListaCompras();
+
+  // Badge
+  const badge=document.getElementById('badgeCompras');
+  const nurg=datosCompletos.filter(r=>r.estado==='VENCIDO'||r.estado==='POR VENCER').length;
+  if(badge){ badge.textContent=nurg; badge.style.display=nurg>0?'inline-block':'none'; }
+
+  // Imágenes en background
+  await Promise.all(eppsUnicos.map(async epp=>{
+    await getProductMeta(epp);
+    const h=document.querySelector('.columna-epp[data-producto="'+epp.toLowerCase()+'"] .header-epp-img');
+    if(h){ const m=productMeta.get(epp)||{}; if(m.img && m.img!==PLACEHOLDER){ h.src=m.img; h.style.opacity='0'; setTimeout(()=>{h.style.transition='opacity .3s';h.style.opacity='1';},10); }}
+  }));
+}
+
+// ========== KPIs ==========
+function renderizarKPIs(){
+  const v=datosCompletos.filter(r=>r.estado==='VIGENTE').length;
+  const p=datosCompletos.filter(r=>r.estado==='POR VENCER').length;
+  const x=datosCompletos.filter(r=>r.estado==='VENCIDO').length;
+  document.getElementById('kpisContainer').innerHTML=
+    '<div class="kpi-card verde"><div><div class="kpi-value">'+v+'</div><div class="kpi-label">Vigentes</div></div></div>'+
+    '<div class="kpi-card naranja"><div><div class="kpi-value">'+p+'</div><div class="kpi-label">Por vencer</div></div></div>'+
+    '<div class="kpi-card rojo"><div><div class="kpi-value">'+x+'</div><div class="kpi-label">Vencidos</div></div></div>';
+}
+
+// ========== TABLA SEMÁFOROS ==========
+function renderizarTabla(){
+  const c=document.getElementById('tablaHorizontal');
+  let h='';
+  // Col trabajadores
+  h+='<div class="columna-trabajador">';
+  h+='<div class="header-trabajador"><i class="fas fa-users me-1"></i> PERSONAL</div>';
+  trabajadoresUnicos.forEach(t=>{
+    h+='<div class="celda-trabajador" data-trabajador="'+(t.nombre||'').toLowerCase()+'"><div class="nombre-trabajador">'+esc(t.nombre)+'</div><div class="cargo-trabajador">'+esc(t.cargo)+'</div></div>';
+  });
+  h+='</div>';
+
+  // Cols EPPs
+  eppsUnicos.forEach(epp=>{
+    const meta=productMeta.get(epp)||{img:PLACEHOLDER};
+    const cat=categoriasEPP[epp]||'';
+    h+='<div class="columna-epp" data-producto="'+epp.toLowerCase()+'" data-categoria="'+cat+'">';
+    h+='<div class="header-epp" onclick="abrirModalImagen(\''+esc(epp).replace(/'/g,"\\'")+'\',\''+meta.img+'\')"><img src="'+meta.img+'" class="header-epp-img" alt="'+esc(epp)+'" onerror="this.src=\''+PLACEHOLDER+'\'"></div>';
+    trabajadoresUnicos.forEach(t=>{
+      const reg=datosCompletos.find(r=>r.trabajador===t.nombre && r.producto===epp);
+      if(reg){
+        const td=JSON.stringify({epp:epp,trabajador:t.nombre,fecha:reg.fecha||'',variante:reg.variante||'',vencimiento:reg.vencimiento||'',estado:reg.estado||'',dias:reg.diasRestantes||0}).replace(/'/g,"&#39;");
+        h+='<div class="celda-epp"><span class="semaforo '+(reg.clase||'sin-asignar')+'" data-tooltip=\''+td+'\' onmouseover="mostrarTooltip(event,this)" onmouseout="ocultarTooltip()"></span></div>';
+      }else{
+        h+='<div class="celda-epp"><span class="semaforo sin-asignar"></span></div>';
+      }
+    });
+    h+='</div>';
+  });
+  c.innerHTML=h;
+}
+
+// ========== FILTRO TABLA ==========
+function _filtrarTablaHorizontal(){
+  const busq=(document.getElementById('txtBusqueda').value||'').toLowerCase().trim();
+  const catF=document.getElementById('filtroCategoriaEPP').value.toLowerCase();
+  const visibles=new Set();
+  document.querySelectorAll('.celda-trabajador').forEach((cel,i)=>{
+    const ok=!busq||(cel.getAttribute('data-trabajador')||'').includes(busq);
+    cel.classList.toggle('fila-oculta',!ok);
+    if(ok) visibles.add(i);
+  });
+  document.querySelectorAll('.columna-epp').forEach(col=>{
+    const cat=col.getAttribute('data-categoria')||'';
+    let show=true;
+    if(catF==='epp') show=cat.includes('epp')||cat.includes('protecci');
+    else if(catF==='uniforme') show=cat.includes('uniforme')||cat.includes('vestimenta')||cat.includes('ropa');
+    col.style.display=show?'flex':'none';
+    if(show) col.querySelectorAll('.celda-epp').forEach((cel,i)=>cel.classList.toggle('fila-oculta',!visibles.has(i)));
+  });
+}
+
+// ========== TOOLTIP ==========
+function _mostrarTooltip(ev,el){
+  const tip=document.getElementById('tooltipEPP');
+  const ds=el.getAttribute('data-tooltip');
+  if(!ds) return;
+  try{
+    const d=JSON.parse(ds.replace(/&#39;/g,"'"));
+    const dias=d.dias||0;
+    const dtxt=dias>0?'<span style="background:#198754;color:#fff;padding:2px 8px;border-radius:10px;font-size:10px">'+dias+' días restantes</span>'
+                     :'<span style="background:#dc3545;color:#fff;padding:2px 8px;border-radius:10px;font-size:10px">'+Math.abs(dias)+' días de retraso</span>';
+    tip.innerHTML='<div class="tooltip-header">'+esc(d.epp)+'</div>'+
+      '<div class="tooltip-row"><span class="tooltip-label">Trabajador:</span><span class="tooltip-value">'+esc(d.trabajador)+'</span></div>'+
+      '<div class="tooltip-row"><span class="tooltip-label">Entrega:</span><span class="tooltip-value">'+(d.fecha||'N/A')+'</span></div>'+
+      '<div class="tooltip-row"><span class="tooltip-label">Variante:</span><span class="tooltip-value">'+esc(d.variante||'N/A')+'</span></div>'+
+      '<div class="tooltip-row"><span class="tooltip-label">Vencimiento:</span><span class="tooltip-value">'+(d.vencimiento||'N/A')+'</span></div>'+
+      '<div class="tooltip-row"><span class="tooltip-label">Estado:</span><span class="tooltip-value">'+(d.estado||'N/A')+'</span></div>'+
+      '<div style="text-align:center;margin-top:6px">'+dtxt+'</div>';
+    tip.style.left=(ev.pageX+12)+'px'; tip.style.top=(ev.pageY-12)+'px';
+    tip.classList.add('show');
+  }catch(e){}
+}
+function _ocultarTooltip(){ const t=document.getElementById('tooltipEPP'); if(t) t.classList.remove('show'); }
+
+// ========== MODAL IMAGEN ==========
+function _abrirModalImagen(n,img){
+  document.getElementById('modalImg').src=img;
+  document.getElementById('modalTitle').textContent=n;
+  document.getElementById('modalImagen').style.display='block';
+}
+function _cerrarModalImagen(){ document.getElementById('modalImagen').style.display='none'; }
+window.onclick=function(e){ if(e.target===document.getElementById('modalImagen')) _cerrarModalImagen(); };
+
+// ========================================================================
+//  LISTA DE COMPRAS
+// ========================================================================
+let listaComprasData = []; // {producto, variante, cantidad, prioridad, diasMin, detalle:[{trabajador,dias,estado}]}
+
+function _renderizarListaCompras(){
+  const diasMax = Number(document.getElementById('filtroComprasDias')?.value ?? 30);
+
+  // Filtrar registros urgentes
+  const urgentes = datosCompletos.filter(r => {
+    if(r.estado==='VENCIDO') return true;
+    if(r.estado==='POR VENCER' && diasMax > 0) return r.diasRestantes <= diasMax;
+    if(diasMax > 0 && r.diasRestantes > 0 && r.diasRestantes <= diasMax) return true;
+    return false;
+  });
+
+  // Agrupar por producto+variante
+  const mapa = new Map();
+  urgentes.forEach(r => {
+    const key = (r.producto||'') + '||' + (r.variante||'');
+    if(!mapa.has(key)) mapa.set(key, {producto:r.producto, variante:r.variante||'', cantidad:0, diasMin:Infinity, detalle:[]});
+    const g = mapa.get(key);
+    g.cantidad++;
+    if(r.diasRestantes < g.diasMin) g.diasMin = r.diasRestantes;
+    g.detalle.push({trabajador:r.trabajador, dias:r.diasRestantes, estado:r.estado});
+  });
+
+  // Ordenar: vencidos primero, luego por días
+  listaComprasData = Array.from(mapa.values()).sort((a,b) => a.diasMin - b.diasMin);
+
+  // Resumen
+  const totalItems = listaComprasData.reduce((s,i) => s + i.cantidad, 0);
+  const totalProds = listaComprasData.length;
+  const trabAfectados = new Set(urgentes.map(r=>r.trabajador)).size;
+  const resDiv = document.getElementById('comprasResumen');
+  if(resDiv){
+    if(totalItems === 0){
+      resDiv.innerHTML='<div class="alert alert-success py-2 mb-0"><i class="fas fa-check-circle me-1"></i> No hay productos vencidos o por vencer en el rango seleccionado.</div>';
+    } else {
+      resDiv.innerHTML='<div class="d-flex gap-3 flex-wrap" style="font-size:13px">'+
+        '<div class="border rounded px-3 py-2"><b>'+totalProds+'</b> productos</div>'+
+        '<div class="border rounded px-3 py-2"><b>'+totalItems+'</b> unidades</div>'+
+        '<div class="border rounded px-3 py-2"><b>'+trabAfectados+'</b> trabajadores afectados</div>'+
+      '</div>';
+    }
+  }
+
+  // Tabla principal
+  const tbody = document.getElementById('tbodyCompras');
+  const tfoot = document.getElementById('tfootCompras');
+  if(!tbody) return;
+
+  if(listaComprasData.length === 0){
+    tbody.innerHTML='<tr><td colspan="5" class="text-center text-muted py-3">Sin productos para comprar</td></tr>';
+    if(tfoot) tfoot.innerHTML='';
+    return;
+  }
+
+  let html='';
+  listaComprasData.forEach((item, idx) => {
+    const esVencido = item.diasMin < 0;
+    const prioTxt = esVencido ? 'VENCIDO' : (item.diasMin + ' días');
+    const prioCls = esVencido ? 'vencido' : 'porvencer';
+    html += '<tr>'+
+      '<td class="text-center">'+(idx+1)+'</td>'+
+      '<td><b>'+esc(item.producto)+'</b></td>'+
+      '<td>'+esc(item.variante||'Estándar')+'</td>'+
+      '<td class="text-center"><input type="number" class="form-control form-control-sm text-center compra-cant-input" value="'+item.cantidad+'" min="0" data-idx="'+idx+'" onchange="actualizarCantCompra(this)" style="width:70px;margin:0 auto"></td>'+
+      '<td class="text-center"><span class="compra-prioridad '+prioCls+'">'+prioTxt+'</span></td>'+
+    '</tr>';
+  });
+  tbody.innerHTML=html;
+
+  // Total footer
+  if(tfoot) tfoot.innerHTML='<tr class="table-light fw-bold"><td></td><td>TOTAL</td><td></td><td class="text-center" id="comprasTotal">'+totalItems+'</td><td></td></tr>';
+
+  // Tabla detalle trabajadores
+  const tbDet = document.getElementById('tbodyDetalle');
+  if(tbDet){
+    let dh='';
+    listaComprasData.forEach(item => {
+      const key = esc(item.producto) + (item.variante ? ' - ' + esc(item.variante) : '');
+      dh += '<tr class="table-secondary"><td colspan="4"><b>'+key+'</b> ('+item.cantidad+' uds)</td></tr>';
+      item.detalle.sort((a,b)=>a.dias-b.dias).forEach(d => {
+        const esV = d.dias < 0;
+        const estTxt = esV ? '<span class="badge bg-danger">Vencido '+Math.abs(d.dias)+' días</span>' : '<span class="badge bg-warning text-dark">Vence en '+d.dias+' días</span>';
+        dh += '<tr><td></td><td>'+esc(d.trabajador)+'</td><td>'+estTxt+'</td><td class="text-center">1</td></tr>';
+      });
+    });
+    tbDet.innerHTML=dh;
   }
 }
 
+// Editar cantidad
+window.actualizarCantCompra = function(input){
+  const idx=Number(input.dataset.idx);
+  const val=Math.max(0,parseInt(input.value)||0);
+  if(listaComprasData[idx]) listaComprasData[idx].cantidad=val;
+  // Recalcular total
+  const total=listaComprasData.reduce((s,i)=>s+i.cantidad,0);
+  const el=document.getElementById('comprasTotal');
+  if(el) el.textContent=total;
+};
 
-    // ========== RENDERIZAR KPIs ==========
-    function renderizarKPIs() {
-      const vigentes = datosCompletos.filter(r => r.estado === 'VIGENTE').length;
-      const porVencer = datosCompletos.filter(r => r.estado === 'POR VENCER').length;
-      const vencidos = datosCompletos.filter(r => r.estado === 'VENCIDO').length;
-      
-      const html = `
-        <div class="kpi-card verde">
-          <div>
-            <div class="kpi-value">${vigentes}</div>
-            <div class="kpi-label">Vigentes</div>
-          </div>
-        </div>
-        <div class="kpi-card naranja">
-          <div>
-            <div class="kpi-value">${porVencer}</div>
-            <div class="kpi-label">Por vencer</div>
-          </div>
-        </div>
-        <div class="kpi-card rojo">
-          <div>
-            <div class="kpi-value">${vencidos}</div>
-            <div class="kpi-label">Vencidos</div>
-          </div>
-        </div>
-      `;
-      
-      document.getElementById('kpisContainer').innerHTML = html;
-    }
+// ========== IMPRIMIR PROVEEDOR ==========
+function _imprimirProveedor(){
+  if(!listaComprasData.length){ Swal.fire('Sin datos','No hay productos en la lista','info'); return; }
+  const items=listaComprasData.filter(i=>i.cantidad>0);
+  if(!items.length){ Swal.fire('Cantidades en 0','Ajusta las cantidades','info'); return; }
+  const total=items.reduce((s,i)=>s+i.cantidad,0);
+  const fecha=new Date().toLocaleDateString('es-PE');
 
-    // ========== RENDERIZAR ALERTAS ==========
-    function renderizarAlertas() {
-      const pendientes = datosCompletos.filter(r => r.estado === 'VENCIDO' || r.estado === 'POR VENCER');
-      const badge = document.getElementById('badgeAlertas');
-      if (badge) badge.textContent = pendientes.length;
-      
-      const container = document.getElementById('alertasContainer');
-      if (!container) return;
-      
-      if (pendientes.length === 0) {
-        container.innerHTML = `
-          <div style="padding: 40px; text-align: center; color: #198754;">
-            <i class="fas fa-check-circle" style="font-size: 48px; margin-bottom: 15px;"></i>
-            <h5>¡Todo en orden!</h5>
-            <p>No hay alertas pendientes</p>
-          </div>
-        `;
-        return;
-      }
-      
-      let html = '';
-      pendientes.forEach(reg => {
-        const esVencido = reg.estado === 'VENCIDO';
-        const diasTexto = esVencido 
-          ? `${Math.abs(reg.diasRestantes || 0)} días de retraso` 
-          : `Vence en ${reg.diasRestantes || 0} días`;
-        
-        html += `
-          <div class="alert-card" style="border-left-color: ${esVencido ? '#dc3545' : '#ffc107'}">
-            <div class="alert-header">
-              <div class="alert-title">${escapeHtml(reg.trabajador || 'Sin nombre')}</div>
-              <div class="alert-badge" style="background: ${esVencido ? '#dc3545' : '#ffc107'}">
-                ${esVencido ? 'VENCIDO' : 'POR VENCER'}
-              </div>
-            </div>
-            <div class="alert-body">
-              ${escapeHtml(reg.producto || 'Sin producto')} ${reg.variante ? '- ' + escapeHtml(reg.variante) : ''}
-            </div>
-            <div class="alert-meta">
-              <div class="alert-meta-item">
-                <i class="fas fa-calendar"></i>
-                ${diasTexto}
-              </div>
-              <div class="alert-meta-item">
-                <i class="fas fa-clock"></i>
-                Vence: ${reg.vencimiento || 'N/A'}
-              </div>
-              <div class="alert-meta-item">
-                <i class="fas fa-user"></i>
-                ${escapeHtml(reg.cargo || 'Sin cargo')}
-              </div>
-            </div>
-          </div>
-        `;
-      });
-      
-      container.innerHTML = html;
-      console.log('✅ Alertas renderizadas:', pendientes.length);
-    }
+  let html='<html><head><title>Orden de Compra EPP</title><style>';
+  html+='body{font-family:Arial,sans-serif;margin:20px;font-size:12px}';
+  html+='h2{text-align:center;margin-bottom:5px}';
+  html+='.fecha{text-align:center;color:#666;margin-bottom:15px}';
+  html+='table{width:100%;border-collapse:collapse;margin-top:10px}';
+  html+='th,td{border:1px solid #333;padding:6px 10px}';
+  html+='th{background:#2c3e50;color:#fff;text-align:left}';
+  html+='td.num{text-align:center}';
+  html+='.total-row{background:#f0f0f0;font-weight:bold}';
+  html+='@media print{body{margin:10px}}';
+  html+='</style></head><body>';
+  html+='<h2>ORDEN DE COMPRA - EPP / UNIFORMES</h2>';
+  html+='<div class="fecha">Fecha: '+fecha+'</div>';
+  html+='<table><thead><tr><th style="width:40px">#</th><th>Descripción</th><th style="width:100px">Talla</th><th style="width:80px;text-align:center">Cantidad</th></tr></thead><tbody>';
+  items.forEach((item,i)=>{
+    html+='<tr><td class="num">'+(i+1)+'</td><td>'+esc(item.producto)+'</td><td>'+esc(item.variante||'Estándar')+'</td><td class="num">'+item.cantidad+'</td></tr>';
+  });
+  html+='<tr class="total-row"><td></td><td colspan="2" style="text-align:right">TOTAL</td><td class="num">'+total+'</td></tr>';
+  html+='</tbody></table>';
+  html+='</body></html>';
 
-    // ========== RENDERIZAR TABLA ==========
-    function renderizarTabla() {
-      console.log('📋 Renderizando tabla...');
-      const contenedor = document.getElementById('tablaHorizontal');
-      let html = '';
+  const w=window.open('','_blank','width=700,height=500');
+  w.document.write(html); w.document.close();
+  setTimeout(()=>w.print(),300);
+}
 
-      // COLUMNA DE TRABAJADORES
-      html += '<div class="columna-trabajador">';
-      html += '<div class="header-trabajador">👷 PERSONAL</div>';
-      
-      trabajadoresUnicos.forEach(trabajador => {
-        html += `
-          <div class="celda-trabajador" data-trabajador="${(trabajador.nombre || '').toLowerCase()}">
-            <div class="nombre-trabajador">${escapeHtml(trabajador.nombre || 'Sin nombre')}</div>
-            <div class="cargo-trabajador">${escapeHtml(trabajador.cargo || 'Sin cargo')}</div>
-          </div>
-        `;
-      });
-      html += '</div>';
+// ========== IMPRIMIR REGISTRO INTERNO ==========
+function _imprimirRegistro(){
+  if(!listaComprasData.length){ Swal.fire('Sin datos','No hay productos en la lista','info'); return; }
+  const items=listaComprasData.filter(i=>i.cantidad>0);
+  if(!items.length){ Swal.fire('Cantidades en 0','Ajusta las cantidades','info'); return; }
+  const total=items.reduce((s,i)=>s+i.cantidad,0);
+  const fecha=new Date().toLocaleDateString('es-PE');
 
-      // COLUMNAS DE EPPs
-      eppsUnicos.forEach(epp => {
-        const meta = productMeta.get(epp) || { img: PLACEHOLDER_IMG };
-        const categoria = categoriasEPP[epp] || '';
-        
-        html += `<div class="columna-epp" data-producto="${epp.toLowerCase()}" data-categoria="${categoria}">`;
-        html += `
-          <div class="header-epp" onclick="abrirModalImagen('${escapeHtml(epp).replace(/'/g, "\\'")}', '${meta.img}')">
-            <img src="${meta.img}" 
-                 class="header-epp-img" 
-                 alt="${escapeHtml(epp)}"
-                 onerror="this.src='${PLACEHOLDER_IMG}'">
-          </div>
-        `;
-        
-        trabajadoresUnicos.forEach(trabajador => {
-          const registro = datosCompletos.find(r => 
-            r.trabajador === trabajador.nombre && r.producto === epp
-          );
-          
-          if (registro) {
-            const tooltipData = {
-              epp: epp,
-              trabajador: trabajador.nombre,
-              fecha: registro.fecha || 'N/A',
-              variante: registro.variante || 'N/A',
-              vencimiento: registro.vencimiento || 'N/A',
-              estado: registro.estado || 'N/A',
-              dias: registro.diasRestantes || 0
-            };
-            
-            html += `
-              <div class="celda-epp">
-                <span class="semaforo ${registro.clase || 'sin-asignar'}" 
-                      data-tooltip='${JSON.stringify(tooltipData).replace(/'/g, "&#39;")}'
-                      onmouseover="mostrarTooltip(event, this)"
-                      onmouseout="ocultarTooltip()">
-                </span>
-              </div>
-            `;
-          } else {
-            html += '<div class="celda-epp"><span class="semaforo sin-asignar"></span></div>';
-          }
-        });
-        
-        html += '</div>';
-      });
+  let html='<html><head><title>Registro Interno - Reposición EPP</title><style>';
+  html+='body{font-family:Arial,sans-serif;margin:20px;font-size:11px}';
+  html+='h2{text-align:center;margin-bottom:5px}';
+  html+='.fecha{text-align:center;color:#666;margin-bottom:15px}';
+  html+='table{width:100%;border-collapse:collapse}';
+  html+='th,td{border:1px solid #999;padding:5px 8px}';
+  html+='th{background:#34495e;color:#fff;text-align:left;font-size:11px}';
+  html+='.group{background:#ecf0f1;font-weight:bold}';
+  html+='.vencido{color:#c0392b;font-weight:bold}';
+  html+='.porvencer{color:#d35400}';
+  html+='.total-row{background:#2c3e50;color:#fff;font-weight:bold}';
+  html+='@media print{body{margin:10px}}';
+  html+='</style></head><body>';
+  html+='<h2>REGISTRO INTERNO - REPOSICIÓN EPP</h2>';
+  html+='<div class="fecha">Fecha: '+fecha+'</div>';
+  html+='<table><thead><tr><th style="width:30px">#</th><th>Producto / Talla</th><th>Trabajador</th><th>Estado</th><th style="width:60px;text-align:center">Cant</th></tr></thead><tbody>';
 
-      contenedor.innerHTML = html;
-      console.log('✅ Tabla renderizada');
-    }
-
-    // ========== MODAL IMAGEN ==========
-    function _abrirModalImagen(nombre, img) {
-      document.getElementById('modalImg').src = img;
-      document.getElementById('modalTitle').textContent = nombre;
-      document.getElementById('modalDesc').textContent = 'Equipo de Protección Personal';
-      document.getElementById('modalImagen').style.display = 'block';
-    }
-
-    function _cerrarModalImagen() {
-      document.getElementById('modalImagen').style.display = 'none';
-    }
-
-    // ========== TOOLTIP ==========
-    function _mostrarTooltip(event, elemento) {
-      const tooltip = document.getElementById('tooltipEPP');
-      const dataStr = elemento.getAttribute('data-tooltip');
-      
-      if (!dataStr) return;
-      
-      try {
-        const data = JSON.parse(dataStr.replace(/&#39;/g, "'"));
-        
-        const diasTexto = (data.dias || 0) > 0 
-          ? `<span class="badge-dias">${data.dias} días restantes</span>` 
-          : `<span class="badge-retraso">${Math.abs(data.dias || 0)} días de retraso</span>`;
-        
-        tooltip.innerHTML = `
-          <div class="tooltip-header">${escapeHtml(data.epp || 'N/A')}</div>
-          <div class="tooltip-row">
-            <span class="tooltip-label">Trabajador:</span> 
-            <span class="tooltip-value">${escapeHtml(data.trabajador || 'N/A')}</span>
-          </div>
-          <div class="tooltip-row">
-            <span class="tooltip-label">Fecha Entrega:</span> 
-            <span class="tooltip-value">${data.fecha || 'N/A'}</span>
-          </div>
-          <div class="tooltip-row">
-            <span class="tooltip-label">Variante:</span> 
-            <span class="tooltip-value">${escapeHtml(data.variante || 'N/A')}</span>
-          </div>
-          <div class="tooltip-row">
-            <span class="tooltip-label">Vencimiento:</span> 
-            <span class="tooltip-value">${data.vencimiento || 'N/A'}</span>
-          </div>
-          <div class="tooltip-row">
-            <span class="tooltip-label">Estado:</span> 
-            <span class="tooltip-value">${data.estado || 'N/A'}</span>
-          </div>
-          <div style="text-align: center; margin-top: 8px;">
-            ${diasTexto}
-          </div>
-        `;
-        
-        tooltip.style.left = event.pageX + 10 + 'px';
-        tooltip.style.top = event.pageY - 10 + 'px';
-        tooltip.classList.add('show');
-      } catch(e) {
-        console.error('Error al mostrar tooltip:', e);
-      }
-    }
-
-    function _ocultarTooltip() {
-      const tooltip = document.getElementById('tooltipEPP');
-      if (tooltip) tooltip.classList.remove('show');
-    }
-
-    // ========== FILTRO ==========
-    function _filtrarTablaHorizontal() {
-      const busqueda = (document.getElementById('txtBusqueda').value || '').toLowerCase().trim();
-      const categoriaFiltro = document.getElementById('filtroCategoriaEPP').value.toLowerCase();
-      
-      // Filtrar trabajadores
-      const trabajadoresVisibles = new Set();
-      document.querySelectorAll('.celda-trabajador').forEach((celda, index) => {
-        const texto = celda.getAttribute('data-trabajador') || '';
-        const esVisible = !busqueda || texto.includes(busqueda);
-        
-        if (esVisible) {
-          celda.classList.remove('fila-oculta');
-          trabajadoresVisibles.add(index);
-        } else {
-          celda.classList.add('fila-oculta');
-        }
-      });
-      
-      // Filtrar columnas de EPP por categoría
-      document.querySelectorAll('.columna-epp').forEach(colEpp => {
-        const categoria = colEpp.getAttribute('data-categoria') || '';
-        let mostrarColumna = true;
-        
-        if (categoriaFiltro === 'epp') {
-          mostrarColumna = categoria.includes('epp') || categoria.includes('protección') || categoria.includes('proteccion');
-        } else if (categoriaFiltro === 'uniforme') {
-          mostrarColumna = categoria.includes('uniforme') || categoria.includes('vestimenta') || categoria.includes('ropa');
-        }
-        
-        colEpp.style.display = mostrarColumna ? 'flex' : 'none';
-        
-        if (mostrarColumna) {
-          const celdas = colEpp.querySelectorAll('.celda-epp');
-          celdas.forEach((celda, index) => {
-            if (trabajadoresVisibles.has(index)) {
-              celda.classList.remove('fila-oculta');
-            } else {
-              celda.classList.add('fila-oculta');
-            }
-          });
-        }
-      });
-    }
-
-    // ========== CAMBIAR VISTA ==========
-    function _mostrarVista(vista) {
-      if (vista === 'alertas') {
-        setTimeout(() => {
-          renderizarAlertas();
-        }, 100);
-      }
-    }
-
-    // ========== EXPORTAR PDF ==========
-    function _exportarPendientesPDF() {
-      const pendientes = datosCompletos.filter(r => r.estado === 'VENCIDO' || r.estado === 'POR VENCER');
-      
-      if (pendientes.length === 0) {
-        Swal.fire('Sin pendientes', 'No hay EPPs pendientes para exportar', 'info');
-        return;
-      }
-
-      Swal.fire({
-        title: 'Generando PDF...',
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
-      });
-      
-      google.script.run
-        .withSuccessHandler(function(url) {
-          Swal.close();
-          if (url) {
-            window.open(url, '_blank');
-            Swal.fire('¡Listo!', 'PDF generado exitosamente', 'success');
-          } else {
-            Swal.fire('Advertencia', 'Se generó el PDF pero no se obtuvo URL', 'warning');
-          }
-        })
-        .withFailureHandler(function(err) {
-          Swal.fire('Error', 'Error al exportar: ' + (err.message || err), 'error');
-        })
-        .generarPDFPendientes(pendientes);
-    }
-
-    // ========== LISTA DE COMPRA ==========
-    function _generarListaCompra() {
-      const vencidos = datosCompletos.filter(r => r.estado === 'VENCIDO');
-      
-      if (vencidos.length === 0) {
-        Swal.fire('Sin vencidos', 'No hay EPPs vencidos que requieran compra', 'info');
-        return;
-      }
-
-      Swal.fire({
-        title: 'Generando lista...',
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
-      });
-      
-      const agrupado = {};
-      vencidos.forEach(r => {
-        const key = r.producto;
-        if (!agrupado[key]) {
-          agrupado[key] = {
-            producto: r.producto,
-            cantidad: 0,
-            trabajadores: []
-          };
-        }
-        agrupado[key].cantidad++;
-        agrupado[key].trabajadores.push({
-          nombre: r.trabajador,
-          variante: r.variante || 'N/A',
-          vencimiento: r.vencimiento || 'N/A'
-        });
-      });
-      
-      google.script.run
-        .withSuccessHandler(function(url) {
-          Swal.close();
-          if (url) {
-            window.open(url, '_blank');
-            Swal.fire('¡Listo!', 'Lista de compra generada exitosamente', 'success');
-          } else {
-            Swal.fire('Advertencia', 'Se generó la lista pero no se obtuvo URL', 'warning');
-          }
-        })
-        .withFailureHandler(function(err) {
-          Swal.fire('Error', 'Error al generar lista: ' + (err.message || err), 'error');
-        })
-        .generarListaCompra(agrupado);
-    }
-
-    // ========== UTILIDADES ==========
-    function escapeHtml(text) {
-      const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-      };
-      return String(text || '').replace(/[&<>"']/g, m => map[m]);
-    }
-
-    // ========== ASIGNAR GLOBALES ==========
-    cargarDatosMaestro = _cargarDatosMaestro;
-    filtrarTablaHorizontal = _filtrarTablaHorizontal;
-    mostrarTooltip = _mostrarTooltip;
-    ocultarTooltip = _ocultarTooltip;
-    abrirModalImagen = _abrirModalImagen;
-    cerrarModalImagen = _cerrarModalImagen;
-    exportarPendientesPDF = _exportarPendientesPDF;
-    generarListaCompra = _generarListaCompra;
-    mostrarVista = _mostrarVista;
-
-    window.cargarDatosMaestro = _cargarDatosMaestro;
-    window.filtrarTablaHorizontal = _filtrarTablaHorizontal;
-    window.mostrarTooltip = _mostrarTooltip;
-    window.ocultarTooltip = _ocultarTooltip;
-    window.abrirModalImagen = _abrirModalImagen;
-    window.cerrarModalImagen = _cerrarModalImagen;
-    window.exportarPendientesPDF = _exportarPendientesPDF;
-    window.generarListaCompra = _generarListaCompra;
-    window.mostrarVista = _mostrarVista;
-
-    // ========== INICIALIZACIÓN AUTOMÁTICA ==========
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('🚀 Iniciando carga automática...');
-      _cargarDatosMaestro();
+  let n=0;
+  items.forEach(item=>{
+    const key=esc(item.producto)+(item.variante?' - '+esc(item.variante):'');
+    html+='<tr class="group"><td></td><td colspan="3">'+key.toUpperCase()+'</td><td style="text-align:center">'+item.cantidad+'</td></tr>';
+    item.detalle.sort((a,b)=>a.dias-b.dias).forEach(d=>{
+      n++;
+      const esV=d.dias<0;
+      const cls=esV?'vencido':'porvencer';
+      const txt=esV?'Vencido '+Math.abs(d.dias)+' días':'Vence en '+d.dias+' días';
+      html+='<tr><td style="text-align:center">'+n+'</td><td></td><td>'+esc(d.trabajador)+'</td><td class="'+cls+'">'+txt+'</td><td style="text-align:center">1</td></tr>';
     });
+  });
+  html+='<tr class="total-row"><td></td><td colspan="3" style="text-align:right">TOTAL GENERAL</td><td style="text-align:center">'+total+'</td></tr>';
+  html+='</tbody></table>';
+  html+='</body></html>';
 
-    // Click fuera del modal
-    window.onclick = function(event) {
-      const modal = document.getElementById('modalImagen');
-      if (event.target === modal) {
-        _cerrarModalImagen();
-      }
-    }
+  const w=window.open('','_blank','width=700,height=500');
+  w.document.write(html); w.document.close();
+  setTimeout(()=>w.print(),300);
+}
 
-    console.log('✅ Sistema EPP Maestro inicializado');
+// ========== ASIGNAR GLOBALES ==========
+cargarDatosMaestro=_cargarDatosMaestro;
+filtrarTablaHorizontal=_filtrarTablaHorizontal;
+mostrarTooltip=_mostrarTooltip;
+ocultarTooltip=_ocultarTooltip;
+abrirModalImagen=_abrirModalImagen;
+cerrarModalImagen=_cerrarModalImagen;
+renderizarListaCompras=_renderizarListaCompras;
+imprimirProveedor=_imprimirProveedor;
+imprimirRegistro=_imprimirRegistro;
 
-  })();
+window.cargarDatosMaestro=_cargarDatosMaestro;
+window.filtrarTablaHorizontal=_filtrarTablaHorizontal;
+window.mostrarTooltip=_mostrarTooltip;
+window.ocultarTooltip=_ocultarTooltip;
+window.abrirModalImagen=_abrirModalImagen;
+window.cerrarModalImagen=_cerrarModalImagen;
+window.renderizarListaCompras=_renderizarListaCompras;
+window.imprimirProveedor=_imprimirProveedor;
+window.imprimirRegistro=_imprimirRegistro;
+
+})();
 </script>
-
-  </body>
-</html>
