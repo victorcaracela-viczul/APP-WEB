@@ -88,7 +88,7 @@
           <input type="text" id="txtBusqueda" class="form-control form-control-sm"
                  placeholder="Buscar trabajador..." onkeyup="filtrarTablaHorizontal()"
                  style="max-width:220px;border:1px solid #6c757d">
-          <button class="btn btn-outline-secondary btn-sm" onclick="cargarDatosMaestro()">
+          <button class="btn btn-outline-secondary btn-sm" onclick="forzarRecargaMaestro()">
             <i class="fas fa-sync-alt"></i>
           </button>
         </div>
@@ -210,7 +210,7 @@
 /* ================================================================
    MAESTRO EPP — Script principal
    ================================================================ */
-var cargarDatosMaestro, filtrarTablaHorizontal, mostrarTooltip, ocultarTooltip,
+var cargarDatosMaestro, forzarRecargaMaestro, filtrarTablaHorizontal, mostrarTooltip, ocultarTooltip,
     abrirModalImagen, cerrarModalImagen, renderizarListaCompras,
     imprimirProveedor, imprimirRegistro, switchMaestroTab;
 
@@ -282,7 +282,21 @@ async function getProductMeta(pb){
 }
 
 // ========== CARGAR DATOS ==========
+let _maestroCargado = false;
+
 function _cargarDatosMaestro(){
+  // Si ya se cargó, no recargar (el DOM persiste en memoria)
+  if(_maestroCargado && datosCompletos.length) return;
+  _fetchMaestro();
+}
+
+function _forzarRecargaMaestro(){
+  // Forzar recarga desde el botón refresh
+  _maestroCargado = false;
+  _fetchMaestro();
+}
+
+function _fetchMaestro(){
   const contenedor=document.getElementById('tablaHorizontal');
   if(!contenedor) return;
   contenedor.innerHTML='<div class="text-center py-4 w-100"><div class="spinner-border spinner-border-sm text-primary"></div><br>Cargando datos...</div>';
@@ -290,6 +304,7 @@ function _cargarDatosMaestro(){
   google.script.run
     .withSuccessHandler(function(data){
       datosCompletos=data||[];
+      _maestroCargado = true;
       if(!datosCompletos.length){
         contenedor.innerHTML='<div class="text-center py-4 text-muted w-100">No hay entregas registradas</div>';
         return;
@@ -625,6 +640,7 @@ function _imprimirRegistro(){
 
 // ========== ASIGNAR GLOBALES ==========
 cargarDatosMaestro=_cargarDatosMaestro;
+forzarRecargaMaestro=_forzarRecargaMaestro;
 filtrarTablaHorizontal=_filtrarTablaHorizontal;
 mostrarTooltip=_mostrarTooltip;
 ocultarTooltip=_ocultarTooltip;
@@ -636,6 +652,7 @@ imprimirRegistro=_imprimirRegistro;
 switchMaestroTab=_switchMaestroTab;
 
 window.cargarDatosMaestro=_cargarDatosMaestro;
+window.forzarRecargaMaestro=_forzarRecargaMaestro;
 window.filtrarTablaHorizontal=_filtrarTablaHorizontal;
 window.mostrarTooltip=_mostrarTooltip;
 window.ocultarTooltip=_ocultarTooltip;
