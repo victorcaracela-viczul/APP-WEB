@@ -38,6 +38,11 @@
   .modal-close{position:absolute;top:12px;right:15px;font-size:24px;font-weight:bold;color:#6c757d;cursor:pointer}
   .modal-close:hover{color:#dc3545}
   .modal-imagen-img{width:100%;border-radius:8px;margin-bottom:10px}
+  /* Chips categoría */
+  .maestro-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .maestro-chip{ padding:.15rem .7rem; border:1px solid #e5e7eb; border-radius:999px; background:#fff; cursor:pointer; font-size:.85rem; white-space:nowrap; transition:background .15s,color .15s,border-color .15s; }
+  .maestro-chip:hover{ background:#f1f5f9; }
+  .maestro-chip.active{ background:#0ea5e9; color:#fff; border-color:#0ea5e9; }
   /* Lista de compras */
   .compra-prioridad{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
   .compra-prioridad.vencido{background:#f8d7da;color:#842029}
@@ -83,13 +88,6 @@
           <input type="text" id="txtBusqueda" class="form-control form-control-sm"
                  placeholder="Buscar trabajador..." onkeyup="filtrarTablaHorizontal()"
                  style="max-width:220px;border:1px solid #6c757d">
-          <select id="filtroCategoriaEPP" class="form-select form-select-sm"
-                  onchange="filtrarTablaHorizontal()"
-                  style="max-width:160px;border:1px solid #6c757d">
-            <option value="">Todas</option>
-            <option value="epp">Solo EPP</option>
-            <option value="uniforme">Solo Uniformes</option>
-          </select>
           <button class="btn btn-outline-secondary btn-sm" onclick="cargarDatosMaestro()">
             <i class="fas fa-sync-alt"></i>
           </button>
@@ -106,6 +104,14 @@
           <span><span class="semaforo st-NOTIF" style="width:14px;height:14px;vertical-align:middle"></span> Por vencer</span>
           <span><span class="semaforo st-ENTR" style="width:14px;height:14px;vertical-align:middle"></span> Vencido</span>
           <span><span class="semaforo sin-asignar" style="width:14px;height:14px;vertical-align:middle"></span> Sin dato</span>
+        </div>
+      </div>
+
+      <!-- Chips categoría -->
+      <div class="d-flex align-items-center gap-2 mb-2" style="font-size:12px">
+        <span class="text-muted fw-bold" style="white-space:nowrap">Filtrar por categoría:</span>
+        <div id="chipCatsMaestro" class="maestro-chips">
+          <span class="maestro-chip active" data-cat="Todos">Todos</span>
         </div>
       </div>
 
@@ -231,6 +237,33 @@ function _switchMaestroTab(tab){
 // ========== helpers ==========
 function esc(t){ return String(t||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
 
+// ========== chips categoría ==========
+function _fillChipsMaestro(){
+  const box=document.getElementById('chipCatsMaestro');
+  if(!box) return;
+  // Recoger categorías únicas desde categoriasEPP map (lowercase values), capitalizar para display
+  const catsSet=new Set();
+  Object.values(categoriasEPP).forEach(c=>{
+    if(c) catsSet.add(c);
+  });
+  const cats=Array.from(catsSet).sort();
+  // Capitalizar primera letra para display
+  const capitalize=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  const all=['Todos',...cats.map(c=>capitalize(c))];
+  box.innerHTML=all.map(c=>'<span class="maestro-chip" data-cat="'+c+'">'+esc(c)+'</span>').join('');
+  // Event listeners
+  box.querySelectorAll('.maestro-chip').forEach(el=>{
+    el.addEventListener('click',function(){
+      box.querySelectorAll('.maestro-chip').forEach(x=>x.classList.remove('active'));
+      el.classList.add('active');
+      _filtrarTablaHorizontal();
+    });
+  });
+  // Activar "Todos" por defecto
+  const first=box.querySelector('.maestro-chip');
+  if(first) first.classList.add('active');
+}
+
 // ========== product images ==========
 async function getProductMeta(pb){
   if(productMeta.has(pb)) return productMeta.get(pb);
@@ -298,6 +331,9 @@ async function procesarDatos(){
     const h=document.querySelector('.columna-epp[data-producto="'+epp.toLowerCase()+'"] .header-epp-img');
     if(h){ const m=productMeta.get(epp)||{}; if(m.img && m.img!==PLACEHOLDER){ h.src=m.img; h.style.opacity='0'; setTimeout(()=>{h.style.transition='opacity .3s';h.style.opacity='1';},10); }}
   }));
+
+  // Llenar chips después de cargar categorías
+  _fillChipsMaestro();
 }
 
 // ========== KPIs ==========
@@ -346,7 +382,9 @@ function renderizarTabla(){
 // ========== FILTRO TABLA ==========
 function _filtrarTablaHorizontal(){
   const busq=(document.getElementById('txtBusqueda').value||'').toLowerCase().trim();
-  const catF=document.getElementById('filtroCategoriaEPP').value.toLowerCase();
+  // Leer categoría activa desde chip
+  const activeChip=document.querySelector('#chipCatsMaestro .maestro-chip.active');
+  const catF=(activeChip?activeChip.dataset.cat:'Todos').toLowerCase();
   const visibles=new Set();
   document.querySelectorAll('.celda-trabajador').forEach((cel,i)=>{
     const ok=!busq||(cel.getAttribute('data-trabajador')||'').includes(busq);
@@ -356,8 +394,7 @@ function _filtrarTablaHorizontal(){
   document.querySelectorAll('.columna-epp').forEach(col=>{
     const cat=col.getAttribute('data-categoria')||'';
     let show=true;
-    if(catF==='epp') show=cat.includes('epp')||cat.includes('protecci');
-    else if(catF==='uniforme') show=cat.includes('uniforme')||cat.includes('vestimenta')||cat.includes('ropa');
+    if(catF!=='todos') show=cat===catF;
     col.style.display=show?'flex':'none';
     if(show) col.querySelectorAll('.celda-epp').forEach((cel,i)=>cel.classList.toggle('fila-oculta',!visibles.has(i)));
   });
