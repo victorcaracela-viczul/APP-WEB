@@ -325,11 +325,15 @@ async function procesarDatos(){
   const nurg=datosCompletos.filter(r=>r.estado==='VENCIDO'||r.estado==='POR VENCER').length;
   if(badge){ badge.textContent=nurg; badge.style.display=nurg>0?'inline-block':'none'; }
 
-  // Imágenes en background
+  // Imágenes y categorías en background
   await Promise.all(eppsUnicos.map(async epp=>{
     await getProductMeta(epp);
+    // Actualizar imagen
     const h=document.querySelector('.columna-epp[data-producto="'+epp.toLowerCase()+'"] .header-epp-img');
     if(h){ const m=productMeta.get(epp)||{}; if(m.img && m.img!==PLACEHOLDER){ h.src=m.img; h.style.opacity='0'; setTimeout(()=>{h.style.transition='opacity .3s';h.style.opacity='1';},10); }}
+    // Actualizar data-categoria en la columna (no existía al renderizar la tabla)
+    const col=document.querySelector('.columna-epp[data-producto="'+epp.toLowerCase()+'"]');
+    if(col){ col.setAttribute('data-categoria', categoriasEPP[epp]||''); }
   }));
 
   // Llenar chips después de cargar categorías
