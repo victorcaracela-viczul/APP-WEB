@@ -40,6 +40,9 @@ export default {
     if (url.pathname === '/api/push/vapid-key') {
       return json({ publicKey: VAPID_PUBLIC });
     }
+    if (url.pathname === '/api/push/status' && request.method === 'POST') {
+      return handleStatus(request, env);
+    }
 
     // ---- Página principal (shell PWA) ----
     return serveShell();
@@ -183,6 +186,27 @@ async function handleSendBulk(request, env) {
 }
 
 // ============================================================
+//  STATUS — Verificar suscripciones de un usuario
+//  Body: { token, dni }
+// ============================================================
+async function handleStatus(request, env) {
+  try {
+    const data = await request.json();
+    if (!data.token || data.token !== env.PUSH_AUTH_TOKEN) {
+      return json({ ok: false, error: 'No autorizado' }, 401);
+    }
+    const { dni } = data;
+    if (!dni) return json({ ok: false, error: 'dni requerido' }, 400);
+
+    const key = `push:${dni}`;
+    const subs = JSON.parse(await env.PUSH_SUBSCRIPTIONS.get(key) || '[]');
+    return json({ ok: true, dni, subscriptions: subs.length, endpoints: subs.map(s => s.endpoint?.substring(0, 60) + '...') });
+  } catch (e) {
+    return json({ ok: false, error: e.message }, 500);
+  }
+}
+
+// ============================================================
 //  WEB PUSH — Enviar notificación usando protocolo Web Push
 // ============================================================
 async function sendToAll(subscriptions, payload, env) {
@@ -316,11 +340,11 @@ async function encryptPayload(subscription, payloadText) {
   const encrypted = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, aesKey, paddedPayload));
 
   // Header: salt(16) + rs(4) + idlen(1) + keyid(65) + encrypted
-  const rs = new Uint8Array(4);
-  new DataView(rs.buffer).setUint32(0, payload.length + 18 + 1 + 16); // record size
-  const idlen = new Uint8Array([65]); // length of public key
+  const rsBytes = new Uint8Array(4);
+  new DataView(rsBytes.buffer).setUint32(0, 4096); // standard record size
+  const idlen = new Uint8Array([65]); // length of uncompressed P-256 public key
 
-  return concat(salt, rs, idlen, localPublicRaw, encrypted).buffer;
+  return concat(salt, rsBytes, idlen, localPublicRaw, encrypted).buffer;
 }
 
 async function hkdfExtract(salt, ikm) {
@@ -447,6 +471,16 @@ function serveShell() {
     <img src="https://lh3.googleusercontent.com/d/15B-wj4iw5B7RpDXQg2mrdxTAn-3kfeMa" alt="Cargando">
     <div id="splash-text">CARGANDO SISTEMA<span class="dots"></span></div>
   </div>
+  <!-- Banner de activación de notificaciones (requiere gesto del usuario) -->
+  <div id="push-banner" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:14px 24px;border-radius:16px;z-index:10000;box-shadow:0 8px 32px rgba(0,0,0,0.3);align-items:center;gap:14px;font-family:'Poppins',sans-serif;font-size:14px;max-width:90vw;border:1px solid rgba(255,255,255,0.1)">
+    <div style="background:#ffc107;color:#1a1a2e;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
+      <span>&#128276;</span>
+    </div>
+    <span style="flex:1">Activa las notificaciones para recibir alertas de EPP y capacitaciones</span>
+    <button onclick="activarNotificaciones()" style="background:#ffc107;color:#1a1a2e;border:none;padding:8px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;white-space:nowrap">Activar</button>
+    <button onclick="hideNotificationBanner()" style="background:transparent;color:#aaa;border:none;font-size:20px;cursor:pointer;padding:0 4px;line-height:1">&times;</button>
+  </div>
+
   <iframe id="main-iframe" src="${GAS_URL}" allow="camera; geolocation; microphone"
     style="position:fixed;top:0;left:0;bottom:0;right:0;width:100%;height:100%;border:none;margin:0;padding:0;overflow:hidden;z-index:999999;"></iframe>
 
@@ -463,6 +497,8 @@ function serveShell() {
 
     // ============ SERVICE WORKER + PUSH ============
     const VAPID_KEY = '${VAPID_PUBLIC}';
+    let swRegistration = null;
+    let pendingDni = null;
 
     async function initPush(){
       if(!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -470,44 +506,74 @@ function serveShell() {
         return;
       }
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-        console.log('SW registrado:', reg.scope);
+        swRegistration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        console.log('SW registrado:', swRegistration.scope);
 
         // Escuchar mensajes del iframe para suscribir/desuscribir
         window.addEventListener('message', async (e) => {
           if (!e.data || !e.data.type) return;
 
           if (e.data.type === 'PUSH_SUBSCRIBE') {
-            await subscribePush(reg, e.data.dni);
+            pendingDni = e.data.dni;
+            // Verificar si ya tenemos permiso
+            if (Notification.permission === 'granted') {
+              await doSubscribe(e.data.dni);
+            } else if (Notification.permission !== 'denied') {
+              // Mostrar botón para que el usuario active con gesto
+              showNotificationBanner();
+            }
           }
           if (e.data.type === 'PUSH_UNSUBSCRIBE') {
-            await unsubscribePush(reg, e.data.dni);
+            await unsubscribePush(e.data.dni);
           }
         });
+
+        // Si ya tiene permiso, ocultar banner
+        if (Notification.permission === 'granted' && pendingDni) {
+          hideNotificationBanner();
+        }
       } catch(err) {
         console.error('Error registrando SW:', err);
       }
     }
 
-    async function subscribePush(reg, dni) {
+    function showNotificationBanner() {
+      const banner = document.getElementById('push-banner');
+      if (banner) banner.style.display = 'flex';
+    }
+
+    function hideNotificationBanner() {
+      const banner = document.getElementById('push-banner');
+      if (banner) banner.style.display = 'none';
+    }
+
+    // Este se llama desde el CLICK del botón (gesto del usuario)
+    async function activarNotificaciones() {
+      hideNotificationBanner();
       try {
         const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-          console.log('Permiso de notificación denegado');
-          return;
+        if (permission === 'granted') {
+          if (pendingDni) await doSubscribe(pendingDni);
+        } else {
+          console.log('Permiso de notificación denegado por el usuario');
         }
+      } catch(err) {
+        console.error('Error solicitando permiso:', err);
+      }
+    }
 
-        // Verificar si ya existe suscripción
-        let sub = await reg.pushManager.getSubscription();
+    async function doSubscribe(dni) {
+      if (!swRegistration) return;
+      try {
+        let sub = await swRegistration.pushManager.getSubscription();
         if (!sub) {
           const key = urlBase64ToUint8Array(VAPID_KEY);
-          sub = await reg.pushManager.subscribe({
+          sub = await swRegistration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: key
           });
         }
 
-        // Enviar suscripción al servidor vinculada al DNI
         const resp = await fetch('/api/push/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -516,7 +582,6 @@ function serveShell() {
         const result = await resp.json();
         console.log('Suscripción push guardada:', result);
 
-        // Confirmar al iframe
         iframe.contentWindow.postMessage({ type: 'PUSH_SUBSCRIBED', ok: true }, '*');
       } catch(err) {
         console.error('Error suscribiendo push:', err);
@@ -524,9 +589,10 @@ function serveShell() {
       }
     }
 
-    async function unsubscribePush(reg, dni) {
+    async function unsubscribePush(dni) {
+      if (!swRegistration) return;
       try {
-        const sub = await reg.pushManager.getSubscription();
+        const sub = await swRegistration.pushManager.getSubscription();
         if (sub) {
           await fetch('/api/push/unsubscribe', {
             method: 'POST',

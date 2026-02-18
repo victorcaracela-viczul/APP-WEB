@@ -3,7 +3,7 @@
 //  Envía notificaciones push a dispositivos de trabajadores
 // ============================================================
 
-// URL de tu Cloudflare Worker (cambiar si tu dominio es diferente)
+// URL de tu Cloudflare Worker (ACTUALIZAR con tu dominio real)
 const PUSH_WORKER_URL = 'https://sistema-gestion.tu-dominio.workers.dev';
 
 // Token secreto para autenticar llamadas GAS → Worker
@@ -13,11 +13,6 @@ const PUSH_AUTH_TOKEN = 'adecco-isos-push-secret-2024';
 
 /**
  * Enviar push a UN trabajador por DNI
- * @param {string} dni - DNI del trabajador
- * @param {string} title - Título de la notificación
- * @param {string} body - Cuerpo del mensaje
- * @param {string} [tag] - Tag para agrupar/reemplazar notificaciones
- * @returns {Object} { ok, sent }
  */
 function enviarPushNotification(dni, title, body, tag) {
   try {
@@ -50,11 +45,6 @@ function enviarPushNotification(dni, title, body, tag) {
 
 /**
  * Enviar push a VARIOS trabajadores por DNI[]
- * @param {string[]} dnis - Array de DNIs
- * @param {string} title - Título de la notificación
- * @param {string} body - Cuerpo del mensaje
- * @param {string} [tag] - Tag para agrupar
- * @returns {Object} { ok, sent, dnis }
  */
 function enviarPushBulk(dnis, title, body, tag) {
   try {
@@ -88,13 +78,9 @@ function enviarPushBulk(dnis, title, body, tag) {
 }
 
 // ============================================================
-//  FUNCIONES DE NOTIFICACIÓN POR MÓDULO
+//  FUNCIONES DE NOTIFICACIÓN POR MÓDULO (automáticas)
 // ============================================================
 
-/**
- * Notificar al trabajador que tiene un EPP pendiente de firma
- * Se llama desde registrarEntrega() en EppCode.js
- */
 function notificarEntregaEPP(dni, producto, variante) {
   const desc = producto + (variante ? ' (' + variante + ')' : '');
   return enviarPushNotification(
@@ -105,22 +91,12 @@ function notificarEntregaEPP(dni, producto, variante) {
   );
 }
 
-/**
- * Notificar al supervisor que el trabajador confirmó/rechazó
- * Se llama desde confirmarEntregaEpp() / rechazarEntregaEpp()
- */
 function notificarConfirmacionEPP(dniSupervisor, trabajadorNombre, producto, accion) {
   const titulo = accion === 'confirmado' ? 'EPP Confirmado' : 'EPP Rechazado';
   const cuerpo = trabajadorNombre + ' ' + accion + ' la recepción de: ' + producto;
   return enviarPushNotification(dniSupervisor, titulo, cuerpo, 'epp-confirmacion');
 }
 
-/**
- * Notificar a trabajadores sobre una capacitación
- * @param {string[]} dnis - DNIs de los trabajadores convocados
- * @param {string} tema - Nombre de la capacitación
- * @param {string} [fecha] - Fecha de la capacitación
- */
 function notificarCapacitacion(dnis, tema, fecha) {
   const body = fecha
     ? 'Capacitación: ' + tema + ' programada para ' + fecha + '. Revisa tu app.'
@@ -128,18 +104,10 @@ function notificarCapacitacion(dnis, tema, fecha) {
   return enviarPushBulk(dnis, 'Capacitación', body, 'capacitacion');
 }
 
-/**
- * Notificación genérica - se puede llamar desde cualquier módulo
- * Expuesta como función global para usar desde el frontend si se necesita
- */
 function enviarNotificacionManual(dni, titulo, mensaje) {
   return enviarPushNotification(dni, titulo, mensaje, 'manual');
 }
 
-/**
- * Enviar notificación a todos los trabajadores activos
- * Útil para avisos generales
- */
 function notificarATodos(titulo, mensaje) {
   try {
     const hoja = getSpreadsheetPersonal().getSheetByName('PERSONAL');
@@ -162,5 +130,100 @@ function notificarATodos(titulo, mensaje) {
   } catch (e) {
     Logger.log('Error notificando a todos: ' + e.message);
     return { ok: false, error: e.message };
+  }
+}
+
+// ============================================================
+//  FUNCIONES MANUALES — Llamadas desde el frontend (admin)
+//  Usadas por google.script.run desde EPPMaestro y Capacitaciones
+// ============================================================
+
+/**
+ * Enviar alerta manual de EPP desde el panel de administración
+ * @param {string} modo - "individual" o "todos"
+ * @param {string} [dni] - DNI del trabajador (solo si modo="individual")
+ * @param {string} titulo - Título de la alerta
+ * @param {string} mensaje - Mensaje de la alerta
+ * @returns {Object} { ok, sent, ... }
+ */
+function enviarAlertaEPP(modo, dni, titulo, mensaje) {
+  try {
+    if (modo === 'todos') {
+      return notificarATodos(
+        titulo || 'Alerta EPP',
+        mensaje || 'Revisa tu módulo de EPP. Tienes actualizaciones pendientes.'
+      );
+    } else {
+      if (!dni) return { ok: false, error: 'DNI requerido para notificación individual' };
+      return enviarPushNotification(
+        dni,
+        titulo || 'Alerta EPP',
+        mensaje || 'Revisa tu módulo de EPP. Tienes actualizaciones pendientes.',
+        'epp-manual'
+      );
+    }
+  } catch (e) {
+    Logger.log('Error en alerta EPP manual: ' + e.message);
+    return { ok: false, error: e.message };
+  }
+}
+
+/**
+ * Enviar alerta manual de Capacitaciones desde el panel de administración
+ * @param {string} modo - "individual", "seleccion" o "todos"
+ * @param {string|string[]} dniOrDnis - DNI o array de DNIs
+ * @param {string} titulo - Título de la alerta
+ * @param {string} mensaje - Mensaje de la alerta
+ * @returns {Object} { ok, sent, ... }
+ */
+function enviarAlertaCapacitacion(modo, dniOrDnis, titulo, mensaje) {
+  try {
+    const tit = titulo || 'Alerta Capacitación';
+    const msg = mensaje || 'Tienes una capacitación pendiente. Revisa tu app.';
+
+    if (modo === 'todos') {
+      return notificarATodos(tit, msg);
+    } else if (modo === 'seleccion' && Array.isArray(dniOrDnis)) {
+      return enviarPushBulk(dniOrDnis, tit, msg, 'cap-manual');
+    } else {
+      if (!dniOrDnis) return { ok: false, error: 'DNI requerido' };
+      return enviarPushNotification(String(dniOrDnis), tit, msg, 'cap-manual');
+    }
+  } catch (e) {
+    Logger.log('Error en alerta Cap manual: ' + e.message);
+    return { ok: false, error: e.message };
+  }
+}
+
+/**
+ * Obtener lista de trabajadores activos para los selects de notificación
+ * Devuelve [{dni, nombre, cargo, empresa}]
+ */
+function obtenerTrabajadoresParaNotificar() {
+  try {
+    const hoja = getSpreadsheetPersonal().getSheetByName('PERSONAL');
+    const lastRow = hoja.getLastRow();
+    if (lastRow < 2) return [];
+
+    const data = hoja.getRange(2, 1, lastRow - 1, 17).getValues();
+    const trabajadores = [];
+
+    for (let i = 0; i < data.length; i++) {
+      const estado = (data[i][15] || '').toString().toUpperCase(); // Col P = estado
+      const dni = (data[i][1] || '').toString().trim(); // Col B = DNI
+      const nombre = (data[i][2] || '').toString().trim(); // Col C = Nombre
+      const cargo = (data[i][3] || '').toString().trim(); // Col D = Cargo
+      const empresa = (data[i][4] || '').toString().trim(); // Col E = Empresa
+      if (dni && estado !== 'NO') {
+        trabajadores.push({ dni: dni, nombre: nombre, cargo: cargo, empresa: empresa });
+      }
+    }
+
+    return trabajadores.sort(function(a, b) {
+      return (a.nombre || '').localeCompare(b.nombre || '');
+    });
+  } catch (e) {
+    Logger.log('Error obteniendo trabajadores: ' + e.message);
+    return [];
   }
 }
