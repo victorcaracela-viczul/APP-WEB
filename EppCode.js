@@ -704,11 +704,15 @@ function registrarEntrega(payload){
     // 🆕 DETECTAR RETRASO (antes de crear el row)
     const ultimaEntrega = buscarUltimaEntrega(payload.dni, producto, variante);
     let obsAuto = _str(payload.obs || '');
-    
-    if (ultimaEntrega && ultimaEntrega.FECHA_VENCIMIENTO) {
+
+    if (!ultimaEntrega) {
+      // 🆕 Primera entrega de este producto para este trabajador
+      const primeraMsg = '🆕 Primera entrega registrada.';
+      obsAuto = obsAuto ? `${primeraMsg} ${obsAuto}` : primeraMsg;
+    } else if (ultimaEntrega.FECHA_VENCIMIENTO) {
       const vencPrev = new Date(ultimaEntrega.FECHA_VENCIMIENTO);
       const hoyDate = new Date(hoy);
-      
+
       if (hoyDate > vencPrev) {
         const diffMs = hoyDate - vencPrev;
         const diasRetraso = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
@@ -718,6 +722,10 @@ function registrarEntrega(payload){
         const aTiempoMsg = '✅ Reemplazo a tiempo.';
         obsAuto = obsAuto ? `${aTiempoMsg} ${obsAuto}` : aTiempoMsg;
       }
+    } else {
+      // Hay entrega anterior pero sin fecha de vencimiento
+      const reemplazoMsg = '🔄 Reemplazo (sin vencimiento previo).';
+      obsAuto = obsAuto ? `${reemplazoMsg} ${obsAuto}` : reemplazoMsg;
     }
 
     // 🔹 REGISTRO (hoja REGISTRO)
