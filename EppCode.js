@@ -783,6 +783,9 @@ function registrarEntrega(payload){
 
     // 🚫 YA NO se descuenta stock aquí — se descuenta cuando el trabajador confirme
 
+    // 🔔 Notificación push al trabajador
+    try { notificarEntregaEPP(_str(payload.dni||''), producto, variante); } catch(e) { Logger.log('Push error: ' + e); }
+
     return { ok:true, id: row[IDX.REG.ID_REG-1] };
   }catch(err){
     return { ok:false, message: err.message||String(err) };
@@ -1351,6 +1354,21 @@ function confirmarEntregaEpp(idReg, firmaDataUrl){
     const cant = _num(regData[IDX.REG.CANTIDAD-1]);
     _ensureStockDelta(almacen, producto, variante, -cant, false, null);
 
+    // 🔔 Notificar al usuario que registró la entrega
+    try {
+      const usuarioReg = _str(regData[IDX.REG.USUARIO-1]);
+      const nombreTrab = _str(regData[IDX.REG.NOMBRES-1]);
+      // Buscar DNI del usuario que registró por nombre en PERSONAL
+      const hPersonal = getSpreadsheetPersonal().getSheetByName('PERSONAL');
+      const pData = hPersonal.getRange(2, 1, hPersonal.getLastRow()-1, 3).getValues();
+      for (let p = 0; p < pData.length; p++) {
+        if ((pData[p][2]||'') === usuarioReg) {
+          notificarConfirmacionEPP(String(pData[p][1]), nombreTrab, producto, 'confirmado');
+          break;
+        }
+      }
+    } catch(e) { Logger.log('Push confirm error: ' + e); }
+
     return { ok:true, message:'EPP confirmado correctamente' };
   }catch(err){
     return { ok:false, message: err.message||String(err) };
@@ -1427,6 +1445,22 @@ function rechazarEntregaEpp(idReg, motivo){
     }
 
     // NO se descuenta stock
+
+    // 🔔 Notificar al usuario que registró la entrega
+    try {
+      const usuarioReg = _str(regData[IDX.REG.USUARIO-1]);
+      const nombreTrab = _str(regData[IDX.REG.NOMBRES-1]);
+      const prodRechazo = _str(regData[IDX.REG.PRODUCTO-1]);
+      const hPersonal = getSpreadsheetPersonal().getSheetByName('PERSONAL');
+      const pData = hPersonal.getRange(2, 1, hPersonal.getLastRow()-1, 3).getValues();
+      for (let p = 0; p < pData.length; p++) {
+        if ((pData[p][2]||'') === usuarioReg) {
+          notificarConfirmacionEPP(String(pData[p][1]), nombreTrab, prodRechazo, 'rechazado');
+          break;
+        }
+      }
+    } catch(e) { Logger.log('Push rechazo error: ' + e); }
+
     return { ok:true, message:'EPP rechazado. Motivo registrado.' };
   }catch(err){
     return { ok:false, message: err.message||String(err) };

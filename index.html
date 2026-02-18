@@ -864,10 +864,15 @@ function login(obj) {
         setTimeout(() => cargarDatosDNI?.(usuario), 50);
         startPeriodicCheck();
 
-        // ✨ AÑADIR ESTO: Se activa 10 segundos después del login
+        // ✨ Se activa 10 segundos después del login
         setTimeout(() => {
           verificarAlertasAlInicio();
-        }, 10000); 
+        }, 10000);
+
+        // 🔔 Suscribir a notificaciones push (se comunica con el shell Cloudflare)
+        setTimeout(() => {
+          suscribirPushNotifications(usuario);
+        }, 3000);
 
       } else if (result.blocked) {
         showError('Tu cuenta está desactivada. Contacta al administrador.');
@@ -917,6 +922,36 @@ function logout() {
   });
 }
 
+
+// ============================================================================
+// 🔔 PUSH NOTIFICATIONS — Comunicación iframe ↔ shell Cloudflare
+// ============================================================================
+function suscribirPushNotifications(dni) {
+  try {
+    // postMessage al shell (padre) para que registre la suscripción push
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'PUSH_SUBSCRIBE', dni: dni }, '*');
+    }
+  } catch(e) {
+    console.log('Push subscribe error:', e);
+  }
+}
+
+// Escuchar respuesta del shell
+window.addEventListener('message', function(e) {
+  if (!e.data || !e.data.type) return;
+  if (e.data.type === 'PUSH_SUBSCRIBED') {
+    console.log('Push notification suscripción:', e.data.ok ? 'OK' : 'Error ' + (e.data.error||''));
+  }
+});
+
+// También suscribir al auto-login (cuando ya hay sesión guardada)
+(function(){
+  const saved = JSON.parse(localStorage.getItem('userName') || 'null');
+  if (saved && saved.usuario) {
+    setTimeout(function(){ suscribirPushNotifications(saved.usuario); }, 5000);
+  }
+})();
 
 // ============================================================================
 // VERIFICACIÓN OPTIMIZADA (Solo cada 30 minutos)
