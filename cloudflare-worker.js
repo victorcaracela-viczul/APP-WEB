@@ -11,7 +11,7 @@
 const VAPID_PUBLIC  = 'BGivQjFutLF_ixAlil_Q2ntGtM1RgRcLEuxtlwXLknRXN_GOogO26oCOcm9aTfhYfrKPicrhUQP7AqBk4Q1PpRY';
 const VAPID_SUBJECT = 'mailto:victorcaracela@gmail.com';
 const GAS_URL       = 'https://script.google.com/macros/s/AKfycbwJrer0KO6jEd9HFso-AKzARyzlVdRrblJzm1H2i2ylWCbsCS9XzLGAfuQio2EPMzg/exec';
-const AUTH_TOKEN_FALLBACK = 'adecco-isos-push-secret-2024';
+const AUTH_TOKEN_FALLBACK = 'adecco_push_2026_secret_token_xyz123';
 
 export default {
   async fetch(request, env) {
