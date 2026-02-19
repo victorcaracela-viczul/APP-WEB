@@ -928,12 +928,17 @@ function logout() {
 // ============================================================================
 function suscribirPushNotifications(dni) {
   try {
-    // postMessage al shell (padre) para que registre la suscripción push
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'PUSH_SUBSCRIBE', dni: dni }, '*');
+    // postMessage al shell (top) — GAS anida iframes, window.parent apunta al wrapper de Google,
+    // necesitamos window.top para llegar al shell de Cloudflare
+    const shell = window.top || window.parent;
+    if (shell && shell !== window) {
+      shell.postMessage({ type: 'PUSH_SUBSCRIBE', dni: dni }, '*');
+      console.log('[PUSH] postMessage PUSH_SUBSCRIBE enviado, dni:', dni);
+    } else {
+      console.log('[PUSH] No se detectó shell (no estamos en iframe)');
     }
   } catch(e) {
-    console.log('Push subscribe error:', e);
+    console.log('[PUSH] Error enviando postMessage:', e);
   }
 }
 
@@ -941,7 +946,7 @@ function suscribirPushNotifications(dni) {
 window.addEventListener('message', function(e) {
   if (!e.data || !e.data.type) return;
   if (e.data.type === 'PUSH_SUBSCRIBED') {
-    console.log('Push notification suscripción:', e.data.ok ? 'OK' : 'Error ' + (e.data.error||''));
+    console.log('[PUSH] Respuesta del shell:', e.data.ok ? 'Suscripción OK' : 'Error: ' + (e.data.error||''));
   }
 });
 

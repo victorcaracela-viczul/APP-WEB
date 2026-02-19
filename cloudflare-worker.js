@@ -537,38 +537,52 @@ function serveShell() {
 
     async function initPush(){
       if(!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.log('Push no soportado en este navegador');
+        console.log('[PUSH] Push no soportado en este navegador');
         return;
       }
-      try {
-        swRegistration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-        console.log('SW registrado:', swRegistration.scope);
 
-        // Escuchar mensajes del iframe para suscribir/desuscribir
-        window.addEventListener('message', async (e) => {
-          if (!e.data || !e.data.type) return;
+      // Listener de mensajes FUERA del try — así funciona aunque SW falle
+      window.addEventListener('message', async (e) => {
+        if (!e.data || !e.data.type) return;
 
-          if (e.data.type === 'PUSH_SUBSCRIBE') {
-            pendingDni = e.data.dni;
-            // Verificar si ya tenemos permiso
-            if (Notification.permission === 'granted') {
-              await doSubscribe(e.data.dni);
-            } else if (Notification.permission !== 'denied') {
-              // Mostrar botón para que el usuario active con gesto
-              showNotificationBanner();
+        if (e.data.type === 'PUSH_SUBSCRIBE') {
+          console.log('[PUSH] Recibido PUSH_SUBSCRIBE, dni:', e.data.dni);
+          pendingDni = e.data.dni;
+
+          // Esperar a que SW esté listo si aún no lo está
+          if (!swRegistration) {
+            console.log('[PUSH] Esperando registro de SW...');
+            try {
+              swRegistration = await navigator.serviceWorker.ready;
+              console.log('[PUSH] SW listo vía .ready');
+            } catch(err) {
+              console.error('[PUSH] SW no disponible:', err);
+              return;
             }
           }
-          if (e.data.type === 'PUSH_UNSUBSCRIBE') {
-            await unsubscribePush(e.data.dni);
-          }
-        });
 
-        // Si ya tiene permiso, ocultar banner
-        if (Notification.permission === 'granted' && pendingDni) {
-          hideNotificationBanner();
+          // Verificar si ya tenemos permiso
+          if (Notification.permission === 'granted') {
+            console.log('[PUSH] Permiso ya concedido, suscribiendo...');
+            await doSubscribe(e.data.dni);
+          } else if (Notification.permission !== 'denied') {
+            console.log('[PUSH] Mostrando banner de activación');
+            showNotificationBanner();
+          } else {
+            console.log('[PUSH] Permiso denegado previamente');
+          }
         }
+        if (e.data.type === 'PUSH_UNSUBSCRIBE') {
+          await unsubscribePush(e.data.dni);
+        }
+      });
+
+      // Registrar Service Worker
+      try {
+        swRegistration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        console.log('[PUSH] SW registrado:', swRegistration.scope);
       } catch(err) {
-        console.error('Error registrando SW:', err);
+        console.error('[PUSH] Error registrando SW:', err);
       }
     }
 
@@ -586,40 +600,48 @@ function serveShell() {
     async function activarNotificaciones() {
       hideNotificationBanner();
       try {
+        console.log('[PUSH] Solicitando permiso de notificación...');
         const permission = await Notification.requestPermission();
+        console.log('[PUSH] Permiso:', permission);
         if (permission === 'granted') {
           if (pendingDni) await doSubscribe(pendingDni);
         } else {
-          console.log('Permiso de notificación denegado por el usuario');
+          console.log('[PUSH] Permiso denegado por el usuario');
         }
       } catch(err) {
-        console.error('Error solicitando permiso:', err);
+        console.error('[PUSH] Error solicitando permiso:', err);
       }
     }
 
     async function doSubscribe(dni) {
-      if (!swRegistration) return;
+      if (!swRegistration) { console.log('[PUSH] doSubscribe: no hay SW'); return; }
       try {
+        console.log('[PUSH] doSubscribe: obteniendo suscripción para', dni);
         let sub = await swRegistration.pushManager.getSubscription();
         if (!sub) {
+          console.log('[PUSH] Creando nueva suscripción push...');
           const key = urlBase64ToUint8Array(VAPID_KEY);
           sub = await swRegistration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: key
           });
+          console.log('[PUSH] Suscripción creada:', sub.endpoint.slice(0, 60) + '...');
+        } else {
+          console.log('[PUSH] Suscripción existente encontrada');
         }
 
+        console.log('[PUSH] Enviando suscripción al servidor...');
         const resp = await fetch('/api/push/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ dni: dni, subscription: sub.toJSON() })
         });
         const result = await resp.json();
-        console.log('Suscripción push guardada:', result);
+        console.log('[PUSH] Respuesta del servidor:', JSON.stringify(result));
 
         iframe.contentWindow.postMessage({ type: 'PUSH_SUBSCRIBED', ok: true }, '*');
       } catch(err) {
-        console.error('Error suscribiendo push:', err);
+        console.error('[PUSH] Error suscribiendo:', err);
         iframe.contentWindow.postMessage({ type: 'PUSH_SUBSCRIBED', ok: false, error: err.message }, '*');
       }
     }
