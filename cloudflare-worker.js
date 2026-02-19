@@ -380,10 +380,16 @@ self.addEventListener('push', function(event) {
     body: data.body,
     icon: data.icon || 'https://lh3.googleusercontent.com/d/1qik5wQ9CWfURpqBP4LI3YzMO_PHEyt6o',
     badge: data.badge || 'https://lh3.googleusercontent.com/d/1qik5wQ9CWfURpqBP4LI3YzMO_PHEyt6o',
-    vibrate: [200, 100, 200, 100, 200],
+    vibrate: [300, 100, 300, 100, 300, 100, 500],
     tag: data.tag || 'default',
     renotify: true,
-    data: { url: data.url || '/' }
+    requireInteraction: true,
+    silent: false,
+    data: { url: data.url || '/' },
+    actions: [
+      { action: 'open', title: 'Abrir App' },
+      { action: 'dismiss', title: 'Cerrar' }
+    ]
   };
 
   event.waitUntil(self.registration.showNotification(data.title, options));
@@ -391,6 +397,7 @@ self.addEventListener('push', function(event) {
 
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
+  if (event.action === 'dismiss') return;
   const url = event.notification.data?.url || '/';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
