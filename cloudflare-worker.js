@@ -507,7 +507,7 @@ function serveShell() {
     <div id="splash-text">CARGANDO SISTEMA<span class="dots"></span></div>
   </div>
   <!-- Banner de activación de notificaciones (requiere gesto del usuario) -->
-  <div id="push-banner" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:14px 24px;border-radius:16px;z-index:10000;box-shadow:0 8px 32px rgba(0,0,0,0.3);align-items:center;gap:14px;font-family:'Poppins',sans-serif;font-size:14px;max-width:90vw;border:1px solid rgba(255,255,255,0.1)">
+  <div id="push-banner" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:14px 24px;border-radius:16px;z-index:10000000;box-shadow:0 8px 32px rgba(0,0,0,0.3);align-items:center;gap:14px;font-family:'Poppins',sans-serif;font-size:14px;max-width:90vw;border:1px solid rgba(255,255,255,0.1)">
     <div style="background:#ffc107;color:#1a1a2e;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
       <span>&#128276;</span>
     </div>
