@@ -797,7 +797,8 @@ function _enviarNotifEPP(){
         } else {
           const err = (result && result.error) ? result.error : 'Error desconocido';
           const reason = (result && result.reason) ? ' - ' + result.reason : '';
-          resDiv.innerHTML = '<div class="alert alert-warning py-2 mb-0"><i class="fas fa-exclamation-triangle me-1"></i> ' + esc(err) + reason + '</div>';
+          const dbg = (result && result.debug) ? ' | Debug: ' + JSON.stringify(result.debug) : '';
+          resDiv.innerHTML = '<div class="alert alert-warning py-2 mb-0"><i class="fas fa-exclamation-triangle me-1"></i> ' + esc(err) + reason + dbg + '</div>';
         }
       }
     })

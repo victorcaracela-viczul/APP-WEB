@@ -44,6 +44,19 @@ export default {
     if (url.pathname === '/api/push/status' && request.method === 'POST') {
       return handleStatus(request, env);
     }
+    // ---- TEST endpoint (GET, sin auth) para verificar que el Worker responde ----
+    if (url.pathname === '/api/push/test') {
+      return json({
+        ok: true,
+        version: '2.1',
+        timestamp: new Date().toISOString(),
+        hasEnvToken: !!env.PUSH_AUTH_TOKEN,
+        hasEnvVapidPub: !!env.VAPID_PUBLIC_KEY,
+        hasEnvVapidPriv: !!env.VAPID_PRIVATE_KEY,
+        hasKV: !!env.PUSH_SUBSCRIPTIONS,
+        fallbackTokenLen: AUTH_TOKEN_FALLBACK.length
+      });
+    }
 
     // ---- Página principal (shell PWA) ----
     return serveShell();
@@ -107,10 +120,15 @@ async function handleSend(request, env) {
   try {
     const data = await request.json();
 
-    // Autenticar — GAS debe enviar token secreto
-    const validToken = env.PUSH_AUTH_TOKEN || AUTH_TOKEN_FALLBACK;
-    if (!data.token || data.token !== validToken) {
-      return json({ ok: false, error: 'No autorizado' }, 401);
+    // Autenticar — comparar con token hardcodeado (no depende de env)
+    const received = (data.token || '').trim();
+    const expected = AUTH_TOKEN_FALLBACK.trim();
+    if (!received || received !== expected) {
+      return json({
+        ok: false,
+        error: 'No autorizado',
+        debug: { receivedLen: received.length, expectedLen: expected.length, match: received === expected, receivedFirst5: received.substring(0, 5) }
+      }, 401);
     }
 
     const { dni, title, body, icon, url, tag } = data;
@@ -151,9 +169,14 @@ async function handleSend(request, env) {
 async function handleSendBulk(request, env) {
   try {
     const data = await request.json();
-    const validToken = env.PUSH_AUTH_TOKEN || AUTH_TOKEN_FALLBACK;
-    if (!data.token || data.token !== validToken) {
-      return json({ ok: false, error: 'No autorizado' }, 401);
+    const received = (data.token || '').trim();
+    const expected = AUTH_TOKEN_FALLBACK.trim();
+    if (!received || received !== expected) {
+      return json({
+        ok: false,
+        error: 'No autorizado',
+        debug: { receivedLen: received.length, expectedLen: expected.length, match: received === expected }
+      }, 401);
     }
 
     const { dnis, title, body, icon, url, tag } = data;
@@ -195,8 +218,9 @@ async function handleSendBulk(request, env) {
 async function handleStatus(request, env) {
   try {
     const data = await request.json();
-    const validToken = env.PUSH_AUTH_TOKEN || AUTH_TOKEN_FALLBACK;
-    if (!data.token || data.token !== validToken) {
+    const received = (data.token || '').trim();
+    const expected = AUTH_TOKEN_FALLBACK.trim();
+    if (!received || received !== expected) {
       return json({ ok: false, error: 'No autorizado' }, 401);
     }
     const { dni } = data;
