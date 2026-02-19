@@ -293,7 +293,6 @@
 </button>
 
 
-
  <div id="contenedorGeneral" style="position: relative; min-height: 200px;">
   <!-- Spinner que cubrirá solo esta sección -->
 <div id="loadingglobal" 
@@ -702,16 +701,30 @@ function crearCardCurso(curso, index) {
 
   // 🔹 Detectar “En vivo”
   const esEnVivo = curso.programacion?.toLowerCase().includes("en vivo");
-  const deshabilitarTest = curso.intentosHoy >= 2;
-  const tooltip = deshabilitarTest ? 'title="Ya realizaste 2 intentos hoy. Intenta mañana."' : "";
+  // ✅ CÓDIGO CORREGIDO
+// Deshabilitar test si: ya aprobó, excedió intentos, o no está en vivo
+const yaAprobo = curso.estado === "Aprobado";
+const excedeIntentos = curso.intentosHoy >= 2;
+const deshabilitarTest = yaAprobo || excedeIntentos;
 
-  // 🔹 Botón Test
-  const botonTest = esEnVivo
-    ? `<button class="btn btn-sm btn-secondary w-50" ${tooltip} ${deshabilitarTest ? "disabled" : ""} 
-          onclick="abrirEvaluacion('${curso.tema}', '${curso.area}', '${curso.duracion}', '${curso.capacitador}')">
-          Test ✏️
-        </button>`
-    : `<button class="btn btn-sm btn-secondary w-50" disabled>Test cerrado</button>`;
+// Tooltip dinámico según la razón
+let tooltip = "";
+if (yaAprobo) {
+  tooltip = 'title="✅ Ya aprobaste esta capacitación"';
+} else if (excedeIntentos) {
+  tooltip = 'title="⏳ Ya realizaste 2 intentos hoy. Intenta mañana."';
+}
+
+// Botón del test con validación completa
+const botonTest = esEnVivo
+  ? `<button class="btn btn-sm ${yaAprobo ? 'btn-success' : 'btn-secondary'} w-50" 
+        ${tooltip} 
+        ${deshabilitarTest ? "disabled" : ""} 
+        onclick="abrirEvaluacion('${curso.tema}', '${curso.area}', '${curso.duracion}', '${curso.capacitador}')">
+        ${yaAprobo ? '✅ Aprobado' : 'Test ✏️'}
+      </button>`
+  : `<button class="btn btn-sm btn-secondary w-50" disabled>Test cerrado</button>`;
+
 
   // 🔹 Botón Certificado
   let botonCertificado = "";
@@ -1190,7 +1203,30 @@ window.debugCursos = function() {
                                                                                                                                               
     let temaValido = false; // declarar globalmente                                                                                           
                                                                                                                                               
-    function abrirEvaluacion(tema, area, duracion) {                                                                                          
+    function abrirEvaluacion(tema, area, duracion) {
+  // ✅ VALIDACIÓN: Verificar si ya aprobó el curso
+  const cursoActual = cursosGlobal.find(c => c.tema === tema && c.area === area);
+  
+  if (cursoActual && cursoActual.estado === "Aprobado") {
+    Swal.fire({
+      icon: 'success',
+      title: '¡Ya aprobaste!',
+      html: `Ya completaste exitosamente:<br><b>${tema}</b><br>Puntaje: ${cursoActual.puntaje}`,
+      confirmButtonText: 'Entendido'
+    });
+    return; // 🚫 Detener ejecución
+  }
+
+  // ✅ VALIDACIÓN: Verificar intentos del día
+  if (cursoActual && cursoActual.intentosHoy >= 2) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Límite alcanzado',
+      text: 'Ya realizaste 2 intentos hoy. Intenta mañana.',
+      confirmButtonText: 'Entendido'
+    });
+    return; // 🚫 Detener ejecución
+  }                                                                                        
       duracionGlobal = duracion;                                                                                                              
       areaGlobal = area;                                                                                                                      
                                                                                                                                               
@@ -1417,6 +1453,8 @@ function generarCertificado(nombre, tema) {
 
       resetx();
       document.getElementById("evaluacion").style.display = "block";
+      const dniInput = JSON.parse(localStorage.getItem('userName')).usuario;
+      localStorage.removeItem(`datosDNI_${dniInput}`);
       google.script.run.withSuccessHandler(mostrarResultados).obtenerDatosPorDNI(dniInput);
     } else {
       Swal.fire("Error", "No se pudo guardar la información.", "error");
@@ -2057,8 +2095,8 @@ function cerrarKahootModal() {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') cerrarKahootModal();
 });
+
 </script>
                                                                                                                            
     </body>   
 </html>
-
