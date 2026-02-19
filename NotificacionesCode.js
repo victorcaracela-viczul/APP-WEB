@@ -4,12 +4,12 @@
 // ============================================================
 
 // URL de tu Cloudflare Worker (ACTUALIZAR con tu dominio real)
-const PUSH_WORKER_URL = 'https://sistema-gestion.tu-dominio.workers.dev';
+const PUSH_WORKER_URL = 'https://viczul.com';
 
 // Token secreto para autenticar llamadas GAS → Worker
 // IMPORTANTE: Configurar el mismo valor como variable de entorno
 // PUSH_AUTH_TOKEN en tu Cloudflare Worker
-const PUSH_AUTH_TOKEN = 'adecco-isos-push-secret-2024';
+const PUSH_AUTH_TOKEN = 'adecco_push_2026_secret_token_xyz123';
 
 /**
  * Enviar push a UN trabajador por DNI
