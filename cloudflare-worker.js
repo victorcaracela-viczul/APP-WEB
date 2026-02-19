@@ -11,6 +11,7 @@
 const VAPID_PUBLIC  = 'BGivQjFutLF_ixAlil_Q2ntGtM1RgRcLEuxtlwXLknRXN_GOogO26oCOcm9aTfhYfrKPicrhUQP7AqBk4Q1PpRY';
 const VAPID_SUBJECT = 'mailto:victorcaracela@gmail.com';
 const GAS_URL       = 'https://script.google.com/macros/s/AKfycbwJrer0KO6jEd9HFso-AKzARyzlVdRrblJzm1H2i2ylWCbsCS9XzLGAfuQio2EPMzg/exec';
+const AUTH_TOKEN_FALLBACK = 'adecco-isos-push-secret-2024';
 
 export default {
   async fetch(request, env) {
@@ -107,7 +108,8 @@ async function handleSend(request, env) {
     const data = await request.json();
 
     // Autenticar — GAS debe enviar token secreto
-    if (!data.token || data.token !== env.PUSH_AUTH_TOKEN) {
+    const validToken = env.PUSH_AUTH_TOKEN || AUTH_TOKEN_FALLBACK;
+    if (!data.token || data.token !== validToken) {
       return json({ ok: false, error: 'No autorizado' }, 401);
     }
 
@@ -149,7 +151,8 @@ async function handleSend(request, env) {
 async function handleSendBulk(request, env) {
   try {
     const data = await request.json();
-    if (!data.token || data.token !== env.PUSH_AUTH_TOKEN) {
+    const validToken = env.PUSH_AUTH_TOKEN || AUTH_TOKEN_FALLBACK;
+    if (!data.token || data.token !== validToken) {
       return json({ ok: false, error: 'No autorizado' }, 401);
     }
 
@@ -192,7 +195,8 @@ async function handleSendBulk(request, env) {
 async function handleStatus(request, env) {
   try {
     const data = await request.json();
-    if (!data.token || data.token !== env.PUSH_AUTH_TOKEN) {
+    const validToken = env.PUSH_AUTH_TOKEN || AUTH_TOKEN_FALLBACK;
+    if (!data.token || data.token !== validToken) {
       return json({ ok: false, error: 'No autorizado' }, 401);
     }
     const { dni } = data;
