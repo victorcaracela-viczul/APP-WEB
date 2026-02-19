@@ -1553,6 +1553,38 @@ function mostrarAvisoTemporal() {
   const aviso = document.getElementById('avisoGlobalEPP');
   if (!aviso) return;
 
+  // Sonido de alerta (beep corto usando Web Audio API, no requiere archivos externos)
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Primer tono — tin!
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.value = 880;  // La5
+    gain1.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(ctx.currentTime);
+    osc1.stop(ctx.currentTime + 0.3);
+    // Segundo tono — tin! (más agudo)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.value = 1175; // Re6
+    gain2.gain.setValueAtTime(0.3, ctx.currentTime + 0.15);
+    gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(ctx.currentTime + 0.15);
+    osc2.stop(ctx.currentTime + 0.5);
+  } catch(e) { /* Audio no soportado */ }
+
+  // Vibración en celular (patrón: vibra-pausa-vibra)
+  try {
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  } catch(e) {}
+
   // Mostrar con una pequeña animación de entrada
   aviso.style.display = 'flex';
   aviso.style.animation = 'fadeInDown 0.5s ease-out';

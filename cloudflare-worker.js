@@ -408,7 +408,7 @@ self.addEventListener('push', function(event) {
     body: data.body,
     icon: data.icon || 'https://lh3.googleusercontent.com/d/1qik5wQ9CWfURpqBP4LI3YzMO_PHEyt6o',
     badge: data.badge || 'https://lh3.googleusercontent.com/d/1qik5wQ9CWfURpqBP4LI3YzMO_PHEyt6o',
-    vibrate: [300, 100, 300, 100, 300, 100, 500],
+    vibrate: [300, 150, 300, 150, 300, 150, 600],
     tag: data.tag || 'default',
     renotify: true,
     requireInteraction: true,
@@ -420,7 +420,17 @@ self.addEventListener('push', function(event) {
     ]
   };
 
-  event.waitUntil(self.registration.showNotification(data.title, options));
+  // Mostrar notificación + emitir sonido en ventanas abiertas de la app
+  event.waitUntil(
+    self.registration.showNotification(data.title, options).then(function() {
+      // Enviar mensaje a las ventanas abiertas para que reproduzcan sonido
+      return self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(windowClients) {
+        windowClients.forEach(function(client) {
+          client.postMessage({ type: 'PUSH_SOUND', title: data.title });
+        });
+      });
+    })
+  );
 });
 
 self.addEventListener('notificationclick', function(event) {
@@ -671,6 +681,45 @@ function serveShell() {
       const arr = new Uint8Array(raw.length);
       for(let i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
       return arr;
+    }
+
+    // Función para reproducir sonido de alerta (tin-tin!)
+    function playAlertSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        // Tono 1 — tin
+        const o1 = ctx.createOscillator(), g1 = ctx.createGain();
+        o1.type = 'sine'; o1.frequency.value = 880;
+        g1.gain.setValueAtTime(0.35, ctx.currentTime);
+        g1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+        o1.connect(g1); g1.connect(ctx.destination);
+        o1.start(ctx.currentTime); o1.stop(ctx.currentTime + 0.25);
+        // Tono 2 — tin (más agudo)
+        const o2 = ctx.createOscillator(), g2 = ctx.createGain();
+        o2.type = 'sine'; o2.frequency.value = 1175;
+        g2.gain.setValueAtTime(0.35, ctx.currentTime + 0.15);
+        g2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.45);
+        o2.connect(g2); g2.connect(ctx.destination);
+        o2.start(ctx.currentTime + 0.15); o2.stop(ctx.currentTime + 0.45);
+        // Tono 3 — acento final
+        const o3 = ctx.createOscillator(), g3 = ctx.createGain();
+        o3.type = 'sine'; o3.frequency.value = 1320;
+        g3.gain.setValueAtTime(0.3, ctx.currentTime + 0.35);
+        g3.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.7);
+        o3.connect(g3); g3.connect(ctx.destination);
+        o3.start(ctx.currentTime + 0.35); o3.stop(ctx.currentTime + 0.7);
+      } catch(e) { console.log('[PUSH] Audio no disponible'); }
+    }
+
+    // Escuchar mensajes del Service Worker (sonido al recibir push)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', function(e) {
+        if (e.data && e.data.type === 'PUSH_SOUND') {
+          console.log('[PUSH] Reproduciendo sonido para:', e.data.title);
+          playAlertSound();
+          try { if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 300]); } catch(ex) {}
+        }
+      });
     }
 
     // Iniciar push al cargar
