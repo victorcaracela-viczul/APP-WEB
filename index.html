@@ -1553,36 +1553,33 @@ function mostrarAvisoTemporal() {
   const aviso = document.getElementById('avisoGlobalEPP');
   if (!aviso) return;
 
-  // Sonido de alerta (beep corto usando Web Audio API, no requiere archivos externos)
+  // Sonido de alerta fuerte (alarma tipo bip-bip-bip)
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    // Primer tono — tin!
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.type = 'sine';
-    osc1.frequency.value = 880;  // La5
-    gain1.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-    osc1.connect(gain1);
-    gain1.connect(ctx.destination);
-    osc1.start(ctx.currentTime);
-    osc1.stop(ctx.currentTime + 0.3);
-    // Segundo tono — tin! (más agudo)
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.type = 'sine';
-    osc2.frequency.value = 1175; // Re6
-    gain2.gain.setValueAtTime(0.3, ctx.currentTime + 0.15);
-    gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.start(ctx.currentTime + 0.15);
-    osc2.stop(ctx.currentTime + 0.5);
+    const t = ctx.currentTime;
+    for (let i = 0; i < 3; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = 1200 + (i * 200);
+      gain.gain.setValueAtTime(0.8, t + i * 0.25);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + i * 0.25 + 0.18);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(t + i * 0.25); osc.stop(t + i * 0.25 + 0.18);
+    }
+    // Tono largo final
+    const oscF = ctx.createOscillator();
+    const gainF = ctx.createGain();
+    oscF.type = 'square'; oscF.frequency.value = 1800;
+    gainF.gain.setValueAtTime(0.7, t + 0.8);
+    gainF.gain.exponentialRampToValueAtTime(0.01, t + 1.4);
+    oscF.connect(gainF); gainF.connect(ctx.destination);
+    oscF.start(t + 0.8); oscF.stop(t + 1.4);
   } catch(e) { /* Audio no soportado */ }
 
-  // Vibración en celular (patrón: vibra-pausa-vibra)
+  // Vibración: 2 pulsos de 1 segundo cada uno
   try {
-    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    if (navigator.vibrate) navigator.vibrate([1000, 300, 1000]);
   } catch(e) {}
 
   // Mostrar con una pequeña animación de entrada

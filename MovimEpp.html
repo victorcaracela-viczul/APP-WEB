@@ -157,9 +157,7 @@
         <i class="fa-solid fa-cart-shopping"></i>
         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cartCount">0</span>
       </button>
-      <button class="btn btn-warning ms-1" onclick="abrirPanelNotifEPPMovim()" title="Enviar alerta a trabajadores">
-        <i class="fas fa-bell"></i>
-      </button>
+      <!-- Notificaciones movidas a Usuarios -->
     </div>
 
     <!-- Chips -->
@@ -173,56 +171,7 @@
     </div>
   </div>
 
-  <!-- Dialog Notificaciones EPP -->
-  <dialog id="dialogNotifEPPMovim" class="border-0 rounded-3 shadow p-0" style="width:90%;max-width:500px;z-index:9999;">
-    <div style="background:linear-gradient(135deg,#ffc107,#ff9800);padding:12px 20px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
-      <h6 style="margin:0;font-weight:700;color:#1a1a2e"><i class="fas fa-bell me-2"></i>Enviar Alerta EPP</h6>
-      <button type="button" class="btn-close" onclick="document.getElementById('dialogNotifEPPMovim').close()"></button>
-    </div>
-    <div style="padding:20px">
-      <p class="text-muted" style="font-size:12px">
-        Envía una alerta con vibración y sonido al celular de los trabajadores sobre EPP.
-      </p>
-      <div class="mb-3">
-        <label class="form-label fw-bold" style="font-size:13px">Destinatario</label>
-        <div class="d-flex gap-2">
-          <button class="btn btn-sm btn-dark notifMovim-modo-btn" data-modo="individual" onclick="setModoNotifEPPMovim('individual')">
-            <i class="fas fa-user me-1"></i> Individual
-          </button>
-          <button class="btn btn-sm btn-outline-dark notifMovim-modo-btn" data-modo="todos" onclick="setModoNotifEPPMovim('todos')">
-            <i class="fas fa-users me-1"></i> Todos
-          </button>
-        </div>
-      </div>
-      <div class="mb-3" id="notifMovim_selectBox">
-        <label class="form-label fw-bold" style="font-size:13px">Trabajador</label>
-        <select id="notifMovim_trabajador" class="form-select form-select-sm">
-          <option value="">Cargando...</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <label class="form-label fw-bold" style="font-size:13px">Título</label>
-        <input type="text" id="notifMovim_titulo" class="form-control form-control-sm" value="Alerta EPP" maxlength="60">
-      </div>
-      <div class="mb-3">
-        <label class="form-label fw-bold" style="font-size:13px">Mensaje</label>
-        <textarea id="notifMovim_mensaje" class="form-control form-control-sm" rows="3" maxlength="200">Revisa tu módulo de EPP. Tienes actualizaciones pendientes.</textarea>
-      </div>
-      <div class="mb-3">
-        <label class="form-label fw-bold" style="font-size:13px">Mensajes rápidos</label>
-        <div class="d-flex flex-wrap gap-1">
-          <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('notifMovim_mensaje').value='Revisa tu módulo de EPP. Tienes actualizaciones pendientes.'">EPP Pendiente</button>
-          <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('notifMovim_mensaje').value='Tienes EPP vencidos. Acércate para el recambio.'">EPP Vencido</button>
-          <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('notifMovim_mensaje').value='Firma la recepción de tu EPP asignado en la app.'">Firmar EPP</button>
-          <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('notifMovim_mensaje').value='Reunión de entrega de EPP. Acudir de inmediato.'">Reunión EPP</button>
-        </div>
-      </div>
-      <div id="notifMovim_resultado" class="mb-2" style="display:none"></div>
-      <button id="btnEnviarNotifMovim" class="btn btn-warning w-100 fw-bold" onclick="enviarNotifEPPMovim()">
-        <i class="fas fa-paper-plane me-2"></i>Enviar Alerta
-      </button>
-    </div>
-  </dialog>
+  <!-- Dialog Notificaciones movido a Usuarios -->
 
   <!-- Template Popover -->
   <div id="popTemplate" class="d-none">
@@ -2287,94 +2236,7 @@ document.getElementById('btnActualizarEPP').addEventListener('click', async ()=>
   }
 });
 
-// ============================================================
-//  NOTIFICACIONES EPP — Panel en MovimEpp
-// ============================================================
-var _notifMovimTrabCargados = false;
-var _notifMovimModo = 'individual';
-
-function abrirPanelNotifEPPMovim(){
-  var dlg = document.getElementById('dialogNotifEPPMovim');
-  if(dlg) dlg.showModal();
-  if(!_notifMovimTrabCargados) _cargarTrabNotifMovim();
-}
-
-function _cargarTrabNotifMovim(){
-  var sel = document.getElementById('notifMovim_trabajador');
-  if(!sel) return;
-  sel.innerHTML = '<option value="">Cargando...</option>';
-  google.script.run
-    .withSuccessHandler(function(lista){
-      _notifMovimTrabCargados = true;
-      sel.innerHTML = '<option value="">-- Selecciona trabajador --</option>';
-      (lista || []).forEach(function(t){
-        var opt = document.createElement('option');
-        opt.value = t.dni;
-        opt.textContent = t.nombre + (t.cargo ? ' - ' + t.cargo : '');
-        sel.appendChild(opt);
-      });
-    })
-    .withFailureHandler(function(){
-      sel.innerHTML = '<option value="">Error al cargar</option>';
-    })
-    .obtenerTrabajadoresParaNotificar();
-}
-
-function setModoNotifEPPMovim(modo){
-  _notifMovimModo = modo;
-  document.querySelectorAll('.notifMovim-modo-btn').forEach(function(b){
-    b.classList.toggle('btn-dark', b.dataset.modo === modo);
-    b.classList.toggle('btn-outline-dark', b.dataset.modo !== modo);
-  });
-  var selectBox = document.getElementById('notifMovim_selectBox');
-  if(selectBox) selectBox.style.display = (modo === 'individual') ? '' : 'none';
-}
-
-function enviarNotifEPPMovim(){
-  var titulo = (document.getElementById('notifMovim_titulo').value || '').trim();
-  var mensaje = (document.getElementById('notifMovim_mensaje').value || '').trim();
-  var btn = document.getElementById('btnEnviarNotifMovim');
-  var resDiv = document.getElementById('notifMovim_resultado');
-
-  if(!titulo){ Swal.fire('Error','Escribe un título','warning'); return; }
-  if(!mensaje){ Swal.fire('Error','Escribe un mensaje','warning'); return; }
-
-  var dni = '';
-  if(_notifMovimModo === 'individual'){
-    dni = document.getElementById('notifMovim_trabajador').value;
-    if(!dni){ Swal.fire('Error','Selecciona un trabajador','warning'); return; }
-  }
-
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Enviando...';
-  if(resDiv) resDiv.style.display = 'none';
-
-  google.script.run
-    .withSuccessHandler(function(result){
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Alerta';
-      if(resDiv){
-        resDiv.style.display = 'block';
-        if(result && result.ok){
-          var sent = result.sent || 0;
-          resDiv.innerHTML = '<div class="alert alert-success py-2 mb-0"><i class="fas fa-check-circle me-1"></i> Alerta enviada. <b>' + sent + '</b> notificación(es).</div>';
-        } else {
-          var err = (result && result.error) ? result.error : 'Error desconocido';
-          var dbg = (result && result.debug) ? ' | Debug: ' + JSON.stringify(result.debug) : '';
-          resDiv.innerHTML = '<div class="alert alert-warning py-2 mb-0"><i class="fas fa-exclamation-triangle me-1"></i> ' + err + dbg + '</div>';
-        }
-      }
-    })
-    .withFailureHandler(function(err){
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Alerta';
-      if(resDiv){
-        resDiv.style.display = 'block';
-        resDiv.innerHTML = '<div class="alert alert-danger py-2 mb-0"><i class="fas fa-times-circle me-1"></i> Error: ' + (err.message||err) + '</div>';
-      }
-    })
-    .enviarAlertaEPP(_notifMovimModo, dni, titulo, mensaje);
-}
+// Notificaciones EPP movidas a Usuarios.html
 
 </script>
 

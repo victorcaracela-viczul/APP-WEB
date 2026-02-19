@@ -42,6 +42,10 @@
     <button id="guardarColor" class="btn btn-secondary btn-sm">
       <i class="fa-solid fa-floppy-disk"></i>
     </button>
+
+    <button class="btn btn-warning btn-sm rounded-pill ms-2" onclick="abrirPanelNotifUsuarios()" title="Enviar alertas a trabajadores">
+      <i class="fas fa-bell me-1"></i> Alertas
+    </button>
   </div>
 
   <!-- 🔹 Grupo derecho: Buscador -->
@@ -467,6 +471,243 @@ function eliminarRegistro3(usuario, nombre) {
       });
 
     </script>
+
+<!-- ============================================================ -->
+<!--  PANEL DE ALERTAS / NOTIFICACIONES (solo admin)              -->
+<!-- ============================================================ -->
+<dialog id="dialogNotifUsuarios" class="border-0 rounded-3 shadow p-0" style="width:92%;max-width:520px;z-index:9999;">
+  <div style="background:linear-gradient(135deg,#ffc107,#ff9800);padding:14px 20px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
+    <h6 style="margin:0;font-weight:700;color:#1a1a2e"><i class="fas fa-bell me-2"></i>Centro de Alertas</h6>
+    <button type="button" class="btn-close" onclick="document.getElementById('dialogNotifUsuarios').close()"></button>
+  </div>
+  <div style="padding:20px">
+    <p class="text-muted" style="font-size:12px;margin-bottom:16px">
+      Enviar alertas con sonido y vibración al celular de los trabajadores.
+    </p>
+
+    <!-- Tipo de alerta -->
+    <div class="mb-3">
+      <label class="form-label fw-bold" style="font-size:13px">Tipo de alerta</label>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-dark notifU-tipo-btn" data-tipo="epp" onclick="setTipoNotifU('epp')">
+          <i class="fas fa-hard-hat me-1"></i> EPP
+        </button>
+        <button class="btn btn-sm btn-outline-dark notifU-tipo-btn" data-tipo="capacitacion" onclick="setTipoNotifU('capacitacion')">
+          <i class="fas fa-graduation-cap me-1"></i> Capacitación
+        </button>
+      </div>
+    </div>
+
+    <!-- Destinatario -->
+    <div class="mb-3">
+      <label class="form-label fw-bold" style="font-size:13px">Destinatario</label>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-dark notifU-modo-btn" data-modo="individual" onclick="setModoNotifU('individual')">
+          <i class="fas fa-user me-1"></i> Individual
+        </button>
+        <button class="btn btn-sm btn-outline-dark notifU-modo-btn" data-modo="todos" onclick="setModoNotifU('todos')">
+          <i class="fas fa-users me-1"></i> Todos
+        </button>
+      </div>
+    </div>
+
+    <!-- Select trabajador -->
+    <div class="mb-3" id="notifU_selectBox">
+      <label class="form-label fw-bold" style="font-size:13px">Trabajador</label>
+      <select id="notifU_trabajador" class="form-select form-select-sm">
+        <option value="">Cargando...</option>
+      </select>
+    </div>
+
+    <!-- Título -->
+    <div class="mb-3">
+      <label class="form-label fw-bold" style="font-size:13px">Título</label>
+      <input type="text" id="notifU_titulo" class="form-control form-control-sm" value="Alerta EPP" maxlength="60">
+    </div>
+
+    <!-- Mensaje -->
+    <div class="mb-3">
+      <label class="form-label fw-bold" style="font-size:13px">Mensaje</label>
+      <textarea id="notifU_mensaje" class="form-control form-control-sm" rows="3" maxlength="200">Revisa tu módulo de EPP. Tienes actualizaciones pendientes.</textarea>
+      <small class="text-muted"><span id="notifU_charCount">0</span>/200</small>
+    </div>
+
+    <!-- Mensajes rápidos EPP -->
+    <div class="mb-3" id="notifU_rapidosEPP">
+      <label class="form-label fw-bold" style="font-size:13px">Mensajes rápidos</label>
+      <div class="d-flex flex-wrap gap-1">
+        <button class="btn btn-sm btn-outline-secondary" onclick="setMsgRapidoU('Revisa tu módulo de EPP. Tienes actualizaciones pendientes.')">EPP Pendiente</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="setMsgRapidoU('Tienes EPP vencidos. Acércate para el recambio.')">EPP Vencido</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="setMsgRapidoU('Firma la recepción de tu EPP asignado en la app.')">Firmar EPP</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="setMsgRapidoU('Reunión de entrega de EPP. Acudir de inmediato.')">Reunión EPP</button>
+      </div>
+    </div>
+
+    <!-- Mensajes rápidos Capacitación -->
+    <div class="mb-3" id="notifU_rapidosCap" style="display:none">
+      <label class="form-label fw-bold" style="font-size:13px">Mensajes rápidos</label>
+      <div class="d-flex flex-wrap gap-1">
+        <button class="btn btn-sm btn-outline-secondary" onclick="setMsgRapidoU('Tienes una capacitación pendiente. Revisa tu app.')">Cap. Pendiente</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="setMsgRapidoU('Capacitación programada para hoy. Preséntate a tiempo.')">Cap. Hoy</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="setMsgRapidoU('Firma tu registro de capacitación en la app.')">Firmar Registro</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="setMsgRapidoU('Evaluación disponible. Ingresa a la app para completarla.')">Evaluación</button>
+      </div>
+    </div>
+
+    <!-- Resultado -->
+    <div id="notifU_resultado" class="mb-2" style="display:none"></div>
+
+    <!-- Botón enviar -->
+    <button id="btnEnviarNotifU" class="btn btn-warning w-100 fw-bold" onclick="enviarNotifU()">
+      <i class="fas fa-paper-plane me-2"></i>Enviar Alerta
+    </button>
+  </div>
+</dialog>
+
+<script>
+// ============================================================
+//  CENTRO DE ALERTAS — Solo admin desde Usuarios
+// ============================================================
+var _notifUTrabCargados = false;
+var _notifUModo = 'individual';
+var _notifUTipo = 'epp';
+
+function abrirPanelNotifUsuarios(){
+  var dlg = document.getElementById('dialogNotifUsuarios');
+  if(dlg) dlg.showModal();
+  if(!_notifUTrabCargados) _cargarTrabNotifU();
+  _updateCharCountU();
+}
+
+function _cargarTrabNotifU(){
+  var sel = document.getElementById('notifU_trabajador');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">Cargando...</option>';
+  google.script.run
+    .withSuccessHandler(function(lista){
+      _notifUTrabCargados = true;
+      sel.innerHTML = '<option value="">-- Selecciona trabajador --</option>';
+      (lista || []).forEach(function(t){
+        var opt = document.createElement('option');
+        opt.value = t.dni;
+        opt.textContent = t.nombre + (t.cargo ? ' - ' + t.cargo : '');
+        sel.appendChild(opt);
+      });
+    })
+    .withFailureHandler(function(){
+      sel.innerHTML = '<option value="">Error al cargar</option>';
+    })
+    .obtenerTrabajadoresParaNotificar();
+}
+
+function setTipoNotifU(tipo){
+  _notifUTipo = tipo;
+  document.querySelectorAll('.notifU-tipo-btn').forEach(function(b){
+    b.classList.toggle('btn-dark', b.dataset.tipo === tipo);
+    b.classList.toggle('btn-outline-dark', b.dataset.tipo !== tipo);
+  });
+  var tit = document.getElementById('notifU_titulo');
+  var msg = document.getElementById('notifU_mensaje');
+  var rEPP = document.getElementById('notifU_rapidosEPP');
+  var rCap = document.getElementById('notifU_rapidosCap');
+  if(tipo === 'epp'){
+    if(tit) tit.value = 'Alerta EPP';
+    if(msg) msg.value = 'Revisa tu módulo de EPP. Tienes actualizaciones pendientes.';
+    if(rEPP) rEPP.style.display = '';
+    if(rCap) rCap.style.display = 'none';
+  } else {
+    if(tit) tit.value = 'Alerta Capacitación';
+    if(msg) msg.value = 'Tienes una capacitación pendiente. Revisa tu app.';
+    if(rEPP) rEPP.style.display = 'none';
+    if(rCap) rCap.style.display = '';
+  }
+  _updateCharCountU();
+}
+
+function setModoNotifU(modo){
+  _notifUModo = modo;
+  document.querySelectorAll('.notifU-modo-btn').forEach(function(b){
+    b.classList.toggle('btn-dark', b.dataset.modo === modo);
+    b.classList.toggle('btn-outline-dark', b.dataset.modo !== modo);
+  });
+  var selectBox = document.getElementById('notifU_selectBox');
+  if(selectBox) selectBox.style.display = (modo === 'individual') ? '' : 'none';
+}
+
+function setMsgRapidoU(msg){
+  var ta = document.getElementById('notifU_mensaje');
+  if(ta){ ta.value = msg; _updateCharCountU(); }
+}
+
+function _updateCharCountU(){
+  var ta = document.getElementById('notifU_mensaje');
+  var cnt = document.getElementById('notifU_charCount');
+  if(ta && cnt) cnt.textContent = ta.value.length;
+}
+
+function enviarNotifU(){
+  var titulo = (document.getElementById('notifU_titulo').value || '').trim();
+  var mensaje = (document.getElementById('notifU_mensaje').value || '').trim();
+  var btn = document.getElementById('btnEnviarNotifU');
+  var resDiv = document.getElementById('notifU_resultado');
+
+  if(!titulo){ Swal.fire('Error','Escribe un título','warning'); return; }
+  if(!mensaje){ Swal.fire('Error','Escribe un mensaje','warning'); return; }
+
+  var dniOrDnis = '';
+  if(_notifUModo === 'individual'){
+    dniOrDnis = document.getElementById('notifU_trabajador').value;
+    if(!dniOrDnis){ Swal.fire('Error','Selecciona un trabajador','warning'); return; }
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Enviando...';
+  if(resDiv) resDiv.style.display = 'none';
+
+  var callback = function(result){
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Alerta';
+    if(resDiv){
+      resDiv.style.display = 'block';
+      if(result && result.ok){
+        var sent = result.sent || 0;
+        resDiv.innerHTML = '<div class="alert alert-success py-2 mb-0"><i class="fas fa-check-circle me-1"></i> Alerta enviada. <b>' + sent + '</b> notificación(es).</div>';
+      } else {
+        var err = (result && result.error) ? result.error : 'Error desconocido';
+        var reason = (result && result.reason) ? ' - ' + result.reason : '';
+        resDiv.innerHTML = '<div class="alert alert-warning py-2 mb-0"><i class="fas fa-exclamation-triangle me-1"></i> ' + err + reason + '</div>';
+      }
+    }
+  };
+
+  var errorCallback = function(err){
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar Alerta';
+    if(resDiv){
+      resDiv.style.display = 'block';
+      resDiv.innerHTML = '<div class="alert alert-danger py-2 mb-0"><i class="fas fa-times-circle me-1"></i> Error: ' + (err.message||err) + '</div>';
+    }
+  };
+
+  if(_notifUTipo === 'epp'){
+    google.script.run
+      .withSuccessHandler(callback)
+      .withFailureHandler(errorCallback)
+      .enviarAlertaEPP(_notifUModo, dniOrDnis, titulo, mensaje);
+  } else {
+    google.script.run
+      .withSuccessHandler(callback)
+      .withFailureHandler(errorCallback)
+      .enviarAlertaCapacitacion(_notifUModo, dniOrDnis, titulo, mensaje);
+  }
+}
+
+// Listener para contar caracteres
+document.addEventListener('DOMContentLoaded', function(){
+  var ta = document.getElementById('notifU_mensaje');
+  if(ta) ta.addEventListener('input', _updateCharCountU);
+});
+</script>
 
   </body>
 </html>

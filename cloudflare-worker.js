@@ -408,7 +408,7 @@ self.addEventListener('push', function(event) {
     body: data.body,
     icon: data.icon || 'https://lh3.googleusercontent.com/d/1qik5wQ9CWfURpqBP4LI3YzMO_PHEyt6o',
     badge: data.badge || 'https://lh3.googleusercontent.com/d/1qik5wQ9CWfURpqBP4LI3YzMO_PHEyt6o',
-    vibrate: [300, 150, 300, 150, 300, 150, 600],
+    vibrate: [1000, 300, 1000],
     tag: data.tag || 'default',
     renotify: true,
     requireInteraction: true,
@@ -683,31 +683,26 @@ function serveShell() {
       return arr;
     }
 
-    // Función para reproducir sonido de alerta (tin-tin!)
+    // Sonido de alerta fuerte (alarma bip-bip-bip)
     function playAlertSound() {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        // Tono 1 — tin
-        const o1 = ctx.createOscillator(), g1 = ctx.createGain();
-        o1.type = 'sine'; o1.frequency.value = 880;
-        g1.gain.setValueAtTime(0.35, ctx.currentTime);
-        g1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
-        o1.connect(g1); g1.connect(ctx.destination);
-        o1.start(ctx.currentTime); o1.stop(ctx.currentTime + 0.25);
-        // Tono 2 — tin (más agudo)
-        const o2 = ctx.createOscillator(), g2 = ctx.createGain();
-        o2.type = 'sine'; o2.frequency.value = 1175;
-        g2.gain.setValueAtTime(0.35, ctx.currentTime + 0.15);
-        g2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.45);
-        o2.connect(g2); g2.connect(ctx.destination);
-        o2.start(ctx.currentTime + 0.15); o2.stop(ctx.currentTime + 0.45);
-        // Tono 3 — acento final
-        const o3 = ctx.createOscillator(), g3 = ctx.createGain();
-        o3.type = 'sine'; o3.frequency.value = 1320;
-        g3.gain.setValueAtTime(0.3, ctx.currentTime + 0.35);
-        g3.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.7);
-        o3.connect(g3); g3.connect(ctx.destination);
-        o3.start(ctx.currentTime + 0.35); o3.stop(ctx.currentTime + 0.7);
+        const t = ctx.currentTime;
+        for (let i = 0; i < 3; i++) {
+          const osc = ctx.createOscillator(), gain = ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.value = 1200 + (i * 200);
+          gain.gain.setValueAtTime(0.8, t + i * 0.25);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + i * 0.25 + 0.18);
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.start(t + i * 0.25); osc.stop(t + i * 0.25 + 0.18);
+        }
+        const oscF = ctx.createOscillator(), gainF = ctx.createGain();
+        oscF.type = 'square'; oscF.frequency.value = 1800;
+        gainF.gain.setValueAtTime(0.7, t + 0.8);
+        gainF.gain.exponentialRampToValueAtTime(0.01, t + 1.4);
+        oscF.connect(gainF); gainF.connect(ctx.destination);
+        oscF.start(t + 0.8); oscF.stop(t + 1.4);
       } catch(e) { console.log('[PUSH] Audio no disponible'); }
     }
 
@@ -717,7 +712,7 @@ function serveShell() {
         if (e.data && e.data.type === 'PUSH_SOUND') {
           console.log('[PUSH] Reproduciendo sonido para:', e.data.title);
           playAlertSound();
-          try { if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 300]); } catch(ex) {}
+          try { if (navigator.vibrate) navigator.vibrate([1000, 300, 1000]); } catch(ex) {}
         }
       });
     }
