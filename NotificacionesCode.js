@@ -227,3 +227,49 @@ function obtenerTrabajadoresParaNotificar() {
     return [];
   }
 }
+
+// ============================================================
+//  TEST — Ejecutar desde el editor GAS para diagnosticar conexión
+//  En el editor: seleccionar esta función y clic en ▶ Run
+// ============================================================
+function testPushConnection() {
+  // Test 1: Verificar que el Worker responde (GET sin auth)
+  Logger.log('=== TEST 1: Verificar Worker ===');
+  try {
+    var resp1 = UrlFetchApp.fetch(PUSH_WORKER_URL + '/api/push/test', {
+      muteHttpExceptions: true
+    });
+    Logger.log('Status: ' + resp1.getResponseCode());
+    Logger.log('Body: ' + resp1.getContentText());
+  } catch (e) {
+    Logger.log('ERROR: ' + e.message);
+  }
+
+  // Test 2: Enviar push de prueba (POST con auth)
+  Logger.log('=== TEST 2: Enviar push con auth ===');
+  Logger.log('URL: ' + PUSH_WORKER_URL + '/api/push/send');
+  Logger.log('Token que envío (longitud): ' + PUSH_AUTH_TOKEN.length);
+  Logger.log('Token que envío (primeros 10): ' + PUSH_AUTH_TOKEN.substring(0, 10));
+  try {
+    var payload = {
+      token: PUSH_AUTH_TOKEN,
+      dni: '99999999',
+      title: 'Test de conexión',
+      body: 'Si ves esto, la conexión funciona',
+      tag: 'test'
+    };
+    Logger.log('Payload: ' + JSON.stringify(payload));
+    var resp2 = UrlFetchApp.fetch(PUSH_WORKER_URL + '/api/push/send', {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+    Logger.log('Status: ' + resp2.getResponseCode());
+    Logger.log('Body: ' + resp2.getContentText());
+  } catch (e) {
+    Logger.log('ERROR: ' + e.message);
+  }
+
+  Logger.log('=== FIN DE TESTS ===');
+}
