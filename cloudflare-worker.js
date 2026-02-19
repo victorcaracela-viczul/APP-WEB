@@ -8,8 +8,8 @@
 //    - PUSH_AUTH_TOKEN  (token secreto que GAS envía para autenticarse)
 // ============================================================
 
-const VAPID_PUBLIC  = 'BPv6jT95vH2cT3jD4GjdNm_fe5ZkkmeP7YAU31DL601RxqOdS2SKb69yZ-C3mcGq9eWynA48dU6FpkwrD-_IRyo';
-const VAPID_SUBJECT = 'mailto:admin@adecco-isos.com';
+const VAPID_PUBLIC  = 'BGivQjFutLF_ixAlil_Q2ntGtM1RgRcLEuxtlwXLknRXN_GOogO26oCOcm9aTfhYfrKPicrhUQP7AqBk4Q1PpRY';
+const VAPID_SUBJECT = 'mailto:victorcaracela@gmail.com';
 const GAS_URL       = 'https://script.google.com/macros/s/AKfycbwJrer0KO6jEd9HFso-AKzARyzlVdRrblJzm1H2i2ylWCbsCS9XzLGAfuQio2EPMzg/exec';
 
 export default {
