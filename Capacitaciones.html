@@ -773,16 +773,28 @@ function crearCardCurso(curso, index) {
   const horasLectivasVista = formatearTiempo(curso.horasLectivas);
 
   // 🔹 Crear la tarjeta
+  // Badge de tipo de programa
+  const tipoBadgeColor = {
+    'Capacitación': '#6f42c1',
+    'Inspección': '#0d6efd',
+    'Reunión': '#198754',
+    'Entrenamiento': '#fd7e14'
+  }[curso.tipoProg] || '#6c757d';
+
   const cardDiv = document.createElement("div");
   cardDiv.className = "col-md-6 col-lg-3 curso-card";
   cardDiv.id = "nosaleimprimir";
+  cardDiv.dataset.tipo = curso.tipoProg || '';
   cardDiv.style.opacity = "0";
   cardDiv.style.transform = "translateY(20px)";
 
   cardDiv.innerHTML = `
     <div class="card border-0 shadow-sm rounded-4 h-100 d-flex flex-column" style="font-size: 0.85rem;">
-      <img src="${curso.image}" class="card-img-top rounded-top-4" alt="imagen"
-           style="height: 140px; object-fit: cover;" loading="lazy">
+      <div style="position:relative">
+        <img src="${curso.image}" class="card-img-top rounded-top-4" alt="imagen"
+             style="height: 140px; object-fit: cover;" loading="lazy">
+        ${curso.tipoProg ? `<span style="position:absolute;top:8px;left:8px;background:${tipoBadgeColor};color:#fff;font-size:0.7rem;padding:2px 8px;border-radius:12px;font-weight:600">${curso.tipoProg}</span>` : ''}
+      </div>
 
       <div class="card-body px-3 py-2 flex-grow-1">
         <div class="text-muted small mb-1">
@@ -917,6 +929,32 @@ function mostrarResultados(respuesta) {
   `;
   elementsCache.contenedorCursos.appendChild(barraProgreso);
 
+  // === Chips de filtro por TIPO DE PROGRAMA ===
+  const tiposResumen = {};
+  cursos.forEach(c => {
+    const tipo = c.tipoProg || 'Sin tipo';
+    if (!tiposResumen[tipo]) tiposResumen[tipo] = { total: 0, aprobados: 0 };
+    tiposResumen[tipo].total++;
+    if (c.estado === "Aprobado") tiposResumen[tipo].aprobados++;
+  });
+
+  const tipoColors = { 'Capacitación': '#6f42c1', 'Inspección': '#0d6efd', 'Reunión': '#198754', 'Entrenamiento': '#fd7e14' };
+  const tipoChipsContainer = document.createElement("div");
+  tipoChipsContainer.className = "d-flex flex-wrap gap-2 mt-2 mb-2";
+
+  Object.entries(tiposResumen).forEach(([tipo, stats]) => {
+    const chip = document.createElement("div");
+    const color = tipoColors[tipo] || '#6c757d';
+    chip.className = "chip-tipo badge rounded-pill px-3 py-2";
+    chip.dataset.tipo = tipo;
+    chip.style.cssText = `cursor:pointer;background:${color};color:#fff;border:2px solid ${color};font-size:0.8rem`;
+    chip.textContent = `${tipo} (${stats.aprobados}/${stats.total})`;
+    chip.addEventListener("click", () => filtrarPorTipo(tipo, tipoChipsContainer));
+    tipoChipsContainer.appendChild(chip);
+  });
+
+  elementsCache.contenedorCursos.appendChild(tipoChipsContainer);
+
   // === Calcular resumen de áreas ===
   const areasResumen = {};
   cursos.forEach(c => {
@@ -925,9 +963,9 @@ function mostrarResultados(respuesta) {
     if (c.estado === "Aprobado") areasResumen[c.area].aprobados++;
   });
 
-  // === Crear contenedor de chips ===
+  // === Crear contenedor de chips de área ===
   const chipsContainer = document.createElement("div");
-  chipsContainer.className = "d-flex flex-wrap gap-2 mt-2 mb-3";
+  chipsContainer.className = "d-flex flex-wrap gap-2 mb-3";
 
   Object.entries(areasResumen).forEach(([area, stats]) => {
     const chip = document.createElement("div");
@@ -1036,6 +1074,39 @@ function filtrarPorArea(area, chipsContainer) {
   // Actualizar progreso de esa área
   const cursosArea = cursosGlobal.filter(c => c.area === area);
   actualizarProgreso(cursosArea);
+}
+
+// === FILTRAR POR TIPO DE PROGRAMA ===
+function filtrarPorTipo(tipo, chipsContainer) {
+  const cards = document.querySelectorAll(".curso-card");
+  const chipActivo = chipsContainer.querySelector(".chip-tipo.active");
+
+  // Si se vuelve a hacer clic en el mismo chip → quitar filtro
+  if (chipActivo && chipActivo.dataset.tipo === tipo) {
+    chipActivo.style.opacity = "1";
+    chipActivo.classList.remove("active");
+    cards.forEach(c => c.style.display = "");
+    actualizarProgreso(cursosGlobal);
+    return;
+  }
+
+  // Activar chip y bajar opacidad de otros
+  chipsContainer.querySelectorAll(".chip-tipo").forEach(chip => {
+    chip.classList.remove("active");
+    chip.style.opacity = chip.dataset.tipo === tipo ? "1" : "0.4";
+  });
+
+  const chip = chipsContainer.querySelector(`[data-tipo='${tipo}']`);
+  if (chip) chip.classList.add("active");
+
+  // Filtrar tarjetas por data-tipo
+  cards.forEach(card => {
+    card.style.display = (card.dataset.tipo === tipo) ? "" : "none";
+  });
+
+  // Actualizar progreso
+  const cursosTipo = cursosGlobal.filter(c => (c.tipoProg || 'Sin tipo') === tipo);
+  actualizarProgreso(cursosTipo);
 }
 
 // === ACTUALIZAR PROGRESO ===

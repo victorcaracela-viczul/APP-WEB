@@ -97,21 +97,35 @@ function abrirFormulario(index = null) {
     const valor = valores[i] ?? "";
     let campoHTML = "";
 
-    if (i === 2) {
-      // Fecha y hora
+    if (i === 1) {
+      // Tipo de Programa (select)
+      const tipos = ['Capacitación', 'Inspección', 'Reunión', 'Entrenamiento'];
+      const opsTipo = tipos.map(t =>
+        `<option value="${t}" ${valor === t ? "selected" : ""}>${t}</option>`
+      ).join("");
+      campoHTML = `
+        <div class="mb-3">
+          <label class="form-label">${h}</label>
+          <select name="${h}" class="form-select">
+            <option value="">Seleccione</option>
+            ${opsTipo}
+          </select>
+        </div>`;
+    } else if (i === 4) {
+      // Fecha y hora (Programación)
       campoHTML = `
         <div class="mb-3">
           <label class="form-label">${h}</label>
           <input name="${h}" value="${valor}" type="datetime-local" class="form-control">
         </div>`;
-    } else if ([3, 5, 6].includes(i)) {
-      // Campos numéricos
+    } else if ([5, 7, 8].includes(i)) {
+      // Campos numéricos (Vigencia, Puntaje, Duración)
       campoHTML = `
         <div class="mb-3">
           <label class="form-label">${h}</label>
           <input name="${h}" value="${valor}" type="number" class="form-control">
         </div>`;
-    } else if (i === 7) {
+    } else if (i === 9) {
       // Capacitador (datalist)
       const listId = `datalist-${h}`;
       const opciones = opcionesColumnaCCurso.map(opt => `<option value="${opt}">`).join("");
@@ -123,7 +137,7 @@ function abrirFormulario(index = null) {
             ${opciones}
           </datalist>
         </div>`;
-    } else if (i === 8) {
+    } else if (i === 10) {
       // Área (select)
       const opciones = opcionesColumnaBCurso.map(opt =>
         `<option value="${opt}" ${valor === opt ? "selected" : ""}>${opt}</option>`
@@ -291,8 +305,8 @@ function mostrarFilas(data) {
 fila.forEach((celda, colIndex) => {
   const td = document.createElement("td");
 
-  if (colIndex === 4 && typeof celda === "string" && celda.startsWith("http")) {
-    // 📸 Imagen
+  if (colIndex === 6 && typeof celda === "string" && celda.startsWith("http")) {
+    // 📸 Imagen (col 6 = Imagen)
     const img = document.createElement("img");
     img.src = celda;
     img.alt = "Imagen";
@@ -300,8 +314,8 @@ fila.forEach((celda, colIndex) => {
     img.style.maxHeight = "60px";
     td.appendChild(img);
 
-  } else if (colIndex === 1 && typeof celda === "string" && celda.startsWith("http")) {
-    // 📂 Link
+  } else if (colIndex === 3 && typeof celda === "string" && celda.startsWith("http")) {
+    // 📂 Link (col 3 = Link)
     const btnLink = document.createElement("button");
     btnLink.innerHTML = '<i class="fa-solid fa-folder"></i>';
     btnLink.classList.add("btn", "btn-sm", "btn-secondary");
