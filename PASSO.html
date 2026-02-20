@@ -1,0 +1,452 @@
+<body>
+<div class="d-flex align-items-center mt-3 mb-3">
+  <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width:40px;height:40px;background:#198754;">
+    <i class="fas fa-calendar-check text-white"></i>
+  </div>
+  <div>
+    <h5 class="mb-0" style="color:#198754;">Programa Anual SSO</h5>
+    <small class="text-muted">PASSO - Inspecciones, Capacitaciones, Reuniones, Entrenamientos</small>
+  </div>
+</div>
+
+<div id="loadingPASSO" class="text-center my-5">
+  <div class="spinner-border text-success" role="status"><span class="visually-hidden">Cargando...</span></div>
+  <p class="mt-2 text-muted">Cargando Programa Anual...</p>
+</div>
+
+<div id="contenidoPASSO" style="display:none;">
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-0" id="passoTabs" role="tablist" style="font-size:0.85rem;">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabInsp" type="button" role="tab">
+        <i class="fas fa-clipboard-check me-1"></i>Inspecciones
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabCap" type="button" role="tab">
+        <i class="fas fa-chalkboard-teacher me-1"></i>Capacitaciones
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabReun" type="button" role="tab">
+        <i class="fas fa-users me-1"></i>Reuniones
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabEntr" type="button" role="tab">
+        <i class="fas fa-running me-1"></i>Entrenamientos
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- TAB INSPECCIONES -->
+    <div class="tab-pane fade show active" id="tabInsp" role="tabpanel">
+      <div id="tablaInspecciones" class="table-responsive mt-0"></div>
+    </div>
+    <!-- TAB CAPACITACIONES -->
+    <div class="tab-pane fade" id="tabCap" role="tabpanel">
+      <div id="tablaCapacitaciones" class="table-responsive mt-0"></div>
+    </div>
+    <!-- TAB REUNIONES -->
+    <div class="tab-pane fade" id="tabReun" role="tabpanel">
+      <div class="d-flex justify-content-end mt-2 mb-1">
+        <button class="btn btn-success btn-sm" onclick="abrirModalReunion()"><i class="fas fa-plus me-1"></i>Nueva Reunión</button>
+      </div>
+      <div id="tablaReuniones" class="table-responsive mt-0"></div>
+    </div>
+    <!-- TAB ENTRENAMIENTOS -->
+    <div class="tab-pane fade" id="tabEntr" role="tabpanel">
+      <div id="tablaEntrenamientos" class="table-responsive mt-0"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Reuniones -->
+<dialog id="modalReunion" class="border-0 rounded-3 shadow p-3" style="width:90%;max-width:450px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h6 class="mb-0" id="modalReunionTitulo">Nueva Reunión</h6>
+    <button type="button" class="btn-close" onclick="document.getElementById('modalReunion').close()"></button>
+  </div>
+  <form id="formReunion">
+    <input type="hidden" id="reunionId">
+    <div class="mb-2">
+      <label class="form-label small">Tema</label>
+      <input type="text" id="reunionTema" class="form-control form-control-sm" required>
+    </div>
+    <div class="mb-2">
+      <label class="form-label small">Responsable</label>
+      <input type="text" id="reunionResponsable" class="form-control form-control-sm" required>
+    </div>
+    <div class="mb-2">
+      <label class="form-label small">Gerencia</label>
+      <input type="text" id="reunionGerencia" class="form-control form-control-sm">
+    </div>
+    <div class="mb-2">
+      <label class="form-label small">Área</label>
+      <input type="text" id="reunionArea" class="form-control form-control-sm">
+    </div>
+    <div class="mb-2">
+      <label class="form-label small">Mes Programado</label>
+      <select id="reunionMesProg" class="form-select form-select-sm" required>
+        <option value="">Seleccione</option>
+        <option value="1">Enero</option><option value="2">Febrero</option>
+        <option value="3">Marzo</option><option value="4">Abril</option>
+        <option value="5">Mayo</option><option value="6">Junio</option>
+        <option value="7">Julio</option><option value="8">Agosto</option>
+        <option value="9">Septiembre</option><option value="10">Octubre</option>
+        <option value="11">Noviembre</option><option value="12">Diciembre</option>
+      </select>
+    </div>
+    <div class="d-flex gap-2 mt-3">
+      <button type="button" class="btn btn-success btn-sm flex-fill" onclick="guardarReunion()">Guardar</button>
+      <button type="button" class="btn btn-secondary btn-sm flex-fill" onclick="document.getElementById('modalReunion').close()">Cancelar</button>
+    </div>
+  </form>
+</dialog>
+
+<style>
+  .passo-table { width:100%; border-collapse:collapse; font-size:0.75rem; }
+  .passo-table th, .passo-table td { border:1px solid #dee2e6; padding:3px 5px; text-align:center; white-space:nowrap; }
+  .passo-table thead th { background:#343a40; color:#fff; position:sticky; top:0; z-index:2; }
+  .passo-table .col-actividad { text-align:left; min-width:180px; max-width:250px; white-space:normal; word-break:break-word; }
+  .passo-table .col-resp { text-align:left; min-width:100px; }
+  .passo-table .col-area { text-align:left; min-width:80px; }
+  .passo-table .fila-p td { background:#e3f2fd; }
+  .passo-table .fila-e td { background:#fff; }
+  .passo-table .celda-pe { font-weight:600; font-size:0.7rem; }
+  .celda-cumple { background:#d4edda !important; color:#155724; }
+  .celda-parcial { background:#fff3cd !important; color:#856404; }
+  .celda-falta { background:#f8d7da !important; color:#721c24; }
+  .celda-vacia { background:#f8f9fa !important; color:#adb5bd; }
+  .celda-prog { background:#cce5ff !important; color:#004085; }
+  .celda-ejec { background:#d4edda !important; color:#155724; }
+  .resumen-row td { background:#e9ecef !important; font-weight:700; }
+  .passo-table .pe-label { font-weight:700; color:#6c757d; font-size:0.65rem; }
+
+  .passo-table .btn-xs { padding:1px 5px; font-size:0.65rem; }
+
+  @media (max-width: 768px) {
+    .passo-table { font-size:0.65rem; }
+    .passo-table .col-actividad { min-width:120px; }
+  }
+</style>
+
+<script>
+const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+let datosPassoGlobal = null;
+
+// Iniciar carga
+cargarPASSO();
+
+function cargarPASSO() {
+  document.getElementById('loadingPASSO').style.display = 'block';
+  document.getElementById('contenidoPASSO').style.display = 'none';
+  google.script.run
+    .withSuccessHandler(renderPASSO)
+    .withFailureHandler(function(e) {
+      document.getElementById('loadingPASSO').innerHTML = '<p class="text-danger">Error: ' + e.message + '</p>';
+    })
+    .obtenerDatosPASSOCompleto();
+}
+
+function renderPASSO(datos) {
+  datosPassoGlobal = datos;
+  document.getElementById('loadingPASSO').style.display = 'none';
+  document.getElementById('contenidoPASSO').style.display = 'block';
+
+  renderTablaInspecciones(datos.inspecciones);
+  renderTablaCursos(datos.capacitaciones, 'tablaCapacitaciones');
+  renderTablaReuniones(datos.reuniones);
+  renderTablaCursos(datos.entrenamientos, 'tablaEntrenamientos');
+}
+
+// =============================================
+// INSPECCIONES TABLE (P = meta, E = ejecutado como conteo)
+// =============================================
+function renderTablaInspecciones(actividades) {
+  const cont = document.getElementById('tablaInspecciones');
+  if (!actividades || actividades.length === 0) {
+    cont.innerHTML = '<p class="text-muted text-center mt-3">No hay inspecciones programadas.</p>';
+    return;
+  }
+
+  let html = '<table class="passo-table"><thead><tr>';
+  html += '<th class="col-actividad">Equipo</th><th class="col-area">Área</th><th>Frec.</th><th></th>';
+  MESES.forEach(m => html += '<th>' + m + '</th>');
+  html += '<th>Total</th><th>%</th></tr></thead><tbody>';
+
+  let totalProgAnual = 0, totalEjecAnual = 0;
+
+  actividades.forEach(act => {
+    let totalP = 0, totalE = 0;
+
+    // Fila P (Programado)
+    html += '<tr class="fila-p"><td class="col-actividad" rowspan="2">' + act.equipo + '</td>';
+    html += '<td class="col-area" rowspan="2">' + act.area + '</td>';
+    html += '<td rowspan="2" style="font-size:0.65rem;">' + frecuenciaTexto(act.frecuenciaDias) + '</td>';
+    html += '<td class="pe-label">P</td>';
+
+    act.meses.forEach(m => {
+      totalP += m.programado;
+      const cls = m.programado > 0 ? 'celda-prog' : 'celda-vacia';
+      html += '<td class="celda-pe ' + cls + '">' + (m.programado > 0 ? m.programado : '-') + '</td>';
+    });
+
+    html += '<td class="celda-pe">' + totalP + '</td>';
+    html += '<td rowspan="2" class="celda-pe"></td></tr>';
+
+    // Fila E (Ejecutado)
+    html += '<tr class="fila-e"><td class="pe-label">E</td>';
+
+    act.meses.forEach((m, idx) => {
+      totalE += m.ejecutado;
+      let cls = 'celda-vacia';
+      if (m.programado > 0) {
+        if (m.ejecutado >= m.programado) cls = 'celda-cumple';
+        else if (m.ejecutado > 0) cls = 'celda-parcial';
+        else cls = 'celda-falta';
+      } else if (m.ejecutado > 0) {
+        cls = 'celda-cumple';
+      }
+      html += '<td class="celda-pe ' + cls + '">' + (m.ejecutado > 0 ? m.ejecutado : '-') + '</td>';
+    });
+
+    html += '<td class="celda-pe">' + totalE + '</td></tr>';
+
+    // Update % in the rowspan cell
+    totalProgAnual += totalP;
+    totalEjecAnual += totalE;
+  });
+
+  // Resumen
+  html += '<tr class="resumen-row"><td colspan="3">TOTAL</td><td>P</td>';
+  const resP = new Array(12).fill(0);
+  const resE = new Array(12).fill(0);
+  actividades.forEach(a => a.meses.forEach((m, i) => { resP[i] += m.programado; resE[i] += m.ejecutado; }));
+  resP.forEach(v => html += '<td>' + v + '</td>');
+  html += '<td>' + totalProgAnual + '</td><td rowspan="2" class="celda-pe">' + (totalProgAnual > 0 ? Math.round(totalEjecAnual / totalProgAnual * 100) : 0) + '%</td></tr>';
+
+  html += '<tr class="resumen-row"><td colspan="3"></td><td>E</td>';
+  resE.forEach(v => html += '<td>' + v + '</td>');
+  html += '<td>' + totalEjecAnual + '</td></tr>';
+
+  html += '</tbody></table>';
+  cont.innerHTML = html;
+}
+
+// =============================================
+// CAPACITACIONES / ENTRENAMIENTOS TABLE
+// =============================================
+function renderTablaCursos(actividades, containerId) {
+  const cont = document.getElementById(containerId);
+  if (!actividades || actividades.length === 0) {
+    cont.innerHTML = '<p class="text-muted text-center mt-3">No hay actividades programadas.</p>';
+    return;
+  }
+
+  let html = '<table class="passo-table"><thead><tr>';
+  html += '<th class="col-actividad">Actividad</th><th class="col-resp">Responsable</th><th class="col-area">Área</th><th></th>';
+  MESES.forEach(m => html += '<th>' + m + '</th>');
+  html += '<th>Total</th><th>%</th></tr></thead><tbody>';
+
+  let totalProgAnual = 0, totalEjecAnual = 0;
+
+  actividades.forEach(act => {
+    let totalP = 0, totalE = 0;
+
+    // Fila P
+    html += '<tr class="fila-p"><td class="col-actividad" rowspan="2">' + act.curso + '</td>';
+    html += '<td class="col-resp" rowspan="2">' + (act.responsable || '-') + '</td>';
+    html += '<td class="col-area" rowspan="2">' + (act.area || '-') + '</td>';
+    html += '<td class="pe-label">P</td>';
+
+    act.meses.forEach(m => {
+      const prog = m.programado ? 1 : 0;
+      totalP += prog;
+      const cls = prog ? 'celda-prog' : 'celda-vacia';
+      html += '<td class="celda-pe ' + cls + '">' + (prog ? 'P' : '-') + '</td>';
+    });
+    html += '<td class="celda-pe">' + totalP + '</td>';
+    html += '<td rowspan="2" class="celda-pe"></td></tr>';
+
+    // Fila E
+    html += '<tr class="fila-e"><td class="pe-label">E</td>';
+    act.meses.forEach(m => {
+      const ejec = m.ejecutado ? 1 : 0;
+      totalE += ejec;
+      let cls = 'celda-vacia';
+      if (m.programado) {
+        cls = m.ejecutado ? 'celda-cumple' : 'celda-falta';
+      } else if (m.ejecutado) {
+        cls = 'celda-ejec';
+      }
+      html += '<td class="celda-pe ' + cls + '">' + (ejec ? 'E' : '-') + '</td>';
+    });
+    html += '<td class="celda-pe">' + totalE + '</td></tr>';
+
+    totalProgAnual += totalP;
+    totalEjecAnual += totalE;
+  });
+
+  // Resumen
+  const resP = new Array(12).fill(0);
+  const resE = new Array(12).fill(0);
+  actividades.forEach(a => a.meses.forEach((m, i) => { if (m.programado) resP[i]++; if (m.ejecutado) resE[i]++; }));
+
+  html += '<tr class="resumen-row"><td colspan="3">TOTAL</td><td>P</td>';
+  resP.forEach(v => html += '<td>' + v + '</td>');
+  html += '<td>' + totalProgAnual + '</td><td rowspan="2" class="celda-pe">' + (totalProgAnual > 0 ? Math.round(totalEjecAnual / totalProgAnual * 100) : 0) + '%</td></tr>';
+
+  html += '<tr class="resumen-row"><td colspan="3"></td><td>E</td>';
+  resE.forEach(v => html += '<td>' + v + '</td>');
+  html += '<td>' + totalEjecAnual + '</td></tr>';
+
+  html += '</tbody></table>';
+  cont.innerHTML = html;
+}
+
+// =============================================
+// REUNIONES TABLE (con CRUD)
+// =============================================
+function renderTablaReuniones(reuniones) {
+  const cont = document.getElementById('tablaReuniones');
+  if (!reuniones || reuniones.length === 0) {
+    cont.innerHTML = '<p class="text-muted text-center mt-3">No hay reuniones programadas. Agrega una nueva.</p>';
+    return;
+  }
+
+  let html = '<table class="passo-table"><thead><tr>';
+  html += '<th class="col-actividad">Tema</th><th class="col-resp">Responsable</th><th class="col-area">Área</th><th></th>';
+  MESES.forEach(m => html += '<th>' + m + '</th>');
+  html += '<th>Acción</th></tr></thead><tbody>';
+
+  reuniones.forEach(act => {
+    // Fila P
+    html += '<tr class="fila-p"><td class="col-actividad" rowspan="2">' + act.curso + '</td>';
+    html += '<td class="col-resp" rowspan="2">' + (act.responsable || '-') + '</td>';
+    html += '<td class="col-area" rowspan="2">' + (act.area || '-') + '</td>';
+    html += '<td class="pe-label">P</td>';
+
+    act.meses.forEach(m => {
+      const cls = m.programado ? 'celda-prog' : 'celda-vacia';
+      html += '<td class="celda-pe ' + cls + '">' + (m.programado ? 'P' : '-') + '</td>';
+    });
+    html += '<td rowspan="2">';
+    html += '<button class="btn btn-outline-success btn-xs me-1" onclick="marcarEjecutadaUI(\'' + act.id + '\')"><i class="fas fa-check"></i></button>';
+    html += '<button class="btn btn-outline-danger btn-xs" onclick="eliminarReunionUI(\'' + act.id + '\')"><i class="fas fa-trash"></i></button>';
+    html += '</td></tr>';
+
+    // Fila E
+    html += '<tr class="fila-e"><td class="pe-label">E</td>';
+    act.meses.forEach(m => {
+      let cls = 'celda-vacia';
+      if (m.programado) cls = m.ejecutado ? 'celda-cumple' : 'celda-falta';
+      else if (m.ejecutado) cls = 'celda-ejec';
+      html += '<td class="celda-pe ' + cls + '">' + (m.ejecutado ? 'E' : '-') + '</td>';
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  cont.innerHTML = html;
+}
+
+// =============================================
+// REUNIONES CRUD UI
+// =============================================
+function abrirModalReunion() {
+  document.getElementById('modalReunionTitulo').textContent = 'Nueva Reunión';
+  document.getElementById('reunionId').value = '';
+  document.getElementById('reunionTema').value = '';
+  document.getElementById('reunionResponsable').value = '';
+  document.getElementById('reunionGerencia').value = '';
+  document.getElementById('reunionArea').value = '';
+  document.getElementById('reunionMesProg').value = '';
+  document.getElementById('modalReunion').showModal();
+}
+
+function guardarReunion() {
+  const id = document.getElementById('reunionId').value;
+  const tema = document.getElementById('reunionTema').value.trim();
+  const responsable = document.getElementById('reunionResponsable').value.trim();
+  const gerencia = document.getElementById('reunionGerencia').value.trim();
+  const area = document.getElementById('reunionArea').value.trim();
+  const mesProg = document.getElementById('reunionMesProg').value;
+
+  if (!tema || !mesProg) {
+    Swal.fire({ icon: 'warning', title: 'Campos obligatorios', text: 'Tema y Mes son requeridos.', timer: 2000, showConfirmButton: false });
+    return;
+  }
+
+  document.getElementById('modalReunion').close();
+
+  const callback = function() {
+    Swal.fire({ icon: 'success', title: 'Reunión guardada', timer: 1500, showConfirmButton: false });
+    cargarPASSO();
+  };
+
+  if (id) {
+    // Encontrar datos existentes
+    const raw = datosPassoGlobal.reunionesRaw.find(r => r.id === id);
+    google.script.run.withSuccessHandler(callback).actualizarReunion([id, tema, responsable, gerencia, area, mesProg, raw ? raw.mesEjecutado : '', raw ? raw.anio : new Date().getFullYear()]);
+  } else {
+    google.script.run.withSuccessHandler(callback).agregarReunion([tema, responsable, gerencia, area, mesProg]);
+  }
+}
+
+function eliminarReunionUI(id) {
+  Swal.fire({
+    title: 'Eliminar reunión',
+    text: '¿Estás seguro?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar'
+  }).then(result => {
+    if (result.isConfirmed) {
+      google.script.run.withSuccessHandler(function() {
+        Swal.fire({ icon: 'success', title: 'Eliminada', timer: 1200, showConfirmButton: false });
+        cargarPASSO();
+      }).eliminarReunion(id);
+    }
+  });
+}
+
+function marcarEjecutadaUI(id) {
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const opciones = {};
+  meses.forEach((m, i) => opciones[i + 1] = m);
+
+  Swal.fire({
+    title: 'Marcar como ejecutada',
+    text: 'Selecciona el mes de ejecución',
+    input: 'select',
+    inputOptions: opciones,
+    inputPlaceholder: 'Seleccione mes',
+    showCancelButton: true,
+    confirmButtonText: 'Confirmar',
+    cancelButtonText: 'Cancelar'
+  }).then(result => {
+    if (result.isConfirmed && result.value) {
+      google.script.run.withSuccessHandler(function() {
+        Swal.fire({ icon: 'success', title: 'Marcada como ejecutada', timer: 1200, showConfirmButton: false });
+        cargarPASSO();
+      }).marcarReunionEjecutada(id, parseInt(result.value));
+    }
+  });
+}
+
+// =============================================
+// HELPERS
+// =============================================
+function frecuenciaTexto(dias) {
+  if (dias === 1) return 'Diaria';
+  if (dias <= 7) return 'Semanal';
+  if (dias <= 15) return 'Quinc.';
+  if (dias <= 31) return 'Mensual';
+  if (dias <= 92) return 'Trim.';
+  return 'Sem.';
+}
+</script>
+</body>

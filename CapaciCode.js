@@ -20,10 +20,10 @@ function cargarDatosGlobales() {
   const lastColMatriz = hojaMatriz.getLastColumn();
   const matrizDatos = hojaMatriz.getRange(1, 1, lastRowMatriz, lastColMatriz).getValues();
 
-  // 🔹 Filas horizontales actualizadas (2 filas nuevas: Tipo de Programa y Responsable)
-  const cursos = matrizDatos[13].slice(4); // Fila 14 → Temas
-  const cargos = matrizDatos.slice(14).map(f => f[3]); // Columna D desde fila 15 en adelante
-  const matriz = matrizDatos.slice(14).map(f => f.slice(4, 4 + cursos.length));
+  // 🔹 Filas horizontales actualizadas (3 filas nuevas: Tipo de Programa, Responsable y Gerencia)
+  const cursos = matrizDatos[14].slice(4); // Fila 15 → Temas
+  const cargos = matrizDatos.slice(15).map(f => f[3]); // Columna D desde fila 16 en adelante
+  const matriz = matrizDatos.slice(15).map(f => f.slice(4, 4 + cursos.length));
   const lastRowPersonal = hojaPersonal.getLastRow();
   const personalDatos = hojaPersonal.getRange(1, 1, lastRowPersonal, 7).getValues();
   const personalCargos = personalDatos.slice(1).map(f => f[6]);
@@ -62,20 +62,21 @@ function cargarDatosGlobales() {
 
   if (!persona) return { encontrado: false };
 
-  // 🔹 Extraer filas horizontales de la matriz (+2 por Tipo de Programa y Responsable)
-  const tiposProg = matrizDatos[1].slice(4);       // Fila 2 → Tipo de Programa (NUEVA)
-  const responsables = matrizDatos[2].slice(4);     // Fila 3 → Responsable (NUEVA)
-  const links = matrizDatos[3].slice(4);            // Fila 4 → Link
-  const programaciones = matrizDatos[4].slice(4);   // Fila 5 → Programación
-  const temporalidades = matrizDatos[5].slice(4);   // Fila 6 → Vigencia
-  const imagen = matrizDatos[6].slice(4);           // Fila 7 → Imagen
-  const puntajesMin = matrizDatos[7].slice(4).map(p => parseFloat(p)); // Fila 8 → Puntaje
-  const duraciones = matrizDatos[8].slice(4).map(d => parseInt(d));    // Fila 9 → Duración
-  const capacitadores = matrizDatos[9].slice(4);    // Fila 10 → Capacitador
-  const areas = matrizDatos[10].slice(4);           // Fila 11 → Área
-  const horasLectivas = matrizDatos[11].slice(4);   // Fila 12 → Horas lectivas
-  const tieneCertificacion = matrizDatos[12].slice(4); // Fila 13 → Certificación
-  const cursos = matrizDatos[13].slice(4);          // Fila 14 → Temas
+  // 🔹 Extraer filas horizontales de la matriz (+3 por Tipo de Programa, Responsable y Gerencia)
+  const tiposProg = matrizDatos[1].slice(4);       // Fila 2 → Tipo de Programa
+  const responsables = matrizDatos[2].slice(4);     // Fila 3 → Responsable
+  const gerencias = matrizDatos[3].slice(4);        // Fila 4 → Gerencia (NUEVA)
+  const links = matrizDatos[4].slice(4);            // Fila 5 → Link
+  const programaciones = matrizDatos[5].slice(4);   // Fila 6 → Programación
+  const temporalidades = matrizDatos[6].slice(4);   // Fila 7 → Vigencia
+  const imagen = matrizDatos[7].slice(4);           // Fila 8 → Imagen
+  const puntajesMin = matrizDatos[8].slice(4).map(p => parseFloat(p)); // Fila 9 → Puntaje
+  const duraciones = matrizDatos[9].slice(4).map(d => parseInt(d));    // Fila 10 → Duración
+  const capacitadores = matrizDatos[10].slice(4);    // Fila 11 → Capacitador
+  const areas = matrizDatos[11].slice(4);           // Fila 12 → Área
+  const horasLectivas = matrizDatos[12].slice(4);   // Fila 13 → Horas lectivas
+  const tieneCertificacion = matrizDatos[13].slice(4); // Fila 14 → Certificación
+  const cursos = matrizDatos[14].slice(4);          // Fila 15 → Temas
 
   // 🔹 Buscar la fila del cargo
   const filaCursos = matrizDatos.find(f => f[3]?.toString().toLowerCase().trim() === persona.cargo.toLowerCase().trim());
@@ -159,6 +160,7 @@ function cargarDatosGlobales() {
       tema: temaCurso,
       tipoProg: tiposProg[j - 4] || '',
       responsable: responsables[j - 4] || '',
+      gerencia: gerencias[j - 4] || '',
       link: links[j - 4],
       programacion: textoProgramacion,
       image: imagen[j - 4],
@@ -254,11 +256,11 @@ function cargarDatosGlobales() {
   try {
     // === 1️⃣ Buscar datos del curso ===
     const numCursos = hojaMatriz.getLastColumn() - 4;
-    const cursos = hojaMatriz.getRange(14, 5, 1, numCursos).getValues()[0];       // Fila 14 → Temas
-    const puntajesMin = hojaMatriz.getRange(8, 5, 1, numCursos).getValues()[0];  // Fila 8 → Puntaje
-    const temporalidades = hojaMatriz.getRange(6, 5, 1, numCursos).getValues()[0]; // Fila 6 → Vigencia
-    const capacitadores = hojaMatriz.getRange(10, 5, 1, numCursos).getValues()[0]; // Fila 10 → Capacitador
-    const horasLectivas = hojaMatriz.getRange(12, 5, 1, numCursos).getValues()[0]; // Fila 12 → Horas
+    const cursos = hojaMatriz.getRange(15, 5, 1, numCursos).getValues()[0];       // Fila 15 → Temas
+    const puntajesMin = hojaMatriz.getRange(9, 5, 1, numCursos).getValues()[0];  // Fila 9 → Puntaje
+    const temporalidades = hojaMatriz.getRange(7, 5, 1, numCursos).getValues()[0]; // Fila 7 → Vigencia
+    const capacitadores = hojaMatriz.getRange(11, 5, 1, numCursos).getValues()[0]; // Fila 11 → Capacitador
+    const horasLectivas = hojaMatriz.getRange(13, 5, 1, numCursos).getValues()[0]; // Fila 13 → Horas
 
     let puntajeMinimo = null;
     let temporalidad = null;
@@ -361,8 +363,8 @@ function obtenerMatrizInvertida() {
   if (!hoja) return null;
 
   const lastCol = hoja.getLastColumn();
-  // leemos 13 filas horizontales (D2..D14: 2 nuevas + 10 datos + 1 índice)
-  const rango = hoja.getRange(2, 4, 13, lastCol - 3).getValues(); // D2 en adelante, 13 filas
+  // leemos 14 filas horizontales (D2..D15: 3 nuevas + 10 datos + 1 índice)
+  const rango = hoja.getRange(2, 4, 14, lastCol - 3).getValues(); // D2 en adelante, 14 filas
 
   const headers = rango.map(fila => fila[0]);
   const datos = rango.map(fila => fila.slice(1));
@@ -393,23 +395,23 @@ function agregarRegistro(nuevaColumna) {
   const hoja = getSpreadsheetCapacitaciones().getSheetByName("Matriz");
   const lastColumn = hoja.getLastColumn() + 1;
 
-  // 13 valores: 1 nombre del curso + 12 propiedades (filas 2..13)
-  if (nuevaColumna.length !== 13) throw new Error("Se requieren 13 valores: 1 curso + 12 datos");
+  // 14 valores: 1 nombre del curso + 13 propiedades (filas 2..14)
+  if (nuevaColumna.length !== 14) throw new Error("Se requieren 14 valores: 1 curso + 13 datos");
 
-  const datos = nuevaColumna.slice(1); // Las 12 propiedades (para filas 2..13)
+  const datos = nuevaColumna.slice(1); // Las 13 propiedades (para filas 2..14)
   const curso = nuevaColumna[0];       // El nombre del curso
 
-  // Escribe filas 2 a 13 en la nueva columna
-  hoja.getRange(2, lastColumn, 12, 1).setValues(datos.map(d => [d]));
+  // Escribe filas 2 a 14 en la nueva columna
+  hoja.getRange(2, lastColumn, 13, 1).setValues(datos.map(d => [d]));
 
-  // Escribe el índice del curso en la fila 14
-  hoja.getRange(14, lastColumn).setValue(curso);
+  // Escribe el índice del curso en la fila 15
+  hoja.getRange(15, lastColumn).setValue(curso);
 }
                                                                                                                                      
 function actualizarRegistro(columnaEditada) {
   const hoja = getSpreadsheetCapacitaciones().getSheetByName("Matriz");
-  // los cursos están en la fila 14, desde columna E (col 5)
-  const datos = hoja.getRange(14, 5, 1, hoja.getLastColumn() - 4).getValues()[0]; // fila 14, desde E
+  // los cursos están en la fila 15, desde columna E (col 5)
+  const datos = hoja.getRange(15, 5, 1, hoja.getLastColumn() - 4).getValues()[0]; // fila 15, desde E
 
   const curso = columnaEditada[0];
   const colIndex = datos.indexOf(curso);
@@ -417,32 +419,32 @@ function actualizarRegistro(columnaEditada) {
   if (colIndex === -1) throw new Error("Curso no encontrado");
 
   const datosNuevos = columnaEditada.slice(1); // sin el nombre del curso
-  if (datosNuevos.length !== 12) throw new Error("Se requieren 12 valores para actualizar (filas 2..13)");
+  if (datosNuevos.length !== 13) throw new Error("Se requieren 13 valores para actualizar (filas 2..14)");
 
   const col = 5 + colIndex; // columna real donde está el curso
 
-  // Actualiza filas 2 a 13 (12 filas)
-  hoja.getRange(2, col, 12, 1).setValues(datosNuevos.map(d => [d]));
+  // Actualiza filas 2 a 14 (13 filas)
+  hoja.getRange(2, col, 13, 1).setValues(datosNuevos.map(d => [d]));
 
-  // Actualiza el nombre del curso en fila 14
-  hoja.getRange(14, col).setValue(curso);
+  // Actualiza el nombre del curso en fila 15
+  hoja.getRange(15, col).setValue(curso);
 }
                                                                                                                                 
 function eliminarRegistroPorCurso(nombreCurso) {
   const hoja = getSpreadsheetCapacitaciones().getSheetByName("Matriz");
   if (!hoja) return;
 
-  // D2 en adelante, altura = 13 filas (2..14)
-  const rango = hoja.getRange(2, 4, 13, hoja.getLastColumn() - 3); // D2 en adelante
+  // D2 en adelante, altura = 14 filas (2..15)
+  const rango = hoja.getRange(2, 4, 14, hoja.getLastColumn() - 3); // D2 en adelante
   const datos = rango.getValues();
 
-  // Buscar la columna del índice (última fila del bloque = fila 14)
-  const filaIndice = datos[datos.length - 1]; // esto apunta a la fila que contiene los nombres de curso (fila 14)
+  // Buscar la columna del índice (última fila del bloque = fila 15)
+  const filaIndice = datos[datos.length - 1]; // esto apunta a la fila que contiene los nombres de curso (fila 15)
   const colIndex = filaIndice.indexOf(nombreCurso);
 
   if (colIndex === -1) return;
 
-  // Borrar verticalmente todos los valores en esa columna (filas 2..14)
+  // Borrar verticalmente todos los valores en esa columna (filas 2..15)
   for (let fila = 0; fila < datos.length; fila++) {
     hoja.getRange(fila + 2, 4 + colIndex).setValue(""); // columna D + colIndex
   }
@@ -565,11 +567,11 @@ function obtenerOpcionesFormulario() {
   const hojaMatriz = ss.getSheetByName("Matriz");
   const hojaTemas = ss.getSheetByName("TEMAS");
   
-  // --- 1. PROCESAR MATRIZ (Horizontal: Fila 11=Área, 14=Temas) ---
+  // --- 1. PROCESAR MATRIZ (Horizontal: Fila 12=Área, 15=Temas) ---
   const lastCol = hojaMatriz.getLastColumn();
   // Leemos desde la columna E (5) hasta el final
-  const filaAreas = hojaMatriz.getRange(11, 5, 1, lastCol - 4).getValues()[0];
-  const filaTemas = hojaMatriz.getRange(14, 5, 1, lastCol - 4).getValues()[0];
+  const filaAreas = hojaMatriz.getRange(12, 5, 1, lastCol - 4).getValues()[0];
+  const filaTemas = hojaMatriz.getRange(15, 5, 1, lastCol - 4).getValues()[0];
 
   let datosMatrizRelacion = [];
   let areasUnicasMatriz = [];
@@ -714,10 +716,10 @@ function obtenerOpcionesFormulario() {
   // 🔹 Leer solo columnas A–K (1–11) desde fila 2
   const datos = hojaBDatos.getRange(2, 1, lastRow - 1, 11).getValues();
 
-  // 🔹 Leer cursos (fila 14), temporalidades (fila 6), certificación (fila 13)
-  const cursos = hojaMatriz.getRange("E14:14").getValues()[0];
-  const temporalidades = hojaMatriz.getRange("E6:6").getValues()[0];
-  const certificaciones = hojaMatriz.getRange("E13:13").getValues()[0];
+  // 🔹 Leer cursos (fila 15), temporalidades (fila 7), certificación (fila 14)
+  const cursos = hojaMatriz.getRange("E15:15").getValues()[0];
+  const temporalidades = hojaMatriz.getRange("E7:7").getValues()[0];
+  const certificaciones = hojaMatriz.getRange("E14:14").getValues()[0];
 
   // 🔹 Ubicar el índice del curso actual
   const colIndex = cursos.indexOf(curso);
@@ -794,8 +796,8 @@ function obtenerOpcionesFormulario() {
   const hojaBDatos = ssCap.getSheetByName("B DATOS");
   const hojaPersonal = getSpreadsheetPersonal().getSheetByName("PERSONAL");
 
-  // 🔹 Obtener todos los cursos (fila 14)
-  const cursos = hojaMatriz.getRange("E14:14").getValues()[0];
+  // 🔹 Obtener todos los cursos (fila 15)
+  const cursos = hojaMatriz.getRange("E15:15").getValues()[0];
   const lastRowMatriz = hojaMatriz.getLastRow();
 
   // 🔹 Calcular índice de columna dentro del rango de cursos
@@ -808,8 +810,8 @@ function obtenerOpcionesFormulario() {
   hojaMatriz.getRange(fila, columna).setValue(valor);
   SpreadsheetApp.flush();
 
-  // ✅ Leer la matriz desde fila 15 en adelante (cargos verticales)
-  const cargosRange = hojaMatriz.getRange(15, 4, lastRowMatriz - 14, cursos.length + 1).getValues();
+  // ✅ Leer la matriz desde fila 16 en adelante (cargos verticales)
+  const cargosRange = hojaMatriz.getRange(16, 4, lastRowMatriz - 15, cursos.length + 1).getValues();
   const cargos = cargosRange.map(row => row[0]);
   const matriz = cargosRange.map(row => row.slice(1));
 
@@ -892,10 +894,10 @@ function obtenerOpcionesFormulario() {
         }                                                                                                                                     
       }                                                                                                                                       
                                                                                                                                               
-      const cargosMatriz = sheetMatriz.getRange("D15:D" + sheetMatriz.getLastRow()).getValues().flat().filter(c => c);
-      const filaTemas = sheetMatriz.getRange("E14:14").getValues()[0];
+      const cargosMatriz = sheetMatriz.getRange("D16:D" + sheetMatriz.getLastRow()).getValues().flat().filter(c => c);
+      const filaTemas = sheetMatriz.getRange("E15:15").getValues()[0];
       const cantidadTemas = filaTemas.filter(t => t).length;
-      const matrizValores = sheetMatriz.getRange(15, 5, cargosMatriz.length, cantidadTemas).getValues();                                      
+      const matrizValores = sheetMatriz.getRange(16, 5, cargosMatriz.length, cantidadTemas).getValues();                                      
                                                                                                                                               
       const previstosPorCargo = {};                                                                                                           
       cargosMatriz.forEach((cargo, idx) => {                                                                                                  

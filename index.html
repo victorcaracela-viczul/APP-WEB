@@ -207,8 +207,9 @@
       id="v-pills-mapa-tab" data-bs-toggle="pill" data-bs-target="#v-pills-mapa">
       <i class="fa fa-map me-2"></i>Mapa de riesgos</a>
 
-
-
+    <a class="list-group-item list-group-item-action border-0 py-1 px-2 text-dark hover-bg-light rounded"
+      id="v-pills-passo-tab" data-bs-toggle="pill" data-bs-target="#v-pills-passo">
+      <i class="fas fa-calendar-check me-2"></i>PASSO</a>
 
     <!-- Configuración Cap -->
     <a class="list-group-item list-group-item-action border-0 py-1 px-2 text-dark fw-bold"
@@ -492,7 +493,11 @@
               <div class="tab-pane fade" id="v-pills-maestroEpp" role="tabpanel" aria-labelledby="v-pills-maestroEpp-tab">
                 <?!= HtmlService.createHtmlOutputFromFile('EPPMaestro').getContent() ?>
               </div>
-              
+
+              <div class="tab-pane fade" id="v-pills-passo" role="tabpanel" aria-labelledby="v-pills-passo-tab">
+                <?!= HtmlService.createHtmlOutputFromFile('PASSO').getContent() ?>
+              </div>
+
 
           </div>
 <!--End Content-->

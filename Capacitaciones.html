@@ -803,7 +803,7 @@ function crearCardCurso(curso, index) {
         <h6 class="fw-bold mb-2" style="font-size: 0.95rem;">${curso.tema}</h6>
 
         <div class="d-flex justify-content-between flex-wrap small mb-2">
-          <div><strong>Área:</strong> ${curso.area}</div>
+          <div><strong>Área:</strong> ${curso.area}${curso.gerencia ? ` <span class="text-muted">| ${curso.gerencia}</span>` : ''}</div>
           <div><strong>Puntaje:</strong> ${curso.puntaje} – (<i class="fa-solid fa-arrow-up"></i>${curso.puntajeMinimo})</div>
         </div>
 

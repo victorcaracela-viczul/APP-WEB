@@ -111,21 +111,21 @@ function abrirFormulario(index = null) {
             ${opsTipo}
           </select>
         </div>`;
-    } else if (i === 4) {
+    } else if (i === 5) {
       // Fecha y hora (Programación)
       campoHTML = `
         <div class="mb-3">
           <label class="form-label">${h}</label>
           <input name="${h}" value="${valor}" type="datetime-local" class="form-control">
         </div>`;
-    } else if ([5, 7, 8].includes(i)) {
+    } else if ([6, 8, 9].includes(i)) {
       // Campos numéricos (Vigencia, Puntaje, Duración)
       campoHTML = `
         <div class="mb-3">
           <label class="form-label">${h}</label>
           <input name="${h}" value="${valor}" type="number" class="form-control">
         </div>`;
-    } else if (i === 9) {
+    } else if (i === 10) {
       // Capacitador (datalist)
       const listId = `datalist-${h}`;
       const opciones = opcionesColumnaCCurso.map(opt => `<option value="${opt}">`).join("");
@@ -137,7 +137,7 @@ function abrirFormulario(index = null) {
             ${opciones}
           </datalist>
         </div>`;
-    } else if (i === 10) {
+    } else if (i === 11) {
       // Área (select)
       const opciones = opcionesColumnaBCurso.map(opt =>
         `<option value="${opt}" ${valor === opt ? "selected" : ""}>${opt}</option>`
@@ -305,8 +305,8 @@ function mostrarFilas(data) {
 fila.forEach((celda, colIndex) => {
   const td = document.createElement("td");
 
-  if (colIndex === 6 && typeof celda === "string" && celda.startsWith("http")) {
-    // 📸 Imagen (col 6 = Imagen)
+  if (colIndex === 7 && typeof celda === "string" && celda.startsWith("http")) {
+    // 📸 Imagen (col 7 = Imagen)
     const img = document.createElement("img");
     img.src = celda;
     img.alt = "Imagen";
@@ -314,8 +314,8 @@ fila.forEach((celda, colIndex) => {
     img.style.maxHeight = "60px";
     td.appendChild(img);
 
-  } else if (colIndex === 3 && typeof celda === "string" && celda.startsWith("http")) {
-    // 📂 Link (col 3 = Link)
+  } else if (colIndex === 4 && typeof celda === "string" && celda.startsWith("http")) {
+    // 📂 Link (col 4 = Link)
     const btnLink = document.createElement("button");
     btnLink.innerHTML = '<i class="fa-solid fa-folder"></i>';
     btnLink.classList.add("btn", "btn-sm", "btn-secondary");
